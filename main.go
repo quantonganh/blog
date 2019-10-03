@@ -31,6 +31,8 @@ const (
 var (
 	templates = template.Must(
 		template.ParseFiles(
+			"templates/header.html",
+			"templates/footer.html",
 			"templates/home.html",
 			"templates/posts.html",
 			"templates/post.html",

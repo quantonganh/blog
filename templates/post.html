@@ -1,7 +1,9 @@
 {{ define "post" }}
+{{ template "header" . }}
 <h1>QuanTA's blog</h1>
 <h2>{{ .Title }}</h2>
 <p>{{ .Date }}</p>
 <p>{{ .Description }}</p>
 <p>{{ .Content }}</p>
+{{ template "footer" . }}
 {{ end }}
