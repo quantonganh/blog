@@ -3,6 +3,11 @@
 <h1>QuanTA's blog</h1>
 <h2>{{ .Title }}</h2>
 <p>{{ .Date | formatDate }}</p>
+<p>Tags:
+    {{ range $_, $tag := .Tags }}
+        <a href="/tags/{{ $tag }}">{{ $tag }}</a>
+    {{ end }}
+</p>
 <p>{{ .Description }}</p>
 <p>{{ .Content }}</p>
 {{ template "footer" . }}

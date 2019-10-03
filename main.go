@@ -87,6 +87,27 @@ func homeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 }
 
+func tagHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	tag := p.ByName("tagName")
+
+	posts, err := listAllPosts("posts/*.md")
+	if err != nil {
+		log.Fatal(err)
+	}
+	postsByTag := []*Post{}
+	for _, post := range posts {
+		for _, t := range post.Tags {
+			if t == tag {
+				postsByTag = append(postsByTag, post)
+			}
+		}
+	}
+
+	if err := renderHTML(w, r, postsByTag); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	postsPerPageEnv, exists := os.LookupEnv("POSTS_PER_PAGE")
 	if !exists {
@@ -202,6 +223,7 @@ func main() {
 	router.GET("/", homeHandler)
 	router.GET("/posts", postsHandler)
 	router.GET("/posts/:postName", postHandler)
+	router.GET("/tags/:tagName", tagHandler)
 	router.ServeFiles("/assets/*filepath", http.Dir("assets"))
 
 	log.Fatal(http.ListenAndServe(":80", router))

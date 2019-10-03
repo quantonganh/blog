@@ -4,6 +4,11 @@
 {{ range .posts }}
     <a href="/posts/{{ .File }}"><h2>{{ .Title }}</h2></a>
     <p>{{ .Date | formatDate }}</p>
+    <p>Tags:
+        {{ range $_, $tag := .Tags }}
+            <a href="/tags/{{ $tag }}">#{{ $tag }}</a>
+        {{ end }}
+    </p>
     <p>{{ .Description }}</p>
     <hr>
 {{ end }}
