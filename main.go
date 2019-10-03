@@ -36,6 +36,7 @@ var (
 		template.New("").Funcs(funcMap).ParseFiles(
 			"templates/header.html",
 			"templates/footer.html",
+			"templates/paginator.html",
 			"templates/home.html",
 			"templates/posts.html",
 			"templates/post.html",
