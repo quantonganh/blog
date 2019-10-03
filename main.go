@@ -26,11 +26,14 @@ import (
 
 const (
 	yamlDelim  = "---"
+	unixLayout = "Mon Jan 2 15:04:05 -07 2006"
+	postLayout = "2-Jan-2006"
 )
 
 var (
+	funcMap   = template.FuncMap{"formatDate": formatDate}
 	templates = template.Must(
-		template.ParseFiles(
+		template.New("").Funcs(funcMap).ParseFiles(
 			"templates/header.html",
 			"templates/footer.html",
 			"templates/home.html",
@@ -47,6 +50,29 @@ type Post struct {
 	Content     template.HTML
 	Tags        []string
 	File        string
+}
+
+type publishDate struct {
+	time.Time
+}
+
+func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var pd string
+	if err := unmarshal(&pd); err != nil {
+		return err
+	}
+
+	unixDate, err := time.Parse(unixLayout, pd)
+	if err != nil {
+		return err
+	}
+	d.Time = unixDate
+
+	return nil
+}
+
+func formatDate(d publishDate) string {
+	return d.Time.Format(postLayout)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

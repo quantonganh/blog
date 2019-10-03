@@ -3,7 +3,7 @@
 <h1>QuanTA's blog</h1>
 {{ range .posts }}
     <a href="/posts/{{ .File }}"><h2>{{ .Title }}</h2></a>
-    <p>{{ .Date }}</p>
+    <p>{{ .Date | formatDate }}</p>
     <p>{{ .Description }}</p>
     <hr>
 {{ end }}
