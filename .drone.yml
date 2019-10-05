@@ -3,6 +3,10 @@
 kind: pipeline
 name: default
 
+platform:
+  os: linux
+  arch: arm
+
 steps:
   - name: go-mod
     image: golang:1.13-alpine3.10-arm
