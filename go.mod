@@ -9,6 +9,7 @@ require (
 	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/pkg/errors v0.8.1
+	github.com/stretchr/testify v1.3.0
 	gopkg.in/russross/blackfriday.v2 v2.0.1
 	gopkg.in/yaml.v2 v2.2.4
 )
