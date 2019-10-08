@@ -41,6 +41,7 @@ steps:
     settings:
       registry: http://quanta.dynu.net:5000
       repo: quanta.dynu.net:5000/quantonganh/blog
+      insecure: true
       debug: true
       tags:
         - latest
