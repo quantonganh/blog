@@ -18,7 +18,7 @@ steps:
   - name: static-check
     image: golangci/golangci-lint:armv7
     commands:
-      - golangci-lint run -v ./...
+      - golangci-lint run --deadline 2m -v ./...
     environment:
       CGO_ENABLED: 0
       GO111MODULE: "on"
