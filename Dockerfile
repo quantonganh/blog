@@ -1,5 +1,15 @@
 FROM quantonganh/golang:1.13-alpine3.10-arm
 
-COPY blog /usr/local/bin/
+RUN mkdir /app
 
-ENTRYPOINT [ "/usr/local/bin/blog" ]
+COPY assets /app/assets
+
+COPY favicon.ico /app
+
+COPY posts /app/posts
+
+COPY templates/ /app/templates
+
+COPY blog /app
+
+ENTRYPOINT [ "/app/blog" ]
