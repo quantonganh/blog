@@ -39,8 +39,8 @@ steps:
   - name: push
     image: plugins/docker:linux-arm
     settings:
-      registry: http://localhost:5000
-      repo: localhost:5000/quantonganh/blog
+      registry: http://quanta.dynu.net:5000
+      repo: quanta.dynu.net:5000/quantonganh/blog
       debug: true
       tags:
         - latest
