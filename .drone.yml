@@ -35,3 +35,13 @@ steps:
     image: golang:1.13-alpine3.10-arm
     commands:
       - go build -mod=vendor -o blog -v
+
+  - name: push
+    image: plugins/docker:linux-arm
+    settings:
+      registry: http://localhost:5000
+      repo: localhost:5000/quantonganh/blog
+      debug: true
+      tags:
+        - latest
+        - ${DRONE_SOURCE_BRANCH}
