@@ -1,4 +1,4 @@
-FROM quantonganh/golang:1.13-alpine3.10-arm
+FROM arm32v7/alpine:3.10
 
 RUN mkdir /app
 
