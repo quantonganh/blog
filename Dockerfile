@@ -12,4 +12,8 @@ COPY templates/ /app/templates
 
 COPY blog /app
 
+WORKDIR /app
+
 ENTRYPOINT [ "/app/blog" ]
+
+EXPOSE 80
