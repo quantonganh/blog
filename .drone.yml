@@ -31,18 +31,20 @@ steps:
       CGO_ENABLED: 0
       GO111MODULE: "on"
 
-  - name: build
+  - name: build-go
     image: golang:1.13-alpine3.10-arm
     commands:
-      - go build -mod=vendor -o blog -v
+      - go build -mod=vendor -v
 
-  - name: push
-    image: plugins/docker:linux-arm
-    settings:
-      registry: http://quanta.dynu.net:5000
-      repo: quanta.dynu.net:5000/quantonganh/blog
-      insecure: true
-      debug: true
-      tags:
-        - latest
-        - ${DRONE_SOURCE_BRANCH}
+  - name: build-docker
+    image: quantonganh/docker:19.03.3-rc1-armv7
+    commands:
+      - docker build -t quantonganh/blog:${DRONE_SOURCE_BRANCH} .
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
+
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
