@@ -3,6 +3,12 @@ article {
     grid-template-columns: 1fr 1fr 10px 740px 10px 1fr 1fr;
 }
 
+@media (min-width: 320px) and (max-width: 480px) {
+    article {
+        grid-template-columns: 1fr 1fr 10px 380px 10px 1fr 1fr;
+    }
+}
+
 article > * {
     grid-column: 4;
 }
