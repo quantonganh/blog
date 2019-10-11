@@ -1,6 +1,5 @@
 {{ define "posts" }}
 {{ template "header" . }}
-<h1>QuanTA's blog</h1>
 {{ range . }}
     <a href="/posts/{{ .File }}"><h2>{{ .Title }}</h2></a>
 {{ end }}
