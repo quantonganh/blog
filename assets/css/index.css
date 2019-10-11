@@ -26,8 +26,16 @@ article > blockquote {
 
 /* General styling */
 
-html, body {
+html {
     margin: 0;
     padding: 0;
     line-height: 1.4;
+}
+
+body {
+    padding-top: 70px;
+}
+
+.content {
+    margin:10px;
 }
