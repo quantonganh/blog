@@ -44,6 +44,22 @@ steps:
       - name: docker
         path: /var/run/docker.sock
 
+  - name: deploy
+    image: quantonganh/drone-ssh:arm
+    settings:
+      host: quanta.dynu.net
+      username: root
+      key:
+        from_secret: ssh_key
+      port: 22022
+      script:
+        - cd /data
+        - docker-compose stop blog
+        - docker-compose up -d blog
+    when:
+      branch:
+        - master
+
 volumes:
   - name: docker
     host:
