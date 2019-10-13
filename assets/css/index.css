@@ -45,3 +45,8 @@ body {
 .content {
     margin:10px;
 }
+
+hr {
+    margin: 10px 0;
+    border-top: 1px solid #eee;
+}
