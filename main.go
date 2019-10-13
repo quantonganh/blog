@@ -200,12 +200,15 @@ func parseMarkdown(f string) (*Post, error) {
 		return nil, errors.Wrap(err, "yaml.Unmarshal")
 	}
 	content := strings.Join(lines[closingMetadataLine+1:], "\n")
+	options := []html.Option{
+		html.WithLineNumbers(),
+	}
 	p.Content = template.HTML(bf.Run(
 		[]byte(content),
 		bf.WithRenderer(
 			bfchroma.NewRenderer(
 				bfchroma.WithoutAutodetect(),
-				bfchroma.ChromaOptions(html.WithLineNumbers()),
+				bfchroma.ChromaOptions(options...),
 				bfchroma.ChromaStyle(styles.SolarizedDark),
 			),
 		),
