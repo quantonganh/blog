@@ -8,4 +8,4 @@ tags:
   - autocomplete
 ---
 
-https://eli.thegreenplace.net/2018/command-line-autocomplete-for-go-documentation/
+> https://eli.thegreenplace.net/2018/command-line-autocomplete-for-go-documentation/

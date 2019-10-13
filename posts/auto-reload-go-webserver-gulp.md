@@ -7,7 +7,7 @@ tags:
   - gulp
 ---
 
-https://medium.com/@etiennerouzeaud/autoreload-your-go-webserver-with-gulp-ee5e231d133d
+> https://medium.com/@etiennerouzeaud/autoreload-your-go-webserver-with-gulp-ee5e231d133d
 
 ```js
 const gulp     = require('gulp'),
