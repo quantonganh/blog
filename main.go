@@ -67,6 +67,7 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
+
 	d.Time = unixDate
 
 	return nil
@@ -89,12 +90,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 func tagHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	tag := p.ByName("tagName")
+	postsByTag := []*Post{}
 
 	posts, err := listAllPosts("posts/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
-	postsByTag := []*Post{}
+
 	for _, post := range posts {
 		for _, t := range post.Tags {
 			if t == tag {
@@ -113,6 +115,7 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	if !exists {
 		postsPerPageEnv = "10"
 	}
+
 	postsPerPage, err := strconv.Atoi(postsPerPageEnv)
 	if err != nil {
 		log.Fatal(err)
@@ -121,10 +124,12 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	nums := len(posts)
 	paginator := pagination.NewPaginator(r, postsPerPage, int64(nums))
 	offset := paginator.Offset()
+
 	endPos := offset + postsPerPage
 	if endPos > nums {
 		endPos = nums
 	}
+
 	data := pongo2.Context{"paginator": paginator, "posts": posts[offset:endPos]}
 	if err := templates.ExecuteTemplate(w, "home", data); err != nil {
 		log.Fatal(err)
@@ -145,21 +150,24 @@ func postsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func listAllPosts(pattern string) ([]*Post, error) {
-	posts := []*Post{}
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, errors.Wrap(err, "filepath.Glob")
 	}
+
+	posts := []*Post{}
 
 	for _, f := range files {
 		post, err := parseMarkdown(f)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse: %s", f)
 		}
+
 		filename := filepath.Base(f)
 		post.File = strings.TrimSuffix(filename, path.Ext(filename))
 		posts = append(posts, post)
 	}
+
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].Date.Time.After(posts[j].Date.Time)
 	})
@@ -169,10 +177,12 @@ func listAllPosts(pattern string) ([]*Post, error) {
 
 func postHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	path := p.ByName("postName")
+
 	post, err := parseMarkdown("posts/" + path + ".md")
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	post.File = path
 
 	if err := templates.ExecuteTemplate(w, "post", &post); err != nil {
@@ -186,23 +196,27 @@ func parseMarkdown(f string) (*Post, error) {
 		return nil, errors.Wrap(err, "ioutil.ReadFile")
 	}
 
-	lines := strings.Split(string(fileread), "\n")
 	var closingMetadataLine int
+
+	lines := strings.Split(string(fileread), "\n")
 	for i := 1; i < len(lines); i++ {
 		if lines[i] == yamlDelim {
 			closingMetadataLine = i
 		}
 	}
+
 	metadata := strings.Join(lines[1:closingMetadataLine], "\n")
 
 	p := Post{}
 	if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
 		return nil, errors.Wrap(err, "yaml.Unmarshal")
 	}
+
 	content := strings.Join(lines[closingMetadataLine+1:], "\n")
 	options := []html.Option{
 		html.WithLineNumbers(),
 	}
+
 	p.Content = template.HTML(bf.Run(
 		[]byte(content),
 		bf.WithRenderer(
@@ -213,6 +227,7 @@ func parseMarkdown(f string) (*Post, error) {
 			),
 		),
 	))
+
 	return &p, nil
 }
 
@@ -238,6 +253,7 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 
 	n, err := w.ResponseWriter.Write(b)
 	w.length += n
+
 	return n, err
 }
 
