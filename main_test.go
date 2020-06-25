@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -78,7 +78,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func setUp() error {
+func setUp() {
 	s := `---
 title: title
 date: Wed Oct  2 05:22:37 +07 2019
@@ -88,14 +88,12 @@ tags:
 ---
 content`
 	if err := ioutil.WriteFile("posts/test.md", []byte(s), 0644); err != nil {
-		return fmt.Errorf("ioutil.WriteFile: %w", err)
+		log.Fatal(err)
 	}
-	return nil
 }
 
-func tearDown() error {
+func tearDown() {
 	if err := os.Remove("posts/test.md"); err != nil {
-		return fmt.Errorf("os.Remove: %w", err)
+		log.Fatal(err)
 	}
-	return nil
 }

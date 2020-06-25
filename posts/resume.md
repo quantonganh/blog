@@ -73,3 +73,13 @@ tags:
 
 #### National University of Civil Engineering
 #### Bachelor of Information Technology in Civil Engineering                                          Sep 2001 - Mar 2006
+
+### Projects
+
+***
+
+#### Personal website: https://quanta.dynu.net
+
+- Utilized html/template and markdown to build a static site generator.
+- Automated testing and delivery by using Drone CI.
+- Implemented continuous deployment with docker compose on Raspberry Pi 4.
