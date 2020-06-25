@@ -18,6 +18,7 @@ steps:
   - name: static-check
     image: quantonganh/golangci-lint:armv7
     commands:
+      - env
       - git --no-pager diff --name-only "${DRONE_COMMIT_SHA}"..origin/master | grep -q "\.go$" && golangci-lint run --deadline 2m -v ./... || true
     environment:
       CGO_ENABLED: 0
