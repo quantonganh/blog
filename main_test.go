@@ -22,7 +22,7 @@ func TestListAllPosts(t *testing.T) {
 	p := posts[0]
 	require.NotNil(t, p)
 	assert.Equal(t, "title", p.Title)
-	assert.Equal(t, "2-Oct-2019", formatDate(p.Date))
+	assert.Equal(t, "2-Oct-2019", toISODate(p.Date))
 	assert.Equal(t, "description", p.Description)
 	assert.Equal(t, 1, len(p.Tags))
 	assert.Equal(t, "test", p.Tags[0])

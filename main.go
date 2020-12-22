@@ -17,21 +17,27 @@ import (
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/astaxie/beego/utils/pagination"
+	"github.com/bmatcuk/doublestar/v2"
 	"github.com/flosch/pongo2"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	bf "gopkg.in/russross/blackfriday.v2"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 const (
-	yamlDelim  = "---"
-	unixLayout = "Mon Jan 2 15:04:05 -07 2006"
-	postLayout = "2-Jan-2006"
+	yamlSeparator = "---"
+	unixLayout    = "Mon Jan 2 15:04:05 -07 2006"
+	layoutISO     = "2006-01-02"
 )
 
 var (
-	funcMap   = template.FuncMap{"formatDate": formatDate}
+	funcMap   = template.FuncMap{
+		"toISODate": toISODate,
+		"getYear": getYear,
+		"getMonth": getMonth,
+		"getDay": getDay,
+	}
 	templates = template.Must(
 		template.New("").Funcs(funcMap).ParseFiles(
 			"templates/header.html",
@@ -73,12 +79,34 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func formatDate(d publishDate) string {
-	return d.Time.Format(postLayout)
+func toISODate(d publishDate) string {
+	return d.Time.Format(layoutISO)
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	posts, err := listAllPosts("posts/*.md")
+func getYear(d publishDate) int {
+	return d.Time.Year()
+}
+
+func getMonth(d publishDate) string {
+	month := int(d.Time.Month())
+	if month < 10 {
+		return "0" + strconv.Itoa(month)
+	}
+
+	return strconv.Itoa(month)
+}
+
+func getDay(d publishDate) string {
+	day := d.Time.Day()
+	if day < 10 {
+		return "0" + strconv.Itoa(day)
+	}
+
+	return strconv.Itoa(day)
+}
+
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	posts, err := listAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,11 +116,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 }
 
-func tagHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	tag := p.ByName("tagName")
-	postsByTag := []*Post{}
+func tagHandler(w http.ResponseWriter, r *http.Request) {
+	tag := mux.Vars(r)["tagName"]
+	var postsByTag []*Post
 
-	posts, err := listAllPosts("posts/*.md")
+	posts, err := listAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -138,8 +166,8 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	return nil
 }
 
-func postsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	posts, err := listAllPosts("posts/*.md")
+func postsHandler(w http.ResponseWriter, r *http.Request) {
+	posts, err := listAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -150,12 +178,12 @@ func postsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func listAllPosts(pattern string) ([]*Post, error) {
-	files, err := filepath.Glob(pattern)
+	files, err := doublestar.Glob(pattern)
 	if err != nil {
 		return nil, errors.Wrap(err, "filepath.Glob")
 	}
 
-	posts := []*Post{}
+	var posts []*Post
 
 	for _, f := range files {
 		post, err := parseMarkdown(f)
@@ -175,15 +203,18 @@ func listAllPosts(pattern string) ([]*Post, error) {
 	return posts, nil
 }
 
-func postHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	path := p.ByName("postName")
+func postHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	year := vars["year"]
+	month := vars["month"]
+	fileName := vars["postName"]
 
-	post, err := parseMarkdown("posts/" + path + ".md")
+	post, err := parseMarkdown(filepath.Join("posts", year, month, fileName + ".md"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	post.File = path
+	post.File = fileName
 
 	if err := templates.ExecuteTemplate(w, "post", &post); err != nil {
 		log.Fatal(err)
@@ -200,7 +231,7 @@ func parseMarkdown(f string) (*Post, error) {
 
 	lines := strings.Split(string(fileread), "\n")
 	for i := 1; i < len(lines); i++ {
-		if lines[i] == yamlDelim {
+		if lines[i] == yamlSeparator {
 			closingMetadataLine = i
 		}
 	}
@@ -231,7 +262,7 @@ func parseMarkdown(f string) (*Post, error) {
 	return &p, nil
 }
 
-func faviconHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "favicon.ico")
 }
 
@@ -266,13 +297,13 @@ func logHandler(handler http.Handler) http.Handler {
 }
 
 func main() {
-	router := httprouter.New()
-	router.GET("/favicon.ico", faviconHandler)
-	router.GET("/", homeHandler)
-	router.GET("/posts", postsHandler)
-	router.GET("/posts/:postName", postHandler)
-	router.GET("/tags/:tagName", tagHandler)
-	router.ServeFiles("/assets/*filepath", http.Dir("assets"))
+	router := mux.NewRouter()
+	router.HandleFunc("/favicon.ico", faviconHandler)
+	router.HandleFunc("/", homeHandler)
+	router.HandleFunc("/posts", postsHandler)
+	router.HandleFunc("/tag/{tagName}", tagHandler)
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler)
+	router.PathPrefix("/assets/*filepath").Handler(http.FileServer(http.Dir("./assets")))
 
 	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
 }
