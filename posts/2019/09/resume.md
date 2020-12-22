@@ -16,24 +16,24 @@ quantonganh@gmail.com\
 
 ***
 
-**Golang Developer (remote), Blockchain Labs Asia (Malaysia)**\
+**Golang Developer (remote), AOPrivacy (Malaysia)**\
 *Jul 2017 - Sep 2019*
 
 - Built a dedicated social network solution for the electronic music industry based on microservices architecture using gRPC and Protocol Buffers.
 - Developed tools to configure infrastructure, cleanup old backup snapshots, collect metrics, etc.
 - Created some Drone CI plugins to integrate with an issue tracker.
 
-**DevOps (remote), Blockchain Labs Asia**\
+**DevOps (remote), AOPrivacy**\
 *Apr 2015 - Jul 2017*
 
-- Developed an innovative VPN combines cutting-edge technology (microservices, blockchain, etc) with beautiful apps for all of your devices.
+- Developed an innovative VPN combines cutting-edge technology with beautiful apps for all of your devices.
 - Setup CI to build installer files (including metadata and automatic updates feature) for it on multiple platforms: macOS, Windows, Linux.
 - Migrated legacy applications into Docker and Kubernetes.
 
 **DevOps (remote), Bit Flippers Ltd (Hong Kong)**\
 *Nov 2013 - Apr 2015*
 
- - Built a completed DevOps automation product called Robotinfra. Since then, it has been acquired by Blockchain Labs Asia.
+ - Built a completed DevOps automation product called Robotinfra.
  - Contributed to SaltStack’s repository by fixing bugs and adding new features (16 pull requests, 1000 LoC)
 
 **System Administrator Leader, VCCorp (Vietnam)**\
