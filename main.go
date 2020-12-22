@@ -166,7 +166,7 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	return nil
 }
 
-func postsHandler(w http.ResponseWriter, r *http.Request) {
+func postsHandler(w http.ResponseWriter, _ *http.Request) {
 	posts, err := listAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
@@ -221,15 +221,15 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseMarkdown(f string) (*Post, error) {
-	fileread, err := ioutil.ReadFile(f)
+func parseMarkdown(filename string) (*Post, error) {
+	postContent, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, errors.Wrap(err, "ioutil.ReadFile")
+		return nil, errors.Wrapf(err, "failed to read file: %s", filename)
 	}
 
 	var closingMetadataLine int
 
-	lines := strings.Split(string(fileread), "\n")
+	lines := strings.Split(string(postContent), "\n")
 	for i := 1; i < len(lines); i++ {
 		if lines[i] == yamlSeparator {
 			closingMetadataLine = i
