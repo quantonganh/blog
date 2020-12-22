@@ -5,7 +5,7 @@
     <p>{{ .Date | toISODate }}</p>
     <p>Tags:
         {{ range $_, $tag := .Tags }}
-            <a href="/tags/{{ $tag }}">#{{ $tag }}</a>
+            <a href="/tag/{{ $tag }}">#{{ $tag }}</a>
         {{ end }}
     </p>
     <p>{{ .Description }}</p>
