@@ -9,20 +9,20 @@ import (
 	"os"
 	"testing"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListAllPosts(t *testing.T) {
-	posts, err := listAllPosts("posts/test.md")
+	posts, err := listAllPosts("posts/2019/10/test.md")
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(posts))
 
 	p := posts[0]
 	require.NotNil(t, p)
 	assert.Equal(t, "title", p.Title)
-	assert.Equal(t, "2-Oct-2019", toISODate(p.Date))
+	assert.Equal(t, "2019-10-02", toISODate(p.Date))
 	assert.Equal(t, "description", p.Description)
 	assert.Equal(t, 1, len(p.Tags))
 	assert.Equal(t, "test", p.Tags[0])
@@ -30,8 +30,8 @@ func TestListAllPosts(t *testing.T) {
 }
 
 func TestHomeHandler(t *testing.T) {
-	router := httprouter.New()
-	router.GET("/", homeHandler)
+	router := mux.NewRouter()
+	router.HandleFunc("/", homeHandler)
 
 	writer := httptest.NewRecorder()
 	request, err := http.NewRequest("GET", "/", nil)
@@ -44,11 +44,11 @@ func TestHomeHandler(t *testing.T) {
 }
 
 func TestTagsHandler(t *testing.T) {
-	router := httprouter.New()
-	router.GET("/tags/test", tagHandler)
+	router := mux.NewRouter()
+	router.HandleFunc("/tag/test", tagHandler)
 
 	writer := httptest.NewRecorder()
-	request, err := http.NewRequest("GET", "/tags/test", nil)
+	request, err := http.NewRequest("GET", "/tag/test", nil)
 	assert.NoError(t, err)
 	router.ServeHTTP(writer, request)
 
@@ -58,11 +58,11 @@ func TestTagsHandler(t *testing.T) {
 }
 
 func TestPostHandler(t *testing.T) {
-	router := httprouter.New()
-	router.GET("/posts/:postName", postHandler)
+	router := mux.NewRouter()
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler)
 
 	writer := httptest.NewRecorder()
-	request, err := http.NewRequest("GET", "/posts/test", nil)
+	request, err := http.NewRequest("GET", "/2019/10/02/test", nil)
 	assert.NoError(t, err)
 	router.ServeHTTP(writer, request)
 
@@ -87,13 +87,16 @@ tags:
   - test
 ---
 content`
-	if err := ioutil.WriteFile("posts/test.md", []byte(s), 0644); err != nil {
+	if err := os.MkdirAll("posts/2019/10", 0700); err != nil {
+		log.Fatal(err)
+	}
+	if err := ioutil.WriteFile("posts/2019/10/test.md", []byte(s), 0644); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func tearDown() {
-	if err := os.Remove("posts/test.md"); err != nil {
+	if err := os.Remove("posts/2019/10/test.md"); err != nil {
 		log.Fatal(err)
 	}
 }
