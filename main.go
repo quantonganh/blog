@@ -303,7 +303,7 @@ func main() {
 	router.HandleFunc("/posts", postsHandler)
 	router.HandleFunc("/tag/{tagName}", tagHandler)
 	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler)
-	router.PathPrefix("/assets/*filepath").Handler(http.FileServer(http.Dir("./assets")))
+	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
 
 	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
 }
