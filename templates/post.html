@@ -1,14 +1,14 @@
 {{ define "post" }}
 {{ template "header" . }}
 <h2>{{ .Title }}</h2>
-<p>{{ .Date | formatDate }}</p>
-<p>Tags:
-    {{ range $_, $tag := .Tags }}
-        <a href="/tags/{{ $tag }}">#{{ $tag }}</a>
-    {{ end }}
-</p>
+<p>{{ .Date | toISODate }}</p>
 <p>{{ .Description }}</p>
 {{ .Content }}
+<p>Tags:
+    {{ range $_, $tag := .Tags }}
+        <a href="/tag/{{ $tag }}">#{{ $tag }}</a>
+    {{ end }}
+</p>
 <script>
     var remark_config = {
       host: "https://remark42.dynu.net", // hostname of remark server, same as REMARK_URL in backend config, e.g. "https://demo.remark42.com"
