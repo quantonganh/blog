@@ -1,8 +1,8 @@
 {{ define "home" }}
 {{ template "header" . }}
 {{ range .posts }}
-    <a href="/posts/{{ .File }}"><h2>{{ .Title }}</h2></a>
-    <p>{{ .Date | formatDate }}</p>
+    <a href="/{{ .Date | getYear }}/{{ .Date | getMonth }}/{{ .Date | getDay }}/{{ .File }}"><h2>{{ .Title }}</h2></a>
+    <p>{{ .Date | toISODate }}</p>
     <p>Tags:
         {{ range $_, $tag := .Tags }}
             <a href="/tags/{{ $tag }}">#{{ $tag }}</a>
