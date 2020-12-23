@@ -29,6 +29,7 @@ const (
 	yamlSeparator = "---"
 	unixLayout    = "Mon Jan 2 15:04:05 -07 2006"
 	layoutISO     = "2006-01-02"
+	defaultPostsPerPage = 10
 )
 
 var (
@@ -139,14 +140,18 @@ func tagHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
+	var (
+		postsPerPage int
+		err error
+	)
 	postsPerPageEnv, exists := os.LookupEnv("POSTS_PER_PAGE")
 	if !exists {
-		postsPerPageEnv = "10"
-	}
-
-	postsPerPage, err := strconv.Atoi(postsPerPageEnv)
-	if err != nil {
-		log.Fatal(err)
+		postsPerPage = defaultPostsPerPage
+	} else {
+		postsPerPage, err = strconv.Atoi(postsPerPageEnv)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	nums := len(posts)
