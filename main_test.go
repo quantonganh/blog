@@ -15,7 +15,7 @@ import (
 )
 
 func TestListAllPosts(t *testing.T) {
-	posts, err := listAllPosts("posts/2019/10/test.md")
+	posts, err := getAllPosts("posts/2019/10/test.md")
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(posts))
 
