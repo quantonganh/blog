@@ -1,8 +1,0 @@
-{{ define "posts" }}
-{{ template "header" . }}
-{{ range . }}
-    <h2>{{ .Date | toISODate }}</h2>
-    <a href="/{{ .Date | getYear }}/{{ .Date | getMonth }}/{{ .Date | getDay }}/{{ .File }}"><h2>{{ .Title }}</h2></a>
-{{ end }}
-{{ template "footer" . }}
-{{ end }}

@@ -45,7 +45,6 @@ var (
 			"templates/footer.html",
 			"templates/paginator.html",
 			"templates/home.html",
-			"templates/posts.html",
 			"templates/post.html",
 		),
 	)
@@ -61,7 +60,6 @@ func main() {
 	router.HandleFunc("/favicon.ico", faviconHandler)
 	router.HandleFunc("/", homeHandler(posts))
 	router.NotFoundHandler = http.HandlerFunc(homeHandler(posts))
-	router.HandleFunc("/posts", postsHandler(posts))
 	router.HandleFunc("/tag/{tagName}", tagHandler(posts))
 	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler(posts))
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
@@ -218,14 +216,6 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	}
 
 	return nil
-}
-
-func postsHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := templates.ExecuteTemplate(w, "posts", &posts); err != nil {
-			log.Fatal(err)
-		}
-	}
 }
 
 func postHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
