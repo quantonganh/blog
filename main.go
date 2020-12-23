@@ -118,14 +118,25 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tagHandler(w http.ResponseWriter, r *http.Request) {
-	tag := mux.Vars(r)["tagName"]
-	var postsByTag []*Post
-
 	posts, err := listAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	tag := mux.Vars(r)["tagName"]
+
+	postsByTag, err := getPostsByTag(posts, tag)
+	if err != nil {
+		log.Fatalf("failed to get posts by tag: %v", err)
+	}
+
+	if err := renderHTML(w, r, postsByTag); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
+	var postsByTag []*Post
 	for _, post := range posts {
 		for _, t := range post.Tags {
 			if t == tag {
@@ -134,9 +145,7 @@ func tagHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := renderHTML(w, r, postsByTag); err != nil {
-		log.Fatal(err)
-	}
+	return postsByTag, nil
 }
 
 func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
@@ -214,16 +223,45 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	month := vars["month"]
 	fileName := vars["postName"]
 
-	post, err := parseMarkdown(filepath.Join("posts", year, month, fileName + ".md"))
+	currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName + ".md"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	post.File = fileName
+	currentPost.File = fileName
 
-	if err := templates.ExecuteTemplate(w, "post", &post); err != nil {
+	posts, err := listAllPosts("posts/**/*.md")
+	if err != nil {
 		log.Fatal(err)
 	}
+
+	relatedPosts, err := getRelatedPosts(posts, currentPost)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := pongo2.Context{"currentPost": currentPost, "relatedPosts": relatedPosts}
+	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error) {
+	relatedPosts := make(map[string]*Post)
+	for _, tag := range currentPost.Tags {
+		postsByTag, err := getPostsByTag(posts, tag)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, post := range postsByTag {
+			if post.File != currentPost.File {
+				relatedPosts[post.File] = post
+			}
+		}
+	}
+
+	return relatedPosts, nil
 }
 
 func parseMarkdown(filename string) (*Post, error) {
