@@ -233,6 +233,7 @@ func parseMarkdown(filename string) (*Post, error) {
 	for i := 1; i < len(lines); i++ {
 		if lines[i] == yamlSeparator {
 			closingMetadataLine = i
+			break
 		}
 	}
 
