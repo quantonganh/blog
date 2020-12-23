@@ -52,13 +52,18 @@ var (
 )
 
 func main() {
+	posts, err := getAllPosts("posts/**/*.md")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	router := mux.NewRouter()
 	router.HandleFunc("/favicon.ico", faviconHandler)
-	router.HandleFunc("/", homeHandler)
-	router.NotFoundHandler = http.HandlerFunc(homeHandler)
-	router.HandleFunc("/posts", postsHandler)
-	router.HandleFunc("/tag/{tagName}", tagHandler)
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler)
+	router.HandleFunc("/", homeHandler(posts))
+	router.NotFoundHandler = http.HandlerFunc(homeHandler(posts))
+	router.HandleFunc("/posts", postsHandler(posts))
+	router.HandleFunc("/tag/{tagName}", tagHandler(posts))
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler(posts))
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
 
 	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
@@ -73,6 +78,32 @@ type Post struct {
 	File        string
 	HasPrev bool
 	HasNext bool
+}
+
+func getAllPosts(pattern string) ([]*Post, error) {
+	files, err := doublestar.Glob(pattern)
+	if err != nil {
+		return nil, errors.Wrap(err, "doublestar.Glob")
+	}
+
+	var posts []*Post
+
+	for _, f := range files {
+		post, err := parseMarkdown(f)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to parse: %s", f)
+		}
+
+		filename := filepath.Base(f)
+		post.File = strings.TrimSuffix(filename, path.Ext(filename))
+		posts = append(posts, post)
+	}
+
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].Date.Time.After(posts[j].Date.Time)
+	})
+
+	return posts, nil
 }
 
 type publishDate struct {
@@ -121,32 +152,26 @@ func getDay(d publishDate) string {
 	return strconv.Itoa(day)
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	posts, err := listAllPosts("posts/**/*.md")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := renderHTML(w, r, posts); err != nil {
-		log.Fatal(err)
+func homeHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := renderHTML(w, r, posts); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
-func tagHandler(w http.ResponseWriter, r *http.Request) {
-	posts, err := listAllPosts("posts/**/*.md")
-	if err != nil {
-		log.Fatal(err)
-	}
+func tagHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tag := mux.Vars(r)["tagName"]
 
-	tag := mux.Vars(r)["tagName"]
+		postsByTag, err := getPostsByTag(posts, tag)
+		if err != nil {
+			log.Fatalf("failed to get posts by tag: %v", err)
+		}
 
-	postsByTag, err := getPostsByTag(posts, tag)
-	if err != nil {
-		log.Fatalf("failed to get posts by tag: %v", err)
-	}
-
-	if err := renderHTML(w, r, postsByTag); err != nil {
-		log.Fatal(err)
+		if err := renderHTML(w, r, postsByTag); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -195,114 +220,47 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	return nil
 }
 
-func postsHandler(w http.ResponseWriter, _ *http.Request) {
-	posts, err := listAllPosts("posts/**/*.md")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := templates.ExecuteTemplate(w, "posts", &posts); err != nil {
-		log.Fatal(err)
+func postsHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := templates.ExecuteTemplate(w, "posts", &posts); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
-func listAllPosts(pattern string) ([]*Post, error) {
-	files, err := doublestar.Glob(pattern)
-	if err != nil {
-		return nil, errors.Wrap(err, "filepath.Glob")
-	}
+func postHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		year := vars["year"]
+		month := vars["month"]
+		fileName := vars["postName"]
 
-	var posts []*Post
-
-	for _, f := range files {
-		post, err := parseMarkdown(f)
+		currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName + ".md"))
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse: %s", f)
+			log.Fatal(err)
 		}
 
-		filename := filepath.Base(f)
-		post.File = strings.TrimSuffix(filename, path.Ext(filename))
-		posts = append(posts, post)
-	}
+		currentPost.File = fileName
 
-	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].Date.Time.After(posts[j].Date.Time)
-	})
-
-	return posts, nil
-}
-
-func postHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	year := vars["year"]
-	month := vars["month"]
-	fileName := vars["postName"]
-
-	posts, err := listAllPosts("posts/**/*.md")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName + ".md"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	currentPost.File = fileName
-
-	relatedPosts, err := getRelatedPosts(posts, currentPost)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	previousPost, nextPost := getPreviousAndNextPost(posts, currentPost)
-	if previousPost != nil {
-		currentPost.HasPrev = true
-	}
-	if nextPost != nil {
-		currentPost.HasNext = true
-	}
-
-	data := pongo2.Context{"currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
-	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nextPost *Post){
-	for i, post := range posts {
-		if currentPost.File == post.File {
-			if i < len(posts) - 1 {
-				previousPost = posts[i+1]
-			}
-			if i > 0 {
-				nextPost = posts[i-1]
-			}
-			break
-		}
-	}
-
-	return previousPost, nextPost
-}
-
-func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error) {
-	relatedPosts := make(map[string]*Post)
-	for _, tag := range currentPost.Tags {
-		postsByTag, err := getPostsByTag(posts, tag)
+		relatedPosts, err := getRelatedPosts(posts, currentPost)
 		if err != nil {
-			return nil, err
+			log.Fatal(err)
 		}
 
-		for _, post := range postsByTag {
-			if post.File != currentPost.File {
-				relatedPosts[post.File] = post
-			}
+		previousPost, nextPost := getPreviousAndNextPost(posts, currentPost)
+		if previousPost != nil {
+			currentPost.HasPrev = true
+		}
+		if nextPost != nil {
+			currentPost.HasNext = true
+		}
+
+		data := pongo2.Context{"currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
+		if err := templates.ExecuteTemplate(w, "post", data); err != nil {
+			log.Fatal(err)
 		}
 	}
-
-	return relatedPosts, nil
 }
-
 
 func parseMarkdown(filename string) (*Post, error) {
 	postContent, err := ioutil.ReadFile(filename)
@@ -344,6 +302,40 @@ func parseMarkdown(filename string) (*Post, error) {
 	))
 
 	return &p, nil
+}
+
+func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error) {
+	relatedPosts := make(map[string]*Post)
+	for _, tag := range currentPost.Tags {
+		postsByTag, err := getPostsByTag(posts, tag)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, post := range postsByTag {
+			if post.File != currentPost.File {
+				relatedPosts[post.File] = post
+			}
+		}
+	}
+
+	return relatedPosts, nil
+}
+
+func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nextPost *Post){
+	for i, post := range posts {
+		if currentPost.File == post.File {
+			if i < len(posts) - 1 {
+				previousPost = posts[i+1]
+			}
+			if i > 0 {
+				nextPost = posts[i-1]
+			}
+			break
+		}
+	}
+
+	return previousPost, nextPost
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
