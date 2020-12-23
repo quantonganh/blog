@@ -51,6 +51,19 @@ var (
 	)
 )
 
+func main() {
+	router := mux.NewRouter()
+	router.HandleFunc("/favicon.ico", faviconHandler)
+	router.HandleFunc("/", homeHandler)
+	router.NotFoundHandler = http.HandlerFunc(homeHandler)
+	router.HandleFunc("/posts", postsHandler)
+	router.HandleFunc("/tag/{tagName}", tagHandler)
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler)
+	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
+
+	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
+}
+
 type Post struct {
 	Title       string
 	Date        publishDate
@@ -367,14 +380,3 @@ func logHandler(handler http.Handler) http.Handler {
 	})
 }
 
-func main() {
-	router := mux.NewRouter()
-	router.HandleFunc("/favicon.ico", faviconHandler)
-	router.HandleFunc("/", homeHandler)
-	router.HandleFunc("/posts", postsHandler)
-	router.HandleFunc("/tag/{tagName}", tagHandler)
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler)
-	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
-
-	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
-}
