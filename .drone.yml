@@ -17,7 +17,7 @@ steps:
       GO111MODULE: "on"
 
   - name: static-check
-    image: quantonganh/golangci-lint:armv7
+    image: quantonganh/golangci-lint:v1.33-alpine
     commands:
       - git --no-pager diff --name-only "${DRONE_COMMIT_SHA}"..origin/master | grep -q "\.go$" && golangci-lint run --deadline 2m -v ./... || true
     environment:
