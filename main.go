@@ -58,6 +58,8 @@ type Post struct {
 	Content     template.HTML
 	Tags        []string
 	File        string
+	HasPrev bool
+	HasNext bool
 }
 
 type publishDate struct {
@@ -223,6 +225,11 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	month := vars["month"]
 	fileName := vars["postName"]
 
+	posts, err := listAllPosts("posts/**/*.md")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName + ".md"))
 	if err != nil {
 		log.Fatal(err)
@@ -230,20 +237,39 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 	currentPost.File = fileName
 
-	posts, err := listAllPosts("posts/**/*.md")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	relatedPosts, err := getRelatedPosts(posts, currentPost)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	data := pongo2.Context{"currentPost": currentPost, "relatedPosts": relatedPosts}
+	previousPost, nextPost := getPreviousAndNextPost(posts, currentPost)
+	if previousPost != nil {
+		currentPost.HasPrev = true
+	}
+	if nextPost != nil {
+		currentPost.HasNext = true
+	}
+
+	data := pongo2.Context{"currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
 	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nextPost *Post){
+	for i, post := range posts {
+		if currentPost.File == post.File {
+			if i < len(posts) - 1 {
+				previousPost = posts[i+1]
+			}
+			if i > 0 {
+				nextPost = posts[i-1]
+			}
+			break
+		}
+	}
+
+	return previousPost, nextPost
 }
 
 func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error) {
@@ -263,6 +289,7 @@ func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error)
 
 	return relatedPosts, nil
 }
+
 
 func parseMarkdown(filename string) (*Post, error) {
 	postContent, err := ioutil.ReadFile(filename)

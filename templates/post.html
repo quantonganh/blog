@@ -16,6 +16,20 @@
         <a href="/tag/{{ $tag }}">#{{ $tag }}</a>
     {{ end }}
 </p>
+<table>
+    <tr>
+        <td align="left">
+            {{ if .currentPost.HasPrev }}
+                <a href="/{{ .previousPost.Date | getYear }}/{{ .previousPost.Date | getMonth }}/{{ .previousPost.Date | getDay }}/{{ .previousPost.File }}"><< Previous</a>
+            {{ end }}
+        </td>
+        <td align="right">
+            {{ if .currentPost.HasNext }}
+                <a href="/{{ .nextPost.Date | getYear }}/{{ .nextPost.Date | getMonth }}/{{ .nextPost.Date | getDay }}/{{ .nextPost.File }}">Next >></a>
+            {{ end }}
+        </td>
+    </tr>
+</table>
 <script>
     var remark_config = {
       host: "https://remark42.dynu.net", // hostname of remark server, same as REMARK_URL in backend config, e.g. "https://demo.remark42.com"
