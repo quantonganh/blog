@@ -150,6 +150,10 @@ func getDay(d publishDate) string {
 	return strconv.Itoa(day)
 }
 
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "favicon.ico")
+}
+
 func homeHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := renderHTML(w, r, posts); err != nil {
@@ -326,10 +330,6 @@ func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nex
 	}
 
 	return previousPost, nextPost
-}
-
-func faviconHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "favicon.ico")
 }
 
 type statusWriter struct {
