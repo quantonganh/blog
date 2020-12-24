@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	yamlSeparator = "---"
-	unixLayout    = "Mon Jan 2 15:04:05 -07 2006"
-	layoutISO     = "2006-01-02"
+	yamlSeparator       = "---"
+	layoutUnix          = "Mon Jan 2 15:04:05 -07 2006"
+	layoutISO           = "2006-01-02"
 	defaultPostsPerPage = 10
 )
 
@@ -114,7 +114,7 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	unixDate, err := time.Parse(unixLayout, pd)
+	unixDate, err := time.Parse(layoutUnix, pd)
 	if err != nil {
 		return err
 	}
