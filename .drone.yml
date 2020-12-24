@@ -10,7 +10,8 @@ platform:
 
 steps:
   - name: go-mod
-    image: golang:1.15-alpine3.12@sha256:e946774905f6b72f01471355260c23ce41950544d5ef0eb1027b13742aab0b21
+    image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
+    privileged: true
     commands:
       - go mod vendor
     environment:
@@ -26,7 +27,8 @@ steps:
       GO111MODULE: "on"
 
   - name: test
-    image: golang:1.15-alpine3.12@sha256:e946774905f6b72f01471355260c23ce41950544d5ef0eb1027b13742aab0b21
+    image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
+    privileged: true
     commands:
       - if git --no-pager diff --name-only ${DRONE_COMMIT_LINK##*/} | grep -q "\.go$"; then go test -mod=vendor -v ./...; fi
     environment:
@@ -34,7 +36,8 @@ steps:
       GO111MODULE: "on"
 
   - name: build-go
-    image: golang:1.15-alpine3.12@sha256:e946774905f6b72f01471355260c23ce41950544d5ef0eb1027b13742aab0b21
+    image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
+    privileged: true
     commands:
       - go build -mod=vendor -v
 
