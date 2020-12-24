@@ -60,8 +60,8 @@ func main() {
 	router.HandleFunc("/favicon.ico", faviconHandler)
 	router.HandleFunc("/", homeHandler(posts))
 	router.NotFoundHandler = http.HandlerFunc(homeHandler(posts))
-	router.HandleFunc("/tag/{tagName}", tagHandler(posts))
 	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler(posts))
+	router.HandleFunc("/tag/{tagName}", tagHandler(posts))
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
 
 	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
@@ -160,66 +160,6 @@ func homeHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 	}
-}
-
-func tagHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		tag := mux.Vars(r)["tagName"]
-
-		postsByTag, err := getPostsByTag(posts, tag)
-		if err != nil {
-			log.Fatalf("failed to get posts by tag: %v", err)
-		}
-
-		if err := renderHTML(w, r, postsByTag); err != nil {
-			log.Fatal(err)
-		}
-	}
-}
-
-func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
-	var postsByTag []*Post
-	for _, post := range posts {
-		for _, t := range post.Tags {
-			if t == tag {
-				postsByTag = append(postsByTag, post)
-			}
-		}
-	}
-
-	return postsByTag, nil
-}
-
-func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
-	var (
-		postsPerPage int
-		err error
-	)
-	postsPerPageEnv, exists := os.LookupEnv("POSTS_PER_PAGE")
-	if !exists {
-		postsPerPage = defaultPostsPerPage
-	} else {
-		postsPerPage, err = strconv.Atoi(postsPerPageEnv)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	nums := len(posts)
-	paginator := pagination.NewPaginator(r, postsPerPage, int64(nums))
-	offset := paginator.Offset()
-
-	endPos := offset + postsPerPage
-	if endPos > nums {
-		endPos = nums
-	}
-
-	data := pongo2.Context{"paginator": paginator, "posts": posts[offset:endPos]}
-	if err := templates.ExecuteTemplate(w, "home", data); err != nil {
-		log.Fatal(err)
-	}
-
-	return nil
 }
 
 func postHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
@@ -332,6 +272,66 @@ func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nex
 	return previousPost, nextPost
 }
 
+func tagHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tag := mux.Vars(r)["tagName"]
+
+		postsByTag, err := getPostsByTag(posts, tag)
+		if err != nil {
+			log.Fatalf("failed to get posts by tag: %v", err)
+		}
+
+		if err := renderHTML(w, r, postsByTag); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
+	var postsByTag []*Post
+	for _, post := range posts {
+		for _, t := range post.Tags {
+			if t == tag {
+				postsByTag = append(postsByTag, post)
+			}
+		}
+	}
+
+	return postsByTag, nil
+}
+
+func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
+	var (
+		postsPerPage int
+		err error
+	)
+	postsPerPageEnv, exists := os.LookupEnv("POSTS_PER_PAGE")
+	if !exists {
+		postsPerPage = defaultPostsPerPage
+	} else {
+		postsPerPage, err = strconv.Atoi(postsPerPageEnv)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	nums := len(posts)
+	paginator := pagination.NewPaginator(r, postsPerPage, int64(nums))
+	offset := paginator.Offset()
+
+	endPos := offset + postsPerPage
+	if endPos > nums {
+		endPos = nums
+	}
+
+	data := pongo2.Context{"paginator": paginator, "posts": posts[offset:endPos]}
+	if err := templates.ExecuteTemplate(w, "home", data); err != nil {
+		log.Fatal(err)
+	}
+
+	return nil
+}
+
 type statusWriter struct {
 	http.ResponseWriter
 	status int
@@ -361,4 +361,3 @@ func logHandler(handler http.Handler) http.Handler {
 		log.Printf("%s %s %s %d %d", r.RemoteAddr, r.Method, r.URL.Path, sw.status, sw.length)
 	})
 }
-
