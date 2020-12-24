@@ -20,7 +20,7 @@ steps:
     privileged: true
     commands:
       - env
-      - if git --no-pager diff --name-only ${DRONE_COMMIT_LINK##*/} | grep -q "\.go$"; then golangci-lint run --deadline 2m -v ./...; else exit 78; fi
+      - if git --no-pager diff --name-only ${DRONE_COMMIT_LINK##*/} | grep -q "\.go$"; then golangci-lint run --deadline 2m -v ./...; fi
     environment:
       CGO_ENABLED: 0
       GO111MODULE: "on"
@@ -28,7 +28,7 @@ steps:
   - name: test
     image: quantonganh/golang:1.13-alpine3.10-arm
     commands:
-      - if git --no-pager diff --name-only ${DRONE_COMMIT_LINK##*/} | grep -q "\.go$"; then go test -mod=vendor -v ./...; else exit 78; fi
+      - if git --no-pager diff --name-only ${DRONE_COMMIT_LINK##*/} | grep -q "\.go$"; then go test -mod=vendor -v ./...; fi
     environment:
       CGO_ENABLED: 0
       GO111MODULE: "on"
