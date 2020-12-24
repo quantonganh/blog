@@ -1,0 +1,139 @@
+version: "2"
+
+volumes:
+  postgres:
+    driver: local
+  gitea:
+    driver: local
+  drone:
+    driver: local
+  registry:
+    driver: local
+
+services:
+  traefik:
+    image: traefik:2.3@sha256:ad9f98018fc1277839547a39aabd1c19a7f68d807e221c0590f433181a12a71d
+    container_name: "traefik"
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./traefik:/etc/traefik:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  postgres:
+    image: postgres:12.5-alpine@sha256:ab73416a429a66db1ece21ad3ce8d6c20ea6d7c6d5a21bb5cbcd0688f96268e4
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=gitea
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  gitea:
+    image: gitea/gitea:linux-arm64
+    container_name: gitea
+    restart: always
+    volumes:
+      - gitea:/data
+    ports:
+      - "222:22"
+    environment:
+      - DISABLE_REGISTRATION=true
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.gitea.loadbalancer.server.port=3000
+      - traefik.http.routers.gitea.rule=Host(`${DRONE_GITEA_SERVER}`)
+      - traefik.http.routers.gitea.entrypoints=http
+      - traefik.http.routers.gitea.middlewares=https-redirect@file
+      - traefik.http.routers.gitea-secured.rule=Host(`${DRONE_GITEA_SERVER}`)
+      - traefik.http.routers.gitea-secured.entrypoints=https
+      - traefik.http.routers.gitea-secured.tls=true
+      - traefik.http.routers.gitea-secured.tls.certresolver=le
+
+  drone:
+    image: drone/drone:1.10@sha256:c8fa31a167f233c428f34c7d175e8235274e4b9b3e3c00eedce97ce3b2923ee8
+    container_name: drone
+    restart: always
+    volumes:
+      - drone:/data
+    environment:
+      - DRONE_LOGS_DEBUG=true
+      - DRONE_GITEA_SERVER=${DRONE_GITEA_SERVER}
+      - DRONE_GITEA_CLIENT_ID=e045e159-dbe2-4be6-b024-c9e2c488e376
+      - DRONE_GITEA_CLIENT_SECRET=${DRONE_GITEA_CLIENT_SECRET}
+      - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
+      - DRONE_SERVER_PROTO=https
+      - DRONE_SERVER_HOST=${DRONE_SERVER_HOST}
+      - DRONE_USER_CREATE=username:quanta,admin:true
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.drone.loadbalancer.server.port=80
+      - traefik.http.routers.drone.rule=Host(`${DRONE_SERVER_HOST}`)
+      - traefik.http.routers.drone.entrypoints=http
+      - traefik.http.routers.drone.middlewares=https-redirect@file
+      - traefik.http.routers.drone-secured.rule=Host(`${DRONE_SERVER_HOST}`)
+      - traefik.http.routers.drone-secured.entrypoints=https
+      - traefik.http.routers.drone-secured.tls=true
+      - traefik.http.routers.drone-secured.tls.certresolver=le
+
+  drone-runner:
+    image: drone/drone-runner-docker:1.6@sha256:197c8d93a043284596d1b37ac8c090bfc255f16e054dd0ff70678c8a3b08988e
+    container_name: drone-runner
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 3030:3000
+    environment:
+      - DRONE_RPC_PROTO=https
+      - DRONE_RPC_HOST=${DRONE_SERVER_HOST}
+      - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
+      - DRONE_RUNNER_CAPACITY=2
+
+  blog:
+    image: quantonganh/blog:master
+    container_name: blog
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.blog.loadbalancer.server.port=80
+      - traefik.http.routers.blog.rule=Host(`${BLOG_DOMAIN}`)
+      - traefik.http.routers.blog.entrypoints=http
+      - traefik.http.routers.blog.middlewares=https-redirect@file
+      - traefik.http.routers.blog-secured.rule=Host(`${BLOG_DOMAIN}`)
+      - traefik.http.routers.blog-secured.entrypoints=https
+      - traefik.http.routers.blog-secured.tls=true
+      - traefik.http.routers.blog-secured.tls.certresolver=le
+
+  remark42:
+    build: .
+    image: quantonganh/remark42:9b0fee0-arm64
+    container_name: "remark42"
+    hostname: "remark42"
+    restart: always
+    logging:
+      driver: json-file
+      options:
+          max-size: "10m"
+          max-file: "5"
+    environment:
+        - DEBUG=true
+        - REMARK_URL=${REMARK_URL}
+        - SECRET=${SECRET}
+        - STORE_BOLT_PATH=/srv/var/db
+        - BACKUP_PATH=/srv/var/backup
+        - AUTH_GITHUB_CID=47dd3d50c74ba510a9c3
+        - AUTH_GITHUB_CSEC=${AUTH_GITHUB_CSEC}
+    volumes:
+        - ./var:/srv/var
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.remark42.rule=Host(`${REMARK_URL}`)
+      - traefik.http.routers.remark42.entrypoints=https
+      - traefik.http.routers.remark42.tls.certresolver=le
+      - traefik.http.services.remark42.loadbalancer.server.port=8080
