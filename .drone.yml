@@ -48,6 +48,8 @@ steps:
   - name: build-go
     image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
     privileged: true
+    environment:
+      CGO_ENABLED: 0
     commands:
       - go build -mod=vendor -v
 
