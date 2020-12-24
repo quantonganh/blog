@@ -42,7 +42,8 @@ steps:
       - go build -mod=vendor -v
 
   - name: build-docker
-    image: quantonganh/docker:19.03.3-rc1-armv7
+    image: docker:20.10@sha256:4289a7c78ca99f814d2faa1d5bd157d6e179c6d678da9be4843ecac45f34a850
+    privileged: true
     commands:
       - docker build -t quantonganh/blog:${DRONE_SOURCE_BRANCH} .
     volumes:
