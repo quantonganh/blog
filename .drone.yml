@@ -78,11 +78,6 @@ steps:
       branch:
         - master
 
-  - name: check
-    image: quantonganh/curl:armv7-alpine
-    commands:
-      - curl -s -w "%{http_code}" -I quanta.dynu.net -o /dev/null | grep -q 307
-
 volumes:
   - name: docker
     host:
