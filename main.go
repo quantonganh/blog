@@ -26,6 +26,7 @@ import (
 )
 
 const (
+	title               = "Learning makes me happy"
 	yamlSeparator       = "---"
 	layoutUnix          = "Mon Jan 2 15:04:05 -07 2006"
 	layoutISO           = "2006-01-02"
@@ -33,11 +34,11 @@ const (
 )
 
 var (
-	funcMap   = template.FuncMap{
+	funcMap = template.FuncMap{
 		"toISODate": toISODate,
-		"getYear": getYear,
-		"getMonth": getMonth,
-		"getDay": getDay,
+		"getYear":   getYear,
+		"getMonth":  getMonth,
+		"getDay":    getDay,
 	}
 	templates = template.Must(
 		template.New("").Funcs(funcMap).ParseFiles(
@@ -74,8 +75,8 @@ type Post struct {
 	Content     template.HTML
 	Tags        []string
 	File        string
-	HasPrev bool
-	HasNext bool
+	HasPrev     bool
+	HasNext     bool
 }
 
 func getAllPosts(pattern string) ([]*Post, error) {
@@ -169,7 +170,7 @@ func postHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
 		month := vars["month"]
 		fileName := vars["postName"]
 
-		currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName + ".md"))
+		currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName+".md"))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -189,7 +190,7 @@ func postHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
 			currentPost.HasNext = true
 		}
 
-		data := pongo2.Context{"currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
+		data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
 		if err := templates.ExecuteTemplate(w, "post", data); err != nil {
 			log.Fatal(err)
 		}
@@ -256,10 +257,10 @@ func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error)
 	return relatedPosts, nil
 }
 
-func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nextPost *Post){
+func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nextPost *Post) {
 	for i, post := range posts {
 		if currentPost.File == post.File {
-			if i < len(posts) - 1 {
+			if i < len(posts)-1 {
 				previousPost = posts[i+1]
 			}
 			if i > 0 {
@@ -303,7 +304,7 @@ func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
 func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	var (
 		postsPerPage int
-		err error
+		err          error
 	)
 	postsPerPageEnv, exists := os.LookupEnv("POSTS_PER_PAGE")
 	if !exists {
@@ -324,7 +325,7 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 		endPos = nums
 	}
 
-	data := pongo2.Context{"paginator": paginator, "posts": posts[offset:endPos]}
+	data := pongo2.Context{"title": title, "posts": posts[offset:endPos], "paginator": paginator}
 	if err := templates.ExecuteTemplate(w, "home", data); err != nil {
 		log.Fatal(err)
 	}
