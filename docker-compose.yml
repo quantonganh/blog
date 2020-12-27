@@ -47,10 +47,10 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.services.gitea.loadbalancer.server.port=3000
-      - traefik.http.routers.gitea.rule=Host(`${DRONE_GITEA_SERVER}`)
+      - traefik.http.routers.gitea.rule=Host(`${GITEA_DOMAIN}`)
       - traefik.http.routers.gitea.entrypoints=http
       - traefik.http.routers.gitea.middlewares=https-redirect@file
-      - traefik.http.routers.gitea-secured.rule=Host(`${DRONE_GITEA_SERVER}`)
+      - traefik.http.routers.gitea-secured.rule=Host(`${GITEA_DOMAIN}`)
       - traefik.http.routers.gitea-secured.entrypoints=https
       - traefik.http.routers.gitea-secured.tls=true
       - traefik.http.routers.gitea-secured.tls.certresolver=le
@@ -137,3 +137,27 @@ services:
       - traefik.http.routers.remark42.entrypoints=https
       - traefik.http.routers.remark42.tls.certresolver=le
       - traefik.http.services.remark42.loadbalancer.server.port=8080
+
+  registry:
+    image: registry:2.7@sha256:d42f9d2035ce5b9181ae8cc81d5646a2070a33c8125e21dc0d9e8dbddba97d69
+    container_name: registry
+    restart: always
+    ports:
+      - 5000:5000
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+    volumes:
+      - registry:/var/lib/registry
+      - ./auth:/auth
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.registry.loadbalancer.server.port=5000
+      - traefik.http.routers.registry.rule=Host(`${DOCKER_REGISTRY}`)
+      - traefik.http.routers.registry.entrypoints=http
+      - traefik.http.routers.registry.middlewares=https-redirect@file
+      - traefik.http.routers.registry-secured.rule=Host(`${DOCKER_REGISTRY}`)
+      - traefik.http.routers.registry-secured.entrypoints=https
+      - traefik.http.routers.registry-secured.tls=true
+      - traefik.http.routers.registry-secured.tls.certresolver=le
