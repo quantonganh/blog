@@ -76,7 +76,7 @@ steps:
       port: 22022
       script:
         - cd /data
-        - docker-compose stop blog
+        - docker-compose pull blog
         - docker-compose up -d blog
     when:
       branch:
