@@ -15,7 +15,7 @@ steps:
   - name: clone
     image: drone/git:linux-arm64
     commands:
-      - git clone https://git-tea.dynu.net/quanta/blog.git /drone/src
+      - git clone ${DRONE_GIT_HTTP_URL} /drone/src
       - cd /drone/src
       - git checkout $DRONE_COMMIT
 
