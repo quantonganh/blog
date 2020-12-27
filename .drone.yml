@@ -46,7 +46,7 @@ steps:
       CGO_ENABLED: 0
       GO111MODULE: "on"
 
-  - name: build-go
+  - name: build
     image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
     privileged: true
     environment:
@@ -54,19 +54,23 @@ steps:
     commands:
       - go build -mod=vendor -v
 
-  - name: build-docker
-    image: docker:20.10@sha256:4289a7c78ca99f814d2faa1d5bd157d6e179c6d678da9be4843ecac45f34a850
-    privileged: true
-    commands:
-      - docker build -t quantonganh/blog:${DRONE_SOURCE_BRANCH} .
-    volumes:
-      - name: docker
-        path: /var/run/docker.sock
+  - name: publish
+    image: plugins/docker:19.03@sha256:783a12ee229cdc23bf0926fdd7055033229d0b0fcc2b4a4d337d0d550a46f185
+    settings:
+      registry: docker.quantonganh.com
+      repo: docker.quantonganh.com/quanta/blog
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags:
+        - ${DRONE_SOURCE_BRANCH}
 
   - name: deploy
     image: quantonganh/drone-ssh:arm
     settings:
-      host: quanta.dynu.net
+      host:
+        from_secret: ssh_host
       username: root
       key:
         from_secret: ssh_key
@@ -78,8 +82,3 @@ steps:
     when:
       branch:
         - master
-
-volumes:
-  - name: docker
-    host:
-      path: /var/run/docker.sock

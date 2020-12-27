@@ -96,7 +96,7 @@ services:
       - DRONE_RUNNER_CAPACITY=2
 
   blog:
-    image: quantonganh/blog:master
+    image: docker.quantonganh.com/quanta/blog:master
     container_name: blog
     restart: always
     labels:
