@@ -67,7 +67,7 @@ steps:
         - ${DRONE_SOURCE_BRANCH}
 
   - name: deploy
-    image: quantonganh/drone-ssh:arm
+    image: appleboy/drone-ssh:1.6-linux-arm64
     settings:
       host:
         from_secret: ssh_host
