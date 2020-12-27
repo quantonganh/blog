@@ -344,8 +344,8 @@ type url struct {
 
 func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 	scheme := "http"
-	if xForwardedScheme := r.Header.Get("X-Forwarded-Scheme"); xForwardedScheme != "" {
-		scheme = xForwardedScheme
+	if xForwardedProto := r.Header.Get("X-Forwarded-Proto"); xForwardedProto != "" {
+		scheme = xForwardedProto
 	}
 
 	sitemap := urlset{
