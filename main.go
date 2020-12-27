@@ -69,12 +69,12 @@ func main() {
 }
 
 type Post struct {
+	URI         string
 	Title       string
 	Date        publishDate
 	Description string
 	Content     template.HTML
 	Tags        []string
-	File        string
 	HasPrev     bool
 	HasNext     bool
 }
@@ -92,9 +92,6 @@ func getAllPosts(pattern string) ([]*Post, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse: %s", f)
 		}
-
-		filename := filepath.Base(f)
-		post.File = strings.TrimSuffix(filename, path.Ext(filename))
 		posts = append(posts, post)
 	}
 
@@ -129,8 +126,8 @@ func toISODate(d publishDate) string {
 	return d.Time.Format(layoutISO)
 }
 
-func getYear(d publishDate) int {
-	return d.Time.Year()
+func getYear(d publishDate) string {
+	return strconv.Itoa(d.Time.Year())
 }
 
 func getMonth(d publishDate) string {
@@ -175,8 +172,6 @@ func postHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		currentPost.File = fileName
-
 		relatedPosts, err := getRelatedPosts(posts, currentPost)
 		if err != nil {
 			log.Fatal(err)
@@ -219,6 +214,8 @@ func parseMarkdown(filename string) (*Post, error) {
 	if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
 		return nil, errors.Wrap(err, "yaml.Unmarshal")
 	}
+	basename := filepath.Base(filename)
+	p.URI = path.Join(getYear(p.Date), getMonth(p.Date), getDay(p.Date), strings.TrimSuffix(basename, filepath.Ext(basename)))
 
 	content := strings.Join(lines[closingMetadataLine+1:], "\n")
 	options := []html.Option{
@@ -248,8 +245,8 @@ func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error)
 		}
 
 		for _, post := range postsByTag {
-			if post.File != currentPost.File {
-				relatedPosts[post.File] = post
+			if post.URI != currentPost.URI {
+				relatedPosts[post.URI] = post
 			}
 		}
 	}
@@ -259,7 +256,7 @@ func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error)
 
 func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nextPost *Post) {
 	for i, post := range posts {
-		if currentPost.File == post.File {
+		if currentPost.URI == post.URI {
 			if i < len(posts)-1 {
 				previousPost = posts[i+1]
 			}
