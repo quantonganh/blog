@@ -21,7 +21,6 @@ import (
 	"github.com/astaxie/beego/utils/pagination"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/flosch/pongo2"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	bf "gopkg.in/russross/blackfriday.v2"
@@ -55,7 +54,6 @@ func main() {
 	b.posts = posts
 
 	router := mux.NewRouter()
-	router.Use(handlers.ProxyHeaders)
 	router.HandleFunc("/favicon.ico", faviconHandler)
 	router.HandleFunc("/", b.homeHandler)
 	router.NotFoundHandler = http.HandlerFunc(b.homeHandler)
