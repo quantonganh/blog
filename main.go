@@ -46,12 +46,13 @@ var (
 )
 
 func main() {
-	b := Blog{}
-	posts, err := b.getAllPosts("posts/**/*.md")
+	posts, err := getAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
-	b.posts = posts
+	b := Blog{
+		posts: posts,
+	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/favicon.ico", faviconHandler)
@@ -80,7 +81,7 @@ type Post struct {
 	HasNext     bool
 }
 
-func (b *Blog) getAllPosts(pattern string) ([]*Post, error) {
+func getAllPosts(pattern string) ([]*Post, error) {
 	files, err := doublestar.Glob(pattern)
 	if err != nil {
 		return nil, errors.Wrap(err, "doublestar.Glob")
