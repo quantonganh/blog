@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/xml"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -19,6 +21,7 @@ import (
 	"github.com/astaxie/beego/utils/pagination"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/flosch/pongo2"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	bf "gopkg.in/russross/blackfriday.v2"
@@ -31,41 +34,41 @@ const (
 	layoutUnix          = "Mon Jan 2 15:04:05 -07 2006"
 	layoutISO           = "2006-01-02"
 	defaultPostsPerPage = 10
+	xmlns               = "http://www.sitemaps.org/schemas/sitemap/0.9"
 )
 
 var (
 	funcMap = template.FuncMap{
 		"toISODate": toISODate,
-		"getYear":   getYear,
-		"getMonth":  getMonth,
-		"getDay":    getDay,
 	}
 	templates = template.Must(
-		template.New("").Funcs(funcMap).ParseFiles(
-			"templates/header.html",
-			"templates/footer.html",
-			"templates/paginator.html",
-			"templates/home.html",
-			"templates/post.html",
-		),
+		template.New("").Funcs(funcMap).ParseGlob("templates/*.html"),
 	)
 )
 
 func main() {
-	posts, err := getAllPosts("posts/**/*.md")
+	b := Blog{}
+	posts, err := b.getAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
+	b.posts = posts
 
 	router := mux.NewRouter()
+	router.Use(handlers.ProxyHeaders)
 	router.HandleFunc("/favicon.ico", faviconHandler)
-	router.HandleFunc("/", homeHandler(posts))
-	router.NotFoundHandler = http.HandlerFunc(homeHandler(posts))
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler(posts))
-	router.HandleFunc("/tag/{tagName}", tagHandler(posts))
+	router.HandleFunc("/", b.homeHandler)
+	router.NotFoundHandler = http.HandlerFunc(b.homeHandler)
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", b.postHandler)
+	router.HandleFunc("/tag/{tagName}", b.tagHandler)
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
+	router.HandleFunc("/sitemap.xml", b.sitemapHandler)
 
 	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
+}
+
+type Blog struct {
+	posts []*Post
 }
 
 type Post struct {
@@ -79,7 +82,7 @@ type Post struct {
 	HasNext     bool
 }
 
-func getAllPosts(pattern string) ([]*Post, error) {
+func (b *Blog) getAllPosts(pattern string) ([]*Post, error) {
 	files, err := doublestar.Glob(pattern)
 	if err != nil {
 		return nil, errors.Wrap(err, "doublestar.Glob")
@@ -152,43 +155,42 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "favicon.ico")
 }
 
-func homeHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := renderHTML(w, r, posts); err != nil {
-			log.Fatal(err)
-		}
+func (b *Blog) homeHandler(w http.ResponseWriter, r *http.Request) {
+	if err := renderHTML(w, r, b.posts); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
-func postHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		year := vars["year"]
-		month := vars["month"]
-		fileName := vars["postName"]
+func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	year := vars["year"]
+	month := vars["month"]
+	fileName := vars["postName"]
 
-		currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName+".md"))
-		if err != nil {
-			log.Fatal(err)
-		}
+	currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName+".md"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		relatedPosts, err := getRelatedPosts(posts, currentPost)
-		if err != nil {
-			log.Fatal(err)
-		}
+	relatedPosts, err := getRelatedPosts(b.posts, currentPost)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		previousPost, nextPost := getPreviousAndNextPost(posts, currentPost)
-		if previousPost != nil {
-			currentPost.HasPrev = true
-		}
-		if nextPost != nil {
-			currentPost.HasNext = true
-		}
+	previousPost, nextPost := getPreviousAndNextPost(b.posts, currentPost)
+	if previousPost != nil {
+		currentPost.HasPrev = true
+	}
+	if nextPost != nil {
+		currentPost.HasNext = true
+	}
 
-		data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
-		if err := templates.ExecuteTemplate(w, "post", data); err != nil {
-			log.Fatal(err)
-		}
+	data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
+	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -270,18 +272,18 @@ func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nex
 	return previousPost, nextPost
 }
 
-func tagHandler(posts []*Post) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		tag := mux.Vars(r)["tagName"]
+func (b *Blog) tagHandler(w http.ResponseWriter, r *http.Request) {
+	tag := mux.Vars(r)["tagName"]
 
-		postsByTag, err := getPostsByTag(posts, tag)
-		if err != nil {
-			log.Fatalf("failed to get posts by tag: %v", err)
-		}
+	postsByTag, err := getPostsByTag(b.posts, tag)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		if err := renderHTML(w, r, postsByTag); err != nil {
-			log.Fatal(err)
-		}
+	if err := renderHTML(w, r, postsByTag); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -309,7 +311,7 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	} else {
 		postsPerPage, err = strconv.Atoi(postsPerPageEnv)
 		if err != nil {
-			log.Fatal(err)
+			return errors.Errorf("failed to convert %s to int: %v", postsPerPageEnv, err)
 		}
 	}
 
@@ -324,10 +326,50 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 
 	data := pongo2.Context{"title": title, "posts": posts[offset:endPos], "paginator": paginator}
 	if err := templates.ExecuteTemplate(w, "home", data); err != nil {
-		log.Fatal(err)
+		return errors.Errorf("failed to execute template: %v", err)
 	}
 
 	return nil
+}
+
+type urlset struct {
+	XMLNS string `xml:"xmlns,attr"`
+	URLs  []url  `xml:"url"`
+}
+
+type url struct {
+	Loc     string `xml:"loc"`
+	LastMod string `xml:"lastmod,omitempty"`
+}
+
+func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
+	scheme := "http"
+	if xForwardedScheme := r.Header.Get("X-Forwarded-Scheme"); xForwardedScheme != "" {
+		scheme = xForwardedScheme
+	}
+
+	sitemap := urlset{
+		XMLNS: xmlns,
+		URLs: []url{
+			{
+				Loc: fmt.Sprintf("%s://%s", scheme, r.Host),
+			},
+		},
+	}
+
+	for _, post := range b.posts {
+		sitemap.URLs = append(sitemap.URLs, url{
+			Loc:     fmt.Sprintf("%s://%s/%s", scheme, r.Host, post.URI),
+			LastMod: toISODate(post.Date),
+		})
+	}
+
+	output, err := xml.MarshalIndent(sitemap, "  ", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write([]byte(xml.Header + string(output)))
 }
 
 type statusWriter struct {
