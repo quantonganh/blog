@@ -21,7 +21,6 @@ import (
 	"github.com/astaxie/beego/utils/pagination"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/flosch/pongo2"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	bf "gopkg.in/russross/blackfriday.v2"
@@ -47,15 +46,15 @@ var (
 )
 
 func main() {
-	b := Blog{}
-	posts, err := b.getAllPosts("posts/**/*.md")
+	posts, err := getAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
-	b.posts = posts
+	b := Blog{
+		posts: posts,
+	}
 
 	router := mux.NewRouter()
-	router.Use(handlers.ProxyHeaders)
 	router.HandleFunc("/favicon.ico", faviconHandler)
 	router.HandleFunc("/", b.homeHandler)
 	router.NotFoundHandler = http.HandlerFunc(b.homeHandler)
@@ -82,7 +81,7 @@ type Post struct {
 	HasNext     bool
 }
 
-func (b *Blog) getAllPosts(pattern string) ([]*Post, error) {
+func getAllPosts(pattern string) ([]*Post, error) {
 	files, err := doublestar.Glob(pattern)
 	if err != nil {
 		return nil, errors.Wrap(err, "doublestar.Glob")
@@ -344,8 +343,8 @@ type url struct {
 
 func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 	scheme := "http"
-	if xForwardedScheme := r.Header.Get("X-Forwarded-Scheme"); xForwardedScheme != "" {
-		scheme = xForwardedScheme
+	if xForwardedProto := r.Header.Get("X-Forwarded-Proto"); xForwardedProto != "" {
+		scheme = xForwardedProto
 	}
 
 	sitemap := urlset{
@@ -369,7 +368,10 @@ func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write([]byte(xml.Header + string(output)))
+	_, err = w.Write([]byte(xml.Header + string(output)))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 type statusWriter struct {
