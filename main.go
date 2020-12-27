@@ -368,7 +368,10 @@ func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write([]byte(xml.Header + string(output)))
+	_, err = w.Write([]byte(xml.Header + string(output)))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 type statusWriter struct {
