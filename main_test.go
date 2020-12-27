@@ -20,22 +20,17 @@ func TestHandler(t *testing.T) {
 	posts, err := getAllPosts("posts/2019/10/test.md")
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(posts))
+	b := Blog{
+		posts: posts,
+	}
 
-	t.Run("getAllPosts", func(t *testing.T) {
-		testGetAllPosts(t, posts)
-	})
+	t.Run("getAllPosts", b.testGetAllPosts)
 
-	t.Run("homeHandler", func(t *testing.T) {
-		testHomeHandler(t, posts)
-	})
+	t.Run("homeHandler", b.testHomeHandler)
 
-	t.Run("postHandler", func(t *testing.T) {
-		testPostHandler(t, posts)
-	})
+	t.Run("postHandler", b.testPostHandler)
 
-	t.Run("tagHandler", func(t *testing.T) {
-		testTagHandler(t, posts)
-	})
+	t.Run("tagHandler", b.testTagHandler)
 
 	t.Cleanup(func() {
 		_ = os.Remove("posts/2019/10/test.md")
@@ -59,8 +54,8 @@ content`
 	}
 }
 
-func testGetAllPosts(t *testing.T, posts []*Post) {
-	p := posts[0]
+func (b *Blog) testGetAllPosts(t *testing.T) {
+	p := b.posts[0]
 	require.NotNil(t, p)
 	assert.Equal(t, "title", p.Title)
 	assert.Equal(t, "2019-10-02", toISODate(p.Date))
@@ -70,9 +65,9 @@ func testGetAllPosts(t *testing.T, posts []*Post) {
 	assert.Equal(t, template.HTML("<p>content</p>\n"), p.Content)
 }
 
-func testHomeHandler(t *testing.T, posts []*Post) {
+func (b *Blog) testHomeHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/", homeHandler(posts))
+	router.HandleFunc("/", b.homeHandler)
 
 	writer := httptest.NewRecorder()
 	request, err := http.NewRequest("GET", "/", nil)
@@ -84,9 +79,9 @@ func testHomeHandler(t *testing.T, posts []*Post) {
 	}
 }
 
-func testPostHandler(t *testing.T, posts []*Post) {
+func (b *Blog) testPostHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", postHandler(posts))
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", b.postHandler)
 
 	writer := httptest.NewRecorder()
 	request, err := http.NewRequest("GET", "/2019/10/02/test", nil)
@@ -98,9 +93,9 @@ func testPostHandler(t *testing.T, posts []*Post) {
 	}
 }
 
-func testTagHandler(t *testing.T, posts []*Post) {
+func (b *Blog) testTagHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/tag/test", tagHandler(posts))
+	router.HandleFunc("/tag/test", b.tagHandler)
 
 	writer := httptest.NewRecorder()
 	request, err := http.NewRequest("GET", "/tag/test", nil)
@@ -111,4 +106,3 @@ func testTagHandler(t *testing.T, posts []*Post) {
 		t.Errorf("Response code is %v", writer.Code)
 	}
 }
-
