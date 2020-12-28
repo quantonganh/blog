@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -187,10 +188,37 @@ func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) {
 		currentPost.HasNext = true
 	}
 
-	data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost}
+	remark42, err := getRemarkURL()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost, "remark42": remark42}
 	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+type remark struct {
+	URL     *url.URL
+	PageURL *url.URL
+}
+
+func getRemarkURL() (*remark, error) {
+	remarkURL, err := url.Parse(os.Getenv("REMARK_URL"))
+	if err != nil {
+		return nil, err
+	}
+	pageURL, err := url.Parse(os.Getenv("PAGE_URL"))
+	if err != nil {
+		return nil, err
+	}
+
+	return &remark{
+		URL:     remarkURL,
+		PageURL: pageURL,
+	}, nil
 }
 
 func parseMarkdown(filename string) (*Post, error) {
@@ -331,12 +359,13 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	return nil
 }
 
-type urlset struct {
-	XMLNS string `xml:"xmlns,attr"`
-	URLs  []url  `xml:"url"`
+type Sitemap struct {
+	XMLName xml.Name `xml:"urlset"`
+	XMLNS   string   `xml:"xmlns,attr"`
+	URLs    []URL    `xml:"url"`
 }
 
-type url struct {
+type URL struct {
 	Loc     string `xml:"loc"`
 	LastMod string `xml:"lastmod,omitempty"`
 }
@@ -347,9 +376,9 @@ func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 		scheme = xForwardedProto
 	}
 
-	sitemap := urlset{
+	sitemap := Sitemap{
 		XMLNS: xmlns,
-		URLs: []url{
+		URLs: []URL{
 			{
 				Loc: fmt.Sprintf("%s://%s", scheme, r.Host),
 			},
@@ -357,7 +386,7 @@ func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, post := range b.posts {
-		sitemap.URLs = append(sitemap.URLs, url{
+		sitemap.URLs = append(sitemap.URLs, URL{
 			Loc:     fmt.Sprintf("%s://%s/%s", scheme, r.Host, post.URI),
 			LastMod: toISODate(post.Date),
 		})
