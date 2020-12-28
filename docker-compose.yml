@@ -112,7 +112,7 @@ services:
 
   remark42:
     build: .
-    image: quantonganh/remark42:9b0fee0-arm64
+    image: docker.quantonganh.com/umputun/remark42:9b0fee0-arm64
     container_name: "remark42"
     hostname: "remark42"
     restart: always
