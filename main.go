@@ -115,14 +115,16 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	unixDate, err := time.Parse(layoutUnix, pd)
-	if err != nil {
-		return err
+	layouts := []string{layoutUnix, layoutISO}
+	for _, layout := range layouts {
+		date, err := time.Parse(layout, pd)
+		if err == nil {
+			d.Time = date
+			return nil
+		}
 	}
 
-	d.Time = unixDate
-
-	return nil
+	return errors.Errorf("Unrecognized date format: %s", pd)
 }
 
 func toISODate(d publishDate) string {
