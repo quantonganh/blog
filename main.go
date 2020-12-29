@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/xml"
 	"fmt"
 	"html/template"
@@ -20,6 +22,9 @@ import (
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/astaxie/beego/utils/pagination"
+	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/document"
+	"github.com/blevesearch/bleve/index/scorch"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/flosch/pongo2"
 	"github.com/gorilla/mux"
@@ -63,6 +68,7 @@ func main() {
 	router.HandleFunc("/tag/{tagName}", b.tagHandler)
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
 	router.HandleFunc("/sitemap.xml", b.sitemapHandler)
+	router.HandleFunc("/search", b.searchHandler)
 
 	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
 }
@@ -327,6 +333,82 @@ func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
 	}
 
 	return postsByTag, nil
+}
+
+func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
+	mapping := bleve.NewIndexMapping()
+	index, err := bleve.NewUsing("example.bleve", mapping, scorch.Name, scorch.Name, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for _, post := range b.posts {
+		doc := document.Document{
+			ID: post.URI,
+		}
+		if err = mapping.MapDocument(&doc, post); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var b bytes.Buffer
+		enc := gob.NewEncoder(&b)
+		if err = enc.Encode(post); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
+		nd := doc.AddField(field)
+		batch := index.NewBatch()
+		if err = batch.IndexAdvanced(nd); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if err = index.Batch(batch); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	query := bleve.NewMatchQuery(r.FormValue("search"))
+	request := bleve.NewSearchRequest(query)
+	request.Fields = []string{"_source"}
+	searchResults, err := index.Search(request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var (
+		post        *Post
+		searchPosts []*Post
+	)
+	for _, result := range searchResults.Hits {
+		b := bytes.NewBuffer([]byte(fmt.Sprintf("%v", result.Fields["_source"])))
+		dec := gob.NewDecoder(b)
+		if err = dec.Decode(&post); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Printf("post: %+v\n", post)
+		searchPosts = append(searchPosts, post)
+	}
+
+	if err := renderHTML(w, r, searchPosts); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := os.RemoveAll("example.bleve"); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
