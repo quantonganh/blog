@@ -336,37 +336,53 @@ func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
 }
 
 func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
-	mapping := bleve.NewIndexMapping()
-	index, err := bleve.NewUsing("example.bleve", mapping, scorch.Name, scorch.Name, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	for _, post := range b.posts {
-		doc := document.Document{
-			ID: post.URI,
-		}
-		if err = mapping.MapDocument(&doc, post); err != nil {
+	var (
+		index bleve.Index
+		err   error
+	)
+	if _, err = os.Stat("example.bleve"); os.IsNotExist(err) {
+		mapping := bleve.NewIndexMapping()
+		index, err = bleve.NewUsing("example.bleve", mapping, scorch.Name, scorch.Name, nil)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		var b bytes.Buffer
-		enc := gob.NewEncoder(&b)
-		if err = enc.Encode(post); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		for _, post := range b.posts {
+			doc := document.Document{
+				ID: post.URI,
+			}
+			if err = mapping.MapDocument(&doc, post); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-		field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
-		nd := doc.AddField(field)
-		batch := index.NewBatch()
-		if err = batch.IndexAdvanced(nd); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			var b bytes.Buffer
+			enc := gob.NewEncoder(&b)
+			if err = enc.Encode(post); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
+			batch := index.NewBatch()
+			if err = batch.IndexAdvanced(doc.AddField(field)); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if err = index.Batch(batch); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
-		if err = index.Batch(batch); err != nil {
+		if err = index.Close(); err != nil {
+			return errors.Errorf("failed to close index: %v", err)
+		}
+	} else if err == nil {
+		index, err = bleve.OpenUsing("example.bleve", map[string]interface{}{
+			"read_only": true,
+		})
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -387,27 +403,22 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		post        *Post
 		searchPosts []*Post
 	)
 	for _, result := range searchResults.Hits {
+		var post *Post
 		b := bytes.NewBuffer([]byte(fmt.Sprintf("%v", result.Fields["_source"])))
 		dec := gob.NewDecoder(b)
 		if err = dec.Decode(&post); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Printf("post: %+v\n", post)
 		searchPosts = append(searchPosts, post)
 	}
 
 	if err := renderHTML(w, r, searchPosts); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	if err := os.RemoveAll("example.bleve"); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
