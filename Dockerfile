@@ -3,8 +3,9 @@ FROM scratch
 COPY assets assets
 COPY favicon.ico .
 COPY posts posts
+COPY posts.bleve posts.bleve
 COPY templates templates
-COPY blog blog
+COPY blog .
 
 EXPOSE 80
 
