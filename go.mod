@@ -9,6 +9,7 @@ require (
 	github.com/blevesearch/bleve v1.0.14
 	github.com/bmatcuk/doublestar/v2 v2.0.4
 	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
+	github.com/gorilla/handlers v1.4.1
 	github.com/gorilla/mux v1.7.3
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0

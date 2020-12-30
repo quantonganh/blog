@@ -14,6 +14,7 @@ import (
 	"github.com/astaxie/beego/utils/pagination"
 	"github.com/blevesearch/bleve"
 	"github.com/flosch/pongo2"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
@@ -64,7 +65,8 @@ func main() {
 	router.HandleFunc("/search", mwError(b.searchHandler))
 	router.HandleFunc("/sitemap.xml", mwError(b.sitemapHandler))
 
-	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
+	loggingHandler := handlers.LoggingHandler(os.Stdout, router)
+	log.Fatal(http.ListenAndServe(":80", loggingHandler))
 }
 
 type Blog struct {
@@ -255,34 +257,4 @@ func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return nil
-}
-
-type statusWriter struct {
-	http.ResponseWriter
-	status int
-	length int
-}
-
-func (w *statusWriter) WriteHeader(status int) {
-	w.status = status
-	w.ResponseWriter.WriteHeader(status)
-}
-
-func (w *statusWriter) Write(b []byte) (int, error) {
-	if w.status == 0 {
-		w.status = 200
-	}
-
-	n, err := w.ResponseWriter.Write(b)
-	w.length += n
-
-	return n, err
-}
-
-func logHandler(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sw := &statusWriter{ResponseWriter: w}
-		handler.ServeHTTP(sw, r)
-		log.Printf("%s %s %s %d %d", r.RemoteAddr, r.Method, r.URL.Path, sw.status, sw.length)
-	})
 }
