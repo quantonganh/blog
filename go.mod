@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	gopkg.in/russross/blackfriday.v2 v2.0.1
 	gopkg.in/yaml.v2 v2.2.4
 )
