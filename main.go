@@ -40,6 +40,7 @@ const (
 	layoutISO           = "2006-01-02"
 	defaultPostsPerPage = 10
 	xmlns               = "http://www.sitemaps.org/schemas/sitemap/0.9"
+	indexPath           = "posts.bleve"
 )
 
 var (
@@ -347,71 +348,30 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
 		index bleve.Index
 		err   error
 	)
-	if _, err = os.Stat("example.bleve"); os.IsNotExist(err) {
-		mapping := bleve.NewIndexMapping()
-		index, err = bleve.NewUsing("example.bleve", mapping, scorch.Name, scorch.Name, nil)
+	if _, err = os.Stat(indexPath); os.IsNotExist(err) {
+		index, err = b.indexPosts(indexPath)
 		if err != nil {
-			return errors.Errorf("failed to create index at example.bleve: %v", err)
-		}
-
-		for _, post := range b.posts {
-			doc := document.Document{
-				ID: post.URI,
-			}
-			if err = mapping.MapDocument(&doc, post); err != nil {
-				return errors.Errorf("failed to map document: %v", err)
-			}
-
-			var b bytes.Buffer
-			enc := gob.NewEncoder(&b)
-			if err = enc.Encode(post); err != nil {
-				return errors.Errorf("failed to encode post: %v", err)
-			}
-
-			field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
-			batch := index.NewBatch()
-			if err = batch.IndexAdvanced(doc.AddField(field)); err != nil {
-				return errors.Errorf("failed to add index to the batch: %v", err)
-			}
-			if err = index.Batch(batch); err != nil {
-				return errors.Errorf("failed to index batch: %v", err)
-			}
-		}
-		if err = index.Close(); err != nil {
-			return errors.Errorf("failed to close index: %v", err)
+			return errors.Errorf("failed to index posts: %v", err)
 		}
 	} else if err == nil {
-		index, err = bleve.OpenUsing("example.bleve", map[string]interface{}{
+		index, err = bleve.OpenUsing(indexPath, map[string]interface{}{
 			"read_only": true,
 		})
 		if err != nil {
-			return errors.Errorf("failed to open index at example.bleve: %v", err)
+			return errors.Errorf("failed to open index at %s: %v", indexPath, err)
 		}
 	}
+	defer func() {
+		_ = index.Close()
+	}()
 
 	if err := r.ParseForm(); err != nil {
 		return errors.Errorf("failed to parse form: %v", err)
 	}
 
-	query := bleve.NewMatchQuery(r.FormValue("search"))
-	request := bleve.NewSearchRequest(query)
-	request.Fields = []string{"_source"}
-	searchResults, err := index.Search(request)
+	searchPosts, err := b.search(index, r.FormValue("search"))
 	if err != nil {
-		return errors.Errorf("failed to execute a search request: %v", err)
-	}
-
-	var (
-		searchPosts []*Post
-	)
-	for _, result := range searchResults.Hits {
-		var post *Post
-		b := bytes.NewBuffer([]byte(fmt.Sprintf("%v", result.Fields["_source"])))
-		dec := gob.NewDecoder(b)
-		if err = dec.Decode(&post); err != nil {
-			return errors.Errorf("failed to decode post: %v", err)
-		}
-		searchPosts = append(searchPosts, post)
+		return errors.Errorf("failed to search: %v", err)
 	}
 
 	if err := renderHTML(w, r, searchPosts); err != nil {
@@ -419,6 +379,63 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return nil
+}
+
+func (b *Blog) indexPosts(path string) (bleve.Index, error) {
+	mapping := bleve.NewIndexMapping()
+	index, err := bleve.NewUsing(path, mapping, scorch.Name, scorch.Name, nil)
+	if err != nil {
+		return nil, errors.Errorf("failed to create index at %s: %v", path, err)
+	}
+
+	for _, post := range b.posts {
+		doc := document.Document{
+			ID: post.URI,
+		}
+		if err := mapping.MapDocument(&doc, post); err != nil {
+			return nil, errors.Errorf("failed to map document: %v", err)
+		}
+
+		var b bytes.Buffer
+		enc := gob.NewEncoder(&b)
+		if err := enc.Encode(post); err != nil {
+			return nil, errors.Errorf("failed to encode post: %v", err)
+		}
+
+		field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
+		batch := index.NewBatch()
+		if err := batch.IndexAdvanced(doc.AddField(field)); err != nil {
+			return nil, errors.Errorf("failed to add index to the batch: %v", err)
+		}
+		if err := index.Batch(batch); err != nil {
+			return nil, errors.Errorf("failed to index batch: %v", err)
+		}
+	}
+
+	return index, nil
+}
+
+func (b *Blog) search(index bleve.Index, value string) ([]*Post, error) {
+	query := bleve.NewMatchQuery(value)
+	request := bleve.NewSearchRequest(query)
+	request.Fields = []string{"_source"}
+	searchResults, err := index.Search(request)
+	if err != nil {
+		return nil, errors.Errorf("failed to execute a search request: %v", err)
+	}
+
+	var searchPosts []*Post
+	for _, result := range searchResults.Hits {
+		var post *Post
+		b := bytes.NewBuffer([]byte(fmt.Sprintf("%v", result.Fields["_source"])))
+		dec := gob.NewDecoder(b)
+		if err = dec.Decode(&post); err != nil {
+			return nil, errors.Errorf("failed to decode post: %v", err)
+		}
+		searchPosts = append(searchPosts, post)
+	}
+
+	return searchPosts, nil
 }
 
 func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
