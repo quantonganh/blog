@@ -51,6 +51,17 @@ var (
 	)
 )
 
+type handlerFunc func(w http.ResponseWriter, r *http.Request) error
+
+func mwError(hf handlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := hf(w, r); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
 func main() {
 	posts, err := getAllPosts("posts/**/*.md")
 	if err != nil {
@@ -62,13 +73,13 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/favicon.ico", faviconHandler)
-	router.HandleFunc("/", b.homeHandler)
-	router.NotFoundHandler = http.HandlerFunc(b.homeHandler)
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", b.postHandler)
-	router.HandleFunc("/tag/{tagName}", b.tagHandler)
+	router.HandleFunc("/", mwError(b.homeHandler))
+	router.NotFoundHandler = mwError(b.homeHandler)
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mwError(b.postHandler))
+	router.HandleFunc("/tag/{tagName}", mwError(b.tagHandler))
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
-	router.HandleFunc("/sitemap.xml", b.sitemapHandler)
-	router.HandleFunc("/search", b.searchHandler)
+	router.HandleFunc("/sitemap.xml", mwError(b.sitemapHandler))
+	router.HandleFunc("/search", mwError(b.searchHandler))
 
 	log.Fatal(http.ListenAndServe(":80", logHandler(router)))
 }
@@ -163,14 +174,11 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "favicon.ico")
 }
 
-func (b *Blog) homeHandler(w http.ResponseWriter, r *http.Request) {
-	if err := renderHTML(w, r, b.posts); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+func (b *Blog) homeHandler(w http.ResponseWriter, r *http.Request) error {
+	return renderHTML(w, r, b.posts)
 }
 
-func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) {
+func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	year := vars["year"]
 	month := vars["month"]
@@ -178,14 +186,12 @@ func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) {
 
 	currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName+".md"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	relatedPosts, err := getRelatedPosts(b.posts, currentPost)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	previousPost, nextPost := getPreviousAndNextPost(b.posts, currentPost)
@@ -198,14 +204,15 @@ func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) {
 
 	remark42, err := getRemarkURL()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost, "remark42": remark42}
 	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
 	}
+
+	return nil
 }
 
 type remark struct {
@@ -307,19 +314,19 @@ func getPreviousAndNextPost(posts []*Post, currentPost *Post) (previousPost, nex
 	return previousPost, nextPost
 }
 
-func (b *Blog) tagHandler(w http.ResponseWriter, r *http.Request) {
+func (b *Blog) tagHandler(w http.ResponseWriter, r *http.Request) error {
 	tag := mux.Vars(r)["tagName"]
 
 	postsByTag, err := getPostsByTag(b.posts, tag)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	if err := renderHTML(w, r, postsByTag); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
+
+	return nil
 }
 
 func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
@@ -335,7 +342,7 @@ func getPostsByTag(posts []*Post, tag string) ([]*Post, error) {
 	return postsByTag, nil
 }
 
-func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
+func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
 	var (
 		index bleve.Index
 		err   error
@@ -344,8 +351,7 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
 		mapping := bleve.NewIndexMapping()
 		index, err = bleve.NewUsing("example.bleve", mapping, scorch.Name, scorch.Name, nil)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return errors.Errorf("failed to create index at example.bleve: %v", err)
 		}
 
 		for _, post := range b.posts {
@@ -353,26 +359,22 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
 				ID: post.URI,
 			}
 			if err = mapping.MapDocument(&doc, post); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return errors.Errorf("failed to map document: %v", err)
 			}
 
 			var b bytes.Buffer
 			enc := gob.NewEncoder(&b)
 			if err = enc.Encode(post); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return errors.Errorf("failed to encode post: %v", err)
 			}
 
 			field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
 			batch := index.NewBatch()
 			if err = batch.IndexAdvanced(doc.AddField(field)); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return errors.Errorf("failed to add index to the batch: %v", err)
 			}
 			if err = index.Batch(batch); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return errors.Errorf("failed to index batch: %v", err)
 			}
 		}
 		if err = index.Close(); err != nil {
@@ -383,14 +385,12 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
 			"read_only": true,
 		})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return errors.Errorf("failed to open index at example.bleve: %v", err)
 		}
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return errors.Errorf("failed to parse form: %v", err)
 	}
 
 	query := bleve.NewMatchQuery(r.FormValue("search"))
@@ -398,8 +398,7 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
 	request.Fields = []string{"_source"}
 	searchResults, err := index.Search(request)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return errors.Errorf("failed to execute a search request: %v", err)
 	}
 
 	var (
@@ -410,16 +409,16 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) {
 		b := bytes.NewBuffer([]byte(fmt.Sprintf("%v", result.Fields["_source"])))
 		dec := gob.NewDecoder(b)
 		if err = dec.Decode(&post); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return errors.Errorf("failed to decode post: %v", err)
 		}
 		searchPosts = append(searchPosts, post)
 	}
 
 	if err := renderHTML(w, r, searchPosts); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return errors.Errorf("failed to render HTML: %v", err)
 	}
+
+	return nil
 }
 
 func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
@@ -465,7 +464,7 @@ type URL struct {
 	LastMod string `xml:"lastmod,omitempty"`
 }
 
-func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
+func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) error {
 	scheme := "http"
 	if xForwardedProto := r.Header.Get("X-Forwarded-Proto"); xForwardedProto != "" {
 		scheme = xForwardedProto
@@ -489,13 +488,14 @@ func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 
 	output, err := xml.MarshalIndent(sitemap, "  ", "    ")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	_, err = w.Write([]byte(xml.Header + string(output)))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
 	}
+
+	return nil
 }
 
 type statusWriter struct {
