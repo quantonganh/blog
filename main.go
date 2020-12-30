@@ -106,13 +106,31 @@ func getAllPosts(pattern string) ([]*Post, error) {
 		return nil, errors.Wrap(err, "doublestar.Glob")
 	}
 
-	var posts []*Post
-
+	g, ctx := errgroup.WithContext(context.Background())
+	postsCh := make(chan *Post)
 	for _, f := range files {
-		post, err := parseMarkdown(f)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse: %s", f)
-		}
+		f := f // https://golang.org/doc/faq#closures_and_goroutines
+		g.Go(func() error {
+			post, err := parseMarkdown(ctx, f)
+			if err != nil {
+				return err
+			}
+			select {
+			case postsCh <- post:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			return nil
+		})
+	}
+
+	go func() {
+		_ = g.Wait()
+		close(postsCh)
+	}()
+
+	var posts []*Post
+	for post := range postsCh {
 		posts = append(posts, post)
 	}
 
@@ -185,7 +203,7 @@ func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) error {
 	month := vars["month"]
 	fileName := vars["postName"]
 
-	currentPost, err := parseMarkdown(filepath.Join("posts", year, month, fileName+".md"))
+	currentPost, err := parseMarkdown(context.Background(), filepath.Join("posts", year, month, fileName+".md"))
 	if err != nil {
 		return err
 	}
@@ -237,48 +255,53 @@ func getRemarkURL() (*remark, error) {
 	}, nil
 }
 
-func parseMarkdown(filename string) (*Post, error) {
-	postContent, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read file: %s", filename)
-	}
-
-	var closingMetadataLine int
-
-	lines := strings.Split(string(postContent), "\n")
-	for i := 1; i < len(lines); i++ {
-		if lines[i] == yamlSeparator {
-			closingMetadataLine = i
-			break
+func parseMarkdown(ctx context.Context, filename string) (*Post, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		postContent, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to read file: %s", filename)
 		}
-	}
 
-	metadata := strings.Join(lines[1:closingMetadataLine], "\n")
+		var closingMetadataLine int
 
-	p := Post{}
-	if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
-		return nil, errors.Wrap(err, "yaml.Unmarshal")
-	}
-	basename := filepath.Base(filename)
-	p.URI = path.Join(getYear(p.Date), getMonth(p.Date), getDay(p.Date), strings.TrimSuffix(basename, filepath.Ext(basename)))
+		lines := strings.Split(string(postContent), "\n")
+		for i := 1; i < len(lines); i++ {
+			if lines[i] == yamlSeparator {
+				closingMetadataLine = i
+				break
+			}
+		}
 
-	content := strings.Join(lines[closingMetadataLine+1:], "\n")
-	options := []html.Option{
-		html.WithLineNumbers(),
-	}
+		metadata := strings.Join(lines[1:closingMetadataLine], "\n")
 
-	p.Content = template.HTML(bf.Run(
-		[]byte(content),
-		bf.WithRenderer(
-			bfchroma.NewRenderer(
-				bfchroma.WithoutAutodetect(),
-				bfchroma.ChromaOptions(options...),
-				bfchroma.ChromaStyle(styles.SolarizedDark),
+		p := Post{}
+		if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
+			return nil, errors.Wrap(err, "yaml.Unmarshal")
+		}
+		basename := filepath.Base(filename)
+		p.URI = path.Join(getYear(p.Date), getMonth(p.Date), getDay(p.Date), strings.TrimSuffix(basename, filepath.Ext(basename)))
+
+		content := strings.Join(lines[closingMetadataLine+1:], "\n")
+		options := []html.Option{
+			html.WithLineNumbers(),
+		}
+
+		p.Content = template.HTML(bf.Run(
+			[]byte(content),
+			bf.WithRenderer(
+				bfchroma.NewRenderer(
+					bfchroma.WithoutAutodetect(),
+					bfchroma.ChromaOptions(options...),
+					bfchroma.ChromaStyle(styles.SolarizedDark),
+				),
 			),
-		),
-	))
+		))
 
-	return &p, nil
+		return &p, nil
+	}
 }
 
 func getRelatedPosts(posts []*Post, currentPost *Post) (map[string]*Post, error) {
