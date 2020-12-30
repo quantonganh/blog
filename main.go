@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"encoding/xml"
 	"fmt"
@@ -25,10 +26,12 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/document"
 	"github.com/blevesearch/bleve/index/scorch"
+	"github.com/blevesearch/bleve/mapping"
 	"github.com/bmatcuk/doublestar/v2"
 	"github.com/flosch/pongo2"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 	bf "gopkg.in/russross/blackfriday.v2"
 	"gopkg.in/yaml.v2"
 )
@@ -405,37 +408,56 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (b *Blog) indexPosts(path string) (bleve.Index, error) {
-	mapping := bleve.NewIndexMapping()
-	index, err := bleve.NewUsing(path, mapping, scorch.Name, scorch.Name, nil)
+	indexMapping := bleve.NewIndexMapping()
+	index, err := bleve.NewUsing(path, indexMapping, scorch.Name, scorch.Name, nil)
 	if err != nil {
 		return nil, errors.Errorf("failed to create index at %s: %v", path, err)
 	}
 
+	g, ctx := errgroup.WithContext(context.Background())
 	for _, post := range b.posts {
+		post := post // https://golang.org/doc/faq#closures_and_goroutines
+		g.Go(func() error {
+			return indexPost(ctx, indexMapping, index, post)
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return index, nil
+}
+
+func indexPost(ctx context.Context, mapping *mapping.IndexMappingImpl, index bleve.Index, post *Post) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
 		doc := document.Document{
 			ID: post.URI,
 		}
 		if err := mapping.MapDocument(&doc, post); err != nil {
-			return nil, errors.Errorf("failed to map document: %v", err)
+			return errors.Errorf("failed to map document: %v", err)
 		}
 
 		var b bytes.Buffer
 		enc := gob.NewEncoder(&b)
 		if err := enc.Encode(post); err != nil {
-			return nil, errors.Errorf("failed to encode post: %v", err)
+			return errors.Errorf("failed to encode post: %v", err)
 		}
 
 		field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
 		batch := index.NewBatch()
 		if err := batch.IndexAdvanced(doc.AddField(field)); err != nil {
-			return nil, errors.Errorf("failed to add index to the batch: %v", err)
+			return errors.Errorf("failed to add index to the batch: %v", err)
 		}
 		if err := index.Batch(batch); err != nil {
-			return nil, errors.Errorf("failed to index batch: %v", err)
+			return errors.Errorf("failed to index batch: %v", err)
 		}
-	}
 
-	return index, nil
+		return nil
+	}
 }
 
 func (b *Blog) search(index bleve.Index, value string) ([]*Post, error) {
