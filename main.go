@@ -170,7 +170,7 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
 		return errors.Errorf("failed to parse form: %v", err)
 	}
 
-	searchPosts, err := b.search(index, r.FormValue("search"))
+	searchPosts, err := b.search(index, r.FormValue("q"))
 	if err != nil {
 		return errors.Errorf("failed to search: %v", err)
 	}
