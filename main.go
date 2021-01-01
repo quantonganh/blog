@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -17,6 +18,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/quantonganh/blog/config"
 )
 
 const (
@@ -35,24 +37,49 @@ var (
 	)
 )
 
-type handlerFunc func(w http.ResponseWriter, r *http.Request) error
+type Blog struct {
+	config *config.Config
+	posts  []*Post
+}
 
-func mwError(hf handlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := hf(w, r); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
+type Post struct {
+	URI         string
+	Title       string
+	Date        publishDate
+	Description string
+	Content     template.HTML
+	Tags        []string
+	HasPrev     bool
+	HasNext     bool
 }
 
 func main() {
+	var (
+		configPath string
+		cfg        *config.Config
+		err        error
+	)
+
 	posts, err := getAllPosts("posts/**/*.md")
 	if err != nil {
 		log.Fatal(err)
 	}
 	b := Blog{
 		posts: posts,
+	}
+
+	flag.StringVar(&configPath, "config", "", "path to config file")
+	flag.Parse()
+
+	flagSet := make(map[string]bool)
+	flag.Visit(func(f *flag.Flag) { flagSet[f.Name] = true })
+
+	if flagSet["config"] {
+		cfg, err = config.NewConfig(configPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		b.config = cfg
 	}
 
 	router := mux.NewRouter()
@@ -69,27 +96,23 @@ func main() {
 	log.Fatal(http.ListenAndServe(":80", loggingHandler))
 }
 
-type Blog struct {
-	posts []*Post
-}
-
-type Post struct {
-	URI         string
-	Title       string
-	Date        publishDate
-	Description string
-	Content     template.HTML
-	Tags        []string
-	HasPrev     bool
-	HasNext     bool
-}
-
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "favicon.ico")
 }
 
+type handlerFunc func(w http.ResponseWriter, r *http.Request) error
+
+func mwError(hf handlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := hf(w, r); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
 func (b *Blog) homeHandler(w http.ResponseWriter, r *http.Request) error {
-	return renderHTML(w, r, b.posts)
+	return b.renderHTML(w, r, b.posts)
 }
 
 func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) error {
@@ -122,6 +145,9 @@ func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost, "remark42": remark42}
+	if b.config != nil {
+		data["navbarItems"] = b.config.Navbar.Items
+	}
 	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
 		return err
 	}
@@ -137,7 +163,7 @@ func (b *Blog) tagHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if err := renderHTML(w, r, postsByTag); err != nil {
+	if err := b.renderHTML(w, r, postsByTag); err != nil {
 		return err
 	}
 
@@ -175,14 +201,14 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
 		return errors.Errorf("failed to search: %v", err)
 	}
 
-	if err := renderHTML(w, r, searchPosts); err != nil {
+	if err := b.renderHTML(w, r, searchPosts); err != nil {
 		return errors.Errorf("failed to render HTML: %v", err)
 	}
 
 	return nil
 }
 
-func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
+func (b *Blog) renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	var (
 		postsPerPage int
 		err          error
@@ -207,6 +233,9 @@ func renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
 	}
 
 	data := pongo2.Context{"title": title, "posts": posts[offset:endPos], "paginator": paginator}
+	if b.config != nil {
+		data["navbarItems"] = b.config.Navbar.Items
+	}
 	if err := templates.ExecuteTemplate(w, "home", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
 	}

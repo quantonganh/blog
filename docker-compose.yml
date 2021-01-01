@@ -99,6 +99,12 @@ services:
     image: docker.quantonganh.com/quanta/blog:master
     container_name: blog
     restart: always
+    volumes:
+      - ./config.yaml:/config.yaml:ro
+    command: -config config.yaml
+    environment:
+      - REMARK_URL=https://${REMARK_DOMAIN}
+      - PAGE_URL=https://${BLOG_DOMAIN}
     labels:
       - traefik.enable=true
       - traefik.http.services.blog.loadbalancer.server.port=80
@@ -123,7 +129,7 @@ services:
           max-file: "5"
     environment:
         - DEBUG=true
-        - REMARK_URL=${REMARK_URL}
+        - REMARK_URL=https://${REMARK_DOMAIN}
         - SECRET=${SECRET}
         - STORE_BOLT_PATH=/srv/var/db
         - BACKUP_PATH=/srv/var/backup
@@ -133,7 +139,7 @@ services:
         - ./var:/srv/var
     labels:
       - traefik.enable=true
-      - traefik.http.routers.remark42.rule=Host(`${REMARK_URL}`)
+      - traefik.http.routers.remark42.rule=Host(`${REMARK_DOMAIN}`)
       - traefik.http.routers.remark42.entrypoints=https
       - traefik.http.routers.remark42.tls.certresolver=le
       - traefik.http.services.remark42.loadbalancer.server.port=8080
