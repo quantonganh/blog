@@ -17,12 +17,11 @@
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav ml-auto">
+                    {{ range $_, $item := .navbarItems }}
                     <li class="nav-item">
-                        <a class="nav-link" href="/2019/09/30/resume">Resume</a>
+                        <a class="nav-link" href="{{ $item.URL }}">{{ $item.Text }}</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/2019/09/19/about">About</a>
-                    </li>
+                    {{ end }}
                 </ul>
                 <form class="form-inline my-2 my-lg-0" action="/search">
                     <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="q">
