@@ -93,11 +93,21 @@ func main() {
 	router.HandleFunc("/sitemap.xml", mwError(b.sitemapHandler))
 
 	loggingHandler := handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, router))
-	log.Fatal(http.ListenAndServe(":80", loggingHandler))
+	log.Fatal(http.ListenAndServe(":80", mwURLHost(loggingHandler)))
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "favicon.ico")
+}
+
+// https://github.com/gorilla/handlers/issues/177
+func mwURLHost(h http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Host = r.Host
+		h.ServeHTTP(w, r)
+	}
+
+	return http.HandlerFunc(fn)
 }
 
 type handlerFunc func(w http.ResponseWriter, r *http.Request) error
