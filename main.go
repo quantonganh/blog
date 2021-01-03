@@ -92,7 +92,7 @@ func main() {
 	router.HandleFunc("/search", mwError(b.searchHandler))
 	router.HandleFunc("/sitemap.xml", mwError(b.sitemapHandler))
 
-	loggingHandler := handlers.LoggingHandler(os.Stdout, router)
+	loggingHandler := handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, router))
 	log.Fatal(http.ListenAndServe(":80", loggingHandler))
 }
 
