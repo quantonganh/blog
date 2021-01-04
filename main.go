@@ -91,6 +91,7 @@ func main() {
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
 	router.HandleFunc("/search", mwError(b.searchHandler))
 	router.HandleFunc("/sitemap.xml", mwError(b.sitemapHandler))
+	router.HandleFunc("/rss.xml", mwError(b.rssHandler))
 
 	loggingHandler := handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, router))
 	log.Fatal(http.ListenAndServe(":80", mwURLHost(loggingHandler)))
