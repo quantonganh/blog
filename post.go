@@ -4,6 +4,7 @@ import (
 	"context"
 	"html/template"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"sort"
@@ -12,7 +13,6 @@ import (
 	"github.com/Depado/bfchroma"
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
-	"github.com/bmatcuk/doublestar/v2"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	bf "gopkg.in/russross/blackfriday.v2"
@@ -21,17 +21,30 @@ import (
 
 const yamlSeparator = "---"
 
-func getAllPosts(pattern string) ([]*Post, error) {
-	files, err := doublestar.Glob(pattern)
-	if err != nil {
-		return nil, errors.Wrap(err, "doublestar.Glob")
-	}
-
+func getAllPosts(root string) ([]*Post, error) {
 	g, ctx := errgroup.WithContext(context.Background())
+	paths := make(chan string)
+	g.Go(func() error {
+		defer close(paths)
+		return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if filepath.Ext(path) != ".md" {
+				return nil
+			}
+			select {
+			case paths <- path:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			return nil
+		})
+	})
+
 	postsCh := make(chan *Post)
-	for _, f := range files {
-		f := f // https://golang.org/doc/faq#closures_and_goroutines
-		g.Go(func() error {
+	g.Go(func() error {
+		for f := range paths {
 			post, err := parseMarkdown(ctx, f)
 			if err != nil {
 				return err
@@ -41,9 +54,9 @@ func getAllPosts(pattern string) ([]*Post, error) {
 			case <-ctx.Done():
 				return ctx.Err()
 			}
-			return nil
-		})
-	}
+		}
+		return nil
+	})
 
 	go func() {
 		_ = g.Wait()
@@ -53,6 +66,10 @@ func getAllPosts(pattern string) ([]*Post, error) {
 	var posts []*Post
 	for post := range postsCh {
 		posts = append(posts, post)
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	sort.Slice(posts, func(i, j int) bool {
@@ -86,7 +103,7 @@ func parseMarkdown(ctx context.Context, filename string) (*Post, error) {
 
 		p := Post{}
 		if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
-			return nil, errors.Wrap(err, "yaml.Unmarshal")
+			return nil, errors.Wrapf(err, "failed to decode metadata of file: %s", filename)
 		}
 		basename := filepath.Base(filename)
 		p.URI = path.Join(getYear(p.Date), getMonth(p.Date), getDay(p.Date), strings.TrimSuffix(basename, filepath.Ext(basename)))

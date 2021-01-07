@@ -60,7 +60,7 @@ func main() {
 		err        error
 	)
 
-	posts, err := getAllPosts("posts/**/*.md")
+	posts, err := getAllPosts("posts")
 	if err != nil {
 		log.Fatal(err)
 	}
