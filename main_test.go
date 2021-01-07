@@ -12,7 +12,7 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	posts, err := getAllPosts("posts/**/*.md")
+	posts, err := getAllPosts("posts")
 	assert.NoError(t, err)
 	assert.NotZero(t, len(posts))
 	b := Blog{
