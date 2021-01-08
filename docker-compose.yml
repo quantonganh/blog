@@ -166,6 +166,8 @@ services:
         - BACKUP_PATH=/srv/var/backup
         - AUTH_GITHUB_CID=47dd3d50c74ba510a9c3
         - AUTH_GITHUB_CSEC=${AUTH_GITHUB_CSEC}
+        - AUTH_GOOGLE_CID=${AUTH_GOOGLE_CID}
+        - AUTH_GOOGLE_CSEC=${AUTH_GOOGLE_CSEC}
     volumes:
         - ./var:/srv/var
     labels:
