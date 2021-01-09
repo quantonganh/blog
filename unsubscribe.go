@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/pkg/errors"
 )
@@ -12,16 +14,24 @@ func (b *Blog) unsubscribeHandler(w http.ResponseWriter, r *http.Request) error 
 	hash := query.Get("hash")
 	expectedHash := computeHmac256(email, b.config.HMAC.Secret)
 
+	f, err := os.OpenFile(subscribersFile, os.O_RDWR, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	ml := &mailingList{}
 	if hash == expectedHash {
-		subscribers, err := Load(subscribersFile)
-		if err != nil {
+		if err := ml.Load(f); err != nil {
 			return errors.Errorf("failed to load file %subscribers: %v", subscribersFile, err)
 		}
 
-		for i, subscriber := range subscribers {
-			if subscriber.Email == email {
-				subscribers = append(subscribers[:i], subscribers[i+1:]...)
-				if err := Save(subscribers, subscribersFile); err != nil {
+		for i, s := range ml.Subscribers {
+			if s.Email == email {
+				ml.Subscribers = append(ml.Subscribers[:i], ml.Subscribers[i+1:]...)
+				if err := ml.Save(f); err != nil {
 					return err
 				}
 				return b.renderSubscribe(w, "Unsubscribed")

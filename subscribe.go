@@ -7,11 +7,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 
 	"github.com/flosch/pongo2"
 	"github.com/matcornic/hermes/v2"
@@ -25,80 +27,103 @@ const (
 	subscribersFile = "subscribers.json"
 )
 
-type Subscriber struct {
+type mailingList struct {
+	mu          sync.RWMutex
+	Subscribers []subscriber
+}
+
+type subscriber struct {
 	Email   string
 	Token   string
 	Pending bool
 }
 
-func Save(s []Subscriber, filename string) error {
-	subscribersJSON, err := json.MarshalIndent(s, "", "    ")
+func (ml *mailingList) Save(w io.Writer) error {
+	ml.mu.Lock()
+	defer ml.mu.Unlock()
+
+	subscribersJSON, err := json.MarshalIndent(ml.Subscribers, "", "    ")
 	if err != nil {
 		return errors.Errorf("failed to marshal: %v", err)
 	}
 
-	if err := ioutil.WriteFile(filename, subscribersJSON, 0600); err != nil {
-		return errors.Errorf("failed to write to file %s: %v", subscribersFile, err)
+	switch f := w.(type) {
+	case *os.File:
+		if err := f.Truncate(0); err != nil {
+			return errors.Errorf("failed to truncate: %v", err)
+		}
+		_, err := f.Seek(0, 0)
+		if err != nil {
+			return errors.Errorf("failed to seek: %v", err)
+		}
+	default:
+	}
+
+	_, err = w.Write(subscribersJSON)
+	if err != nil {
+		return errors.Errorf("failed to write bytes to underlying data stream: %v", err)
 	}
 
 	return nil
 }
 
-func Load(filename string) ([]Subscriber, error) {
-	jsonFile, err := os.Open(filename)
+func (ml *mailingList) Load(r io.Reader) error {
+	ml.mu.RLock()
+	defer ml.mu.RUnlock()
+
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, errors.Errorf("failed to open file %s: %v", subscribersFile, err)
-	}
-	defer func() {
-		_ = jsonFile.Close()
-	}()
-
-	byteValue, err := ioutil.ReadAll(jsonFile)
-	if err != nil {
-		return nil, errors.Errorf("failed to read JSON file %s: %v", filename, err)
+		return errors.Errorf("failed to read bytes into b: %v", err)
 	}
 
-	var s []Subscriber
-	if err := json.Unmarshal(byteValue, &s); err != nil {
-		return nil, errors.Errorf("failed to unmarshal: %v", err)
+	if len(b) > 0 {
+		if err := json.Unmarshal(b, &ml.Subscribers); err != nil {
+			return errors.Errorf("failed to unmarshal: %v", err)
+		}
 	}
 
-	return s, nil
+	return nil
 }
 
 func (b *Blog) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
 	email := r.FormValue("email")
 	token := uuid.NewV4().String()
-	subscriber := Subscriber{
+	subscriber := subscriber{
 		Email:   email,
 		Token:   token,
 		Pending: true,
 	}
 
-	var (
-		subscribers []Subscriber
-		err         error
-	)
-	if _, err = os.Stat(subscribersFile); os.IsNotExist(err) {
-	} else if err == nil {
-		subscribers, err = Load(subscribersFile)
-		if err != nil {
-			return errors.Errorf("failed to load file %s: %v", subscribersFile, err)
+	f, err := os.OpenFile(subscribersFile, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return errors.Errorf("failed to open file %s: %v", subscribersFile, err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	fileInfo, err := os.Stat(subscribersFile)
+	if err != nil {
+		return errors.Errorf("failed to get file info of %s: %v", subscribersFile, err)
+	}
+
+	ml := &mailingList{}
+	if fileInfo.Size() > 0 {
+		if err := ml.Load(f); err != nil {
+			return err
 		}
 
-		for _, s := range subscribers {
+		for _, s := range ml.Subscribers {
 			if s.Email == subscriber.Email {
 				message := fmt.Sprintf("You had been subscribed to this blog already.")
 				return b.renderSubscribe(w, message)
 			}
 		}
-	} else {
-		return errors.Wrap(err, "os.Stat")
 	}
 
-	subscribers = append(subscribers, subscriber)
-	if err := Save(subscribers, subscribersFile); err != nil {
-		return errors.Errorf("failed to save file %s: %v", subscribersFile, err)
+	ml.Subscribers = append(ml.Subscribers, subscriber)
+	if err := ml.Save(f); err != nil {
+		return err
 	}
 
 	if err := b.sendConfirmationEmail(email, r.Host, token); err != nil {
@@ -117,8 +142,8 @@ func (b *Blog) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
 func (b *Blog) sendConfirmationEmail(to, host, token string) error {
 	h := hermes.Hermes{
 		Product: hermes.Product{
-			Name: "quantonganh.com blog",
-			Link: "https://quantonganh.com",
+			Name: b.config.Newsletter.Product.Name,
+			Link: fmt.Sprintf("http://%s", host),
 		},
 	}
 
@@ -126,7 +151,7 @@ func (b *Blog) sendConfirmationEmail(to, host, token string) error {
 		Body: hermes.Body{
 			Name: "",
 			Intros: []string{
-				"Welcome to quantonganh.com blog",
+				fmt.Sprintf("Welcome to %s", b.config.Newsletter.Product.Name),
 			},
 			Actions: []hermes.Action{
 				{
@@ -146,14 +171,51 @@ func (b *Blog) sendConfirmationEmail(to, host, token string) error {
 		return errors.Errorf("failed to generate HTML email: %v", err)
 	}
 
-	return b.sendEmail([]string{to}, "quantonganh.com blog newsletter - confirm subscription", emailBody)
+	return b.sendEmail([]string{to}, "Confirm subscription", emailBody)
 }
 
-func (b *Blog) sendThankYouEmail(to string) error {
+func (b *Blog) confirmHandler(w http.ResponseWriter, r *http.Request) error {
+	token := r.URL.Query().Get("token")
+	if len(token) == 0 {
+		return errors.New("token is not present")
+	}
+
+	f, err := os.OpenFile(subscribersFile, os.O_RDWR, 0644)
+	if err != nil {
+		return errors.Errorf("failed to open file %s: %v", subscribersFile, err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	ml := &mailingList{}
+	if err := ml.Load(f); err != nil {
+		return err
+	}
+
+	for i, s := range ml.Subscribers {
+		if s.Token == token {
+			ml.Subscribers[i].Pending = false
+			if err := ml.Save(f); err != nil {
+				return err
+			}
+
+			if err := b.sendThankYouEmail(s.Email, r.Host); err != nil {
+				return err
+			}
+
+			return b.renderSubscribe(w, fmt.Sprintf("Thank you for subscribing to this blog."))
+		}
+	}
+
+	return b.renderSubscribe(w, fmt.Sprintf("Something went wrong."))
+}
+
+func (b *Blog) sendThankYouEmail(to, host string) error {
 	h := hermes.Hermes{
 		Product: hermes.Product{
-			Name: "quantonganh.com blog",
-			Link: "https://quantonganh.com",
+			Name: b.config.Newsletter.Product.Name,
+			Link: fmt.Sprintf("http://%s", host),
 		},
 	}
 
@@ -161,7 +223,7 @@ func (b *Blog) sendThankYouEmail(to string) error {
 		Body: hermes.Body{
 			Name: "",
 			Intros: []string{
-				"Thank you for subscribing to quantonganh.com blog",
+				fmt.Sprintf("Thank you for subscribing to %s", b.config.Newsletter.Product.Name),
 			},
 			Actions: []hermes.Action{
 				{
@@ -183,22 +245,27 @@ func (b *Blog) sendNewsletter(posts []*Post) {
 	c := cron.New(
 		cron.WithLogger(
 			cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
-	c.AddFunc("@every 0h0m10s", func() {
-		subscribers, err := Load(subscribersFile)
-		if err == nil {
+	c.AddFunc(b.config.Cron.Spec, func() {
+		fi, _ := os.Open(subscribersFile)
+		defer func() {
+			_ = fi.Close()
+		}()
+
+		ml := &mailingList{}
+		if err := ml.Load(fi); err == nil {
 			var (
 				recipients []string
 				buf        = new(bytes.Buffer)
 			)
-			for _, subscriber := range subscribers {
-				if subscriber.Pending == false {
-					recipients = append(recipients, subscriber.Email)
+			for _, s := range ml.Subscribers {
+				if s.Pending == false {
+					recipients = append(recipients, s.Email)
 
 					pageURL, err := url.Parse(os.Getenv("PAGE_URL"))
 					if err != nil {
 						log.Fatal(err)
 					}
-					data := pongo2.Context{"posts": posts, "pageURL": pageURL, "email": subscriber.Email, "hash": computeHmac256(subscriber.Email, b.config.HMAC.Secret)}
+					data := pongo2.Context{"posts": posts, "pageURL": pageURL, "email": s.Email, "hash": computeHmac256(s.Email, b.config.HMAC.Secret)}
 					if err := templates.ExecuteTemplate(buf, "newsletter", data); err != nil {
 						log.Fatal(err)
 					}
@@ -206,7 +273,7 @@ func (b *Blog) sendNewsletter(posts []*Post) {
 			}
 
 			if len(recipients) > 0 {
-				if err := b.sendEmail(recipients, "quantonganh.com blog newsletter", buf.String()); err != nil {
+				if err := b.sendEmail(recipients, fmt.Sprintf("%s newsletter", b.config.Newsletter.Product.Name), buf.String()); err != nil {
 					log.Fatal(err)
 				}
 			}
@@ -239,36 +306,6 @@ func (b *Blog) sendEmail(to []string, subject, body string) error {
 	}
 
 	return nil
-}
-
-func (b *Blog) confirmHandler(w http.ResponseWriter, r *http.Request) error {
-	token := r.URL.Query().Get("token")
-	if len(token) == 0 {
-		return errors.New("token is not present")
-	}
-
-	subscribers, err := Load(subscribersFile)
-	if err != nil {
-		return errors.Errorf("failed to load file %subscribers: %v", subscribersFile, err)
-	}
-
-	for i, subscriber := range subscribers {
-		if subscriber.Token == token {
-			subscribers[i].Pending = false
-			if err := Save(subscribers, subscribersFile); err != nil {
-				return errors.Errorf("failed to save file %subscribers: %v", subscribersFile, err)
-			}
-
-			fmt.Printf("subscriber.Email: %subscribers\n", subscriber.Email)
-			if err := b.sendThankYouEmail(subscriber.Email); err != nil {
-				return err
-			}
-
-			return b.renderSubscribe(w, fmt.Sprintf("Thank you for subscribing to this blog."))
-		}
-	}
-
-	return b.renderSubscribe(w, fmt.Sprintf("Something went wrong."))
 }
 
 func (b *Blog) renderSubscribe(w http.ResponseWriter, message string) error {
