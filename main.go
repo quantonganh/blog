@@ -69,17 +69,6 @@ func main() {
 		posts: posts,
 	}
 
-	now := time.Now()
-	for _, post := range b.posts {
-		if post.Date.Time.AddDate(0, 0, 30).After(now) {
-			latestPosts = append(latestPosts, post)
-		} else {
-			break
-		}
-	}
-
-	b.sendNewsletter(latestPosts)
-
 	flag.StringVar(&configPath, "config", "", "path to config file")
 	flag.Parse()
 
@@ -93,6 +82,17 @@ func main() {
 		}
 		b.config = cfg
 	}
+
+	now := time.Now()
+	for _, post := range b.posts {
+		if post.Date.Time.AddDate(0, 0, b.config.Newsletter.Frequency).After(now) {
+			latestPosts = append(latestPosts, post)
+		} else {
+			break
+		}
+	}
+
+	b.sendNewsletter(latestPosts)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/favicon.ico", faviconHandler)
