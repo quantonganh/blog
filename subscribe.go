@@ -115,8 +115,7 @@ func (b *Blog) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
 
 		for _, s := range ml.Subscribers {
 			if s.Email == subscriber.Email {
-				message := fmt.Sprintf("You had been subscribed to this blog already.")
-				return b.renderSubscribe(w, message)
+				return b.renderSubscribe(w, "You had been subscribed to this blog already.")
 			}
 		}
 	}
@@ -204,11 +203,11 @@ func (b *Blog) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 				return err
 			}
 
-			return b.renderSubscribe(w, fmt.Sprintf("Thank you for subscribing to this blog."))
+			return b.renderSubscribe(w, "Thank you for subscribing to this blog.")
 		}
 	}
 
-	return b.renderSubscribe(w, fmt.Sprintf("Something went wrong."))
+	return b.renderSubscribe(w, "Something went wrong.")
 }
 
 func (b *Blog) sendThankYouEmail(to, host string) error {
@@ -245,7 +244,7 @@ func (b *Blog) sendNewsletter(posts []*Post) {
 	c := cron.New(
 		cron.WithLogger(
 			cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
-	c.AddFunc(b.config.Cron.Spec, func() {
+	_, _ = c.AddFunc(b.config.Cron.Spec, func() {
 		fi, _ := os.Open(subscribersFile)
 		defer func() {
 			_ = fi.Close()
@@ -258,14 +257,18 @@ func (b *Blog) sendNewsletter(posts []*Post) {
 				buf        = new(bytes.Buffer)
 			)
 			for _, s := range ml.Subscribers {
-				if s.Pending == false {
+				if !s.Pending {
 					recipients = append(recipients, s.Email)
 
 					pageURL, err := url.Parse(os.Getenv("PAGE_URL"))
 					if err != nil {
 						log.Fatal(err)
 					}
-					data := pongo2.Context{"posts": posts, "pageURL": pageURL, "email": s.Email, "hash": computeHmac256(s.Email, b.config.HMAC.Secret)}
+					hash, err := computeHmac256(s.Email, b.config.HMAC.Secret)
+					if err != nil {
+						log.Fatal(err)
+					}
+					data := pongo2.Context{"posts": posts, "pageURL": pageURL, "email": s.Email, "hash": hash}
 					if err := templates.ExecuteTemplate(buf, "newsletter", data); err != nil {
 						log.Fatal(err)
 					}
@@ -283,11 +286,15 @@ func (b *Blog) sendNewsletter(posts []*Post) {
 	c.Start()
 }
 
-func computeHmac256(message, secret string) string {
+func computeHmac256(message, secret string) (string, error) {
 	key := []byte(secret)
 	h := hmac.New(sha256.New, key)
-	h.Write([]byte(message))
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+	_, err := h.Write([]byte(message))
+	if err != nil {
+		return "", errors.Wrap(err, "hmac.Write")
+	}
+
+	return base64.StdEncoding.EncodeToString(h.Sum(nil)), nil
 }
 
 func (b *Blog) sendEmail(to []string, subject, body string) error {
