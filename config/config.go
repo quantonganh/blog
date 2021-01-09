@@ -20,6 +20,15 @@ type Config struct {
 	HMAC struct {
 		Secret string
 	}
+	Newsletter struct {
+		Product struct {
+			Name string
+		}
+		Frequency int
+	}
+	Cron struct {
+		Spec string
+	}
 }
 
 type Item struct {
