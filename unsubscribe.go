@@ -12,7 +12,10 @@ func (b *Blog) unsubscribeHandler(w http.ResponseWriter, r *http.Request) error 
 	query := r.URL.Query()
 	email := query.Get("email")
 	hash := query.Get("hash")
-	expectedHash := computeHmac256(email, b.config.HMAC.Secret)
+	expectedHash, err := computeHmac256(email, b.config.HMAC.Secret)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	f, err := os.OpenFile(subscribersFile, os.O_RDWR, 0644)
 	if err != nil {
