@@ -1,0 +1,14 @@
+{{ define "newsletter" }}
+    {{ range .posts }}
+    <a href="{{ $.pageURL }}/{{ .URI }}"><h2>{{ .Title }}</h2></a>
+    <p>{{ .Date | toISODate }}</p>
+    <p>Tags:
+        {{ range $_, $tag := .Tags }}
+            <a href="{{ $.pageURL }}/tag/{{ $tag }}">#{{ $tag }}</a>
+        {{ end }}
+    </p>
+    <p>{{ .Description }}</p>
+    <hr>
+    {{ end }}
+    <a href="{{ $.pageURL }}/unsubscribe?email={{ .email }}&hash={{ .hash }}">Unsubscribe</a>
+{{ end }}

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/astaxie/beego/utils/pagination"
 	"github.com/blevesearch/bleve"
@@ -22,7 +23,6 @@ import (
 )
 
 const (
-	title               = "Learning makes me happy"
 	defaultPostsPerPage = 10
 	xmlns               = "http://www.sitemaps.org/schemas/sitemap/0.9"
 	indexPath           = "posts.bleve"
@@ -55,9 +55,10 @@ type Post struct {
 
 func main() {
 	var (
-		configPath string
-		cfg        *config.Config
-		err        error
+		configPath  string
+		cfg         *config.Config
+		err         error
+		latestPosts []*Post
 	)
 
 	posts, err := getAllPosts("posts")
@@ -67,6 +68,17 @@ func main() {
 	b := Blog{
 		posts: posts,
 	}
+
+	now := time.Now()
+	for _, post := range b.posts {
+		if post.Date.Time.AddDate(0, 0, 30).After(now) {
+			latestPosts = append(latestPosts, post)
+		} else {
+			break
+		}
+	}
+
+	b.sendNewsletter(latestPosts)
 
 	flag.StringVar(&configPath, "config", "", "path to config file")
 	flag.Parse()
@@ -92,6 +104,10 @@ func main() {
 	router.HandleFunc("/search", mwError(b.searchHandler))
 	router.HandleFunc("/sitemap.xml", mwError(b.sitemapHandler))
 	router.HandleFunc("/rss.xml", mwError(b.rssHandler))
+	router.HandleFunc("/subscribe", mwError(b.subscribeHandler)).Methods(http.MethodPost)
+	s := router.PathPrefix("/subscribe").Subrouter()
+	s.HandleFunc("/confirm", mwError(b.confirmHandler))
+	router.HandleFunc("/unsubscribe", mwError(b.unsubscribeHandler))
 
 	loggingHandler := handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, router))
 	log.Fatal(http.ListenAndServe(":80", mwURLHost(loggingHandler)))
@@ -243,7 +259,7 @@ func (b *Blog) renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post)
 		endPos = nums
 	}
 
-	data := pongo2.Context{"title": title, "posts": posts[offset:endPos], "paginator": paginator}
+	data := pongo2.Context{"posts": posts[offset:endPos], "paginator": paginator}
 	if b.config != nil {
 		data["navbarItems"] = b.config.Navbar.Items
 	}
