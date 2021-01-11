@@ -32,7 +32,7 @@ steps:
     image: golangci/golangci-lint:v1.33-alpine@sha256:0b26f3287b14b4f254b26f42cd250f25f4bdc69c1a4fc0db53093976372f70b2
     privileged: true
     commands:
-      - if git --no-pager diff --name-only ${DRONE_COMMIT_LINK##*/} | grep -q "\.go$"; then golangci-lint run --deadline 2m -v ./...; fi
+      - golangci-lint run --deadline 2m -v ./...
     environment:
       CGO_ENABLED: 0
       GO111MODULE: "on"
