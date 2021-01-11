@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"encoding/xml"
-	"flag"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -19,95 +19,103 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/quantonganh/blog/subscriber/mail"
+	uuid "github.com/satori/go.uuid"
+	"github.com/spf13/viper"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"github.com/quantonganh/blog/config"
+	"github.com/quantonganh/blog/post"
+	"github.com/quantonganh/blog/subscriber"
 )
 
 const (
 	defaultPostsPerPage = 10
 	xmlns               = "http://www.sitemaps.org/schemas/sitemap/0.9"
 	indexPath           = "posts.bleve"
+	connectionTimeout   = 10 * time.Second
 )
 
 var (
 	funcMap = template.FuncMap{
-		"toISODate": toISODate,
+		"toISODate": post.ToISODate,
 	}
 	templates = template.Must(
 		template.New("").Funcs(funcMap).ParseGlob("templates/*.html"),
 	)
 )
 
-type Blog struct {
-	config *config.Config
-	posts  []*Post
-}
-
-type Post struct {
-	URI         string
-	Title       string
-	Date        publishDate
-	Description string
-	Content     template.HTML
-	Tags        []string
-	HasPrev     bool
-	HasNext     bool
+type app struct {
+	*config.Config
+	post.Blog
+	subscriber.MailingList
+	mail.Mailer
 }
 
 func main() {
-	var (
-		configPath  string
-		cfg         *config.Config
-		err         error
-		latestPosts []*Post
-	)
-
-	posts, err := getAllPosts("posts")
+	posts, err := post.GetAllPosts("posts")
 	if err != nil {
 		log.Fatal(err)
 	}
-	b := Blog{
-		posts: posts,
+
+	blog := post.NewBlog(posts)
+	a := app{
+		Blog: blog,
 	}
 
-	flag.StringVar(&configPath, "config", "", "path to config file")
-	flag.Parse()
-
-	flagSet := make(map[string]bool)
-	flag.Visit(func(f *flag.Flag) { flagSet[f.Name] = true })
-
-	if flagSet["config"] {
-		cfg, err = config.NewConfig(configPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		b.config = cfg
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("./config")
+	viper.AutomaticEnv()
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatal(err)
 	}
 
-	now := time.Now()
-	for _, post := range b.posts {
-		if post.Date.Time.AddDate(0, 0, b.config.Newsletter.Frequency).After(now) {
-			latestPosts = append(latestPosts, post)
-		} else {
-			break
-		}
+	var cfg *config.Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		log.Fatal(err)
 	}
+	a.Config = cfg
 
-	b.sendNewsletter(latestPosts)
+	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = client.Disconnect(ctx)
+	}()
+
+	db := client.Database("mailing_list")
+	ml := subscriber.NewMailingList(db)
+	a.MailingList = ml
+
+	pageURL, err := url.Parse(os.Getenv("PAGE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.Mailer = mail.NewGmail(pageURL, cfg, templates, ml)
+	latestPosts := blog.GetLatestPosts(a.Config.Newsletter.Frequency)
+	a.Mailer.SendNewsletter(latestPosts)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/favicon.ico", faviconHandler)
-	router.HandleFunc("/", mwError(b.homeHandler))
-	router.NotFoundHandler = mwError(b.homeHandler)
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mwError(b.postHandler))
-	router.HandleFunc("/tag/{tagName}", mwError(b.tagHandler))
+	router.HandleFunc("/", mwError(a.homeHandler(posts)))
+	router.NotFoundHandler = mwError(a.homeHandler(posts))
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mwError(a.postHandler))
+	router.HandleFunc("/tag/{tagName}", mwError(a.tagHandler))
 	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
-	router.HandleFunc("/search", mwError(b.searchHandler))
-	router.HandleFunc("/sitemap.xml", mwError(b.sitemapHandler))
-	router.HandleFunc("/rss.xml", mwError(b.rssHandler))
-	router.HandleFunc("/subscribe", mwError(b.subscribeHandler)).Methods(http.MethodPost)
+	router.HandleFunc("/search", mwError(a.searchHandler))
+	router.HandleFunc("/sitemap.xml", mwError(a.sitemapHandler(posts)))
+	router.HandleFunc("/rss.xml", mwError(a.rssHandler(posts)))
+
+	router.HandleFunc("/subscribe", mwError(a.subscribeHandler(uuid.NewV4().String()))).Methods(http.MethodPost)
 	s := router.PathPrefix("/subscribe").Subrouter()
-	s.HandleFunc("/confirm", mwError(b.confirmHandler))
-	router.HandleFunc("/unsubscribe", mwError(b.unsubscribeHandler))
+	s.HandleFunc("/confirm", mwError(a.confirmHandler))
+	router.HandleFunc("/unsubscribe", mwError(a.unsubscribeHandler))
 
 	loggingHandler := handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, router))
 	log.Fatal(http.ListenAndServe(":80", mwURLHost(loggingHandler)))
@@ -138,27 +146,29 @@ func mwError(hf handlerFunc) http.HandlerFunc {
 	}
 }
 
-func (b *Blog) homeHandler(w http.ResponseWriter, r *http.Request) error {
-	return b.renderHTML(w, r, b.posts)
+func (a *app) homeHandler(posts []*post.Post) handlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		return a.renderHTML(w, r, posts)
+	}
 }
 
-func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) error {
+func (a *app) postHandler(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	year := vars["year"]
 	month := vars["month"]
 	fileName := vars["postName"]
 
-	currentPost, err := parseMarkdown(context.Background(), filepath.Join("posts", year, month, fileName+".md"))
+	currentPost, err := post.ParseMarkdown(context.Background(), filepath.Join("posts", year, month, fileName+".md"))
 	if err != nil {
 		return err
 	}
 
-	relatedPosts, err := getRelatedPosts(b.posts, currentPost)
+	relatedPosts, err := a.Blog.GetRelatedPosts(currentPost)
 	if err != nil {
 		return err
 	}
 
-	previousPost, nextPost := getPreviousAndNextPost(b.posts, currentPost)
+	previousPost, nextPost := a.Blog.GetPreviousAndNextPost(currentPost)
 	if previousPost != nil {
 		currentPost.HasPrev = true
 	}
@@ -172,8 +182,8 @@ func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	data := pongo2.Context{"title": currentPost.Title, "currentPost": currentPost, "relatedPosts": relatedPosts, "previousPost": previousPost, "nextPost": nextPost, "remark42": remark42}
-	if b.config != nil {
-		data["navbarItems"] = b.config.Navbar.Items
+	if a.Config != nil {
+		data["navbarItems"] = a.Config.Navbar.Items
 	}
 	if err := templates.ExecuteTemplate(w, "post", data); err != nil {
 		return err
@@ -182,28 +192,28 @@ func (b *Blog) postHandler(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (b *Blog) tagHandler(w http.ResponseWriter, r *http.Request) error {
+func (a *app) tagHandler(w http.ResponseWriter, r *http.Request) error {
 	tag := mux.Vars(r)["tagName"]
 
-	postsByTag, err := getPostsByTag(b.posts, tag)
+	postsByTag, err := a.Blog.GetPostsByTag(tag)
 	if err != nil {
 		return err
 	}
 
-	if err := b.renderHTML(w, r, postsByTag); err != nil {
+	if err := a.renderHTML(w, r, postsByTag); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
+func (a *app) searchHandler(w http.ResponseWriter, r *http.Request) error {
 	var (
 		index bleve.Index
 		err   error
 	)
 	if _, err = os.Stat(indexPath); os.IsNotExist(err) {
-		index, err = b.indexPosts(indexPath)
+		index, err = a.Blog.IndexPosts(indexPath)
 		if err != nil {
 			return errors.Errorf("failed to index posts: %v", err)
 		}
@@ -223,19 +233,19 @@ func (b *Blog) searchHandler(w http.ResponseWriter, r *http.Request) error {
 		return errors.Errorf("failed to parse form: %v", err)
 	}
 
-	searchPosts, err := b.search(index, r.FormValue("q"))
+	searchPosts, err := a.Blog.Search(index, r.FormValue("q"))
 	if err != nil {
 		return errors.Errorf("failed to search: %v", err)
 	}
 
-	if err := b.renderHTML(w, r, searchPosts); err != nil {
+	if err := a.renderHTML(w, r, searchPosts); err != nil {
 		return errors.Errorf("failed to render HTML: %v", err)
 	}
 
 	return nil
 }
 
-func (b *Blog) renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post) error {
+func (a *app) renderHTML(w http.ResponseWriter, r *http.Request, posts []*post.Post) error {
 	var (
 		postsPerPage int
 		err          error
@@ -260,8 +270,8 @@ func (b *Blog) renderHTML(w http.ResponseWriter, r *http.Request, posts []*Post)
 	}
 
 	data := pongo2.Context{"posts": posts[offset:endPos], "paginator": paginator}
-	if b.config != nil {
-		data["navbarItems"] = b.config.Navbar.Items
+	if a.Config != nil {
+		data["navbarItems"] = a.Config.Navbar.Items
 	}
 	if err := templates.ExecuteTemplate(w, "home", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
@@ -281,36 +291,38 @@ type URL struct {
 	LastMod string `xml:"lastmod,omitempty"`
 }
 
-func (b *Blog) sitemapHandler(w http.ResponseWriter, r *http.Request) error {
-	scheme := "http"
-	if xForwardedProto := r.Header.Get("X-Forwarded-Proto"); xForwardedProto != "" {
-		scheme = xForwardedProto
-	}
+func (a *app) sitemapHandler(posts []*post.Post) handlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		scheme := "http"
+		if xForwardedProto := r.Header.Get("X-Forwarded-Proto"); xForwardedProto != "" {
+			scheme = xForwardedProto
+		}
 
-	sitemap := Sitemap{
-		XMLNS: xmlns,
-		URLs: []URL{
-			{
-				Loc: fmt.Sprintf("%s://%s", scheme, r.Host),
+		sitemap := Sitemap{
+			XMLNS: xmlns,
+			URLs: []URL{
+				{
+					Loc: fmt.Sprintf("%s://%s", scheme, r.Host),
+				},
 			},
-		},
-	}
+		}
 
-	for _, post := range b.posts {
-		sitemap.URLs = append(sitemap.URLs, URL{
-			Loc:     fmt.Sprintf("%s://%s/%s", scheme, r.Host, post.URI),
-			LastMod: toISODate(post.Date),
-		})
-	}
+		for _, p := range posts {
+			sitemap.URLs = append(sitemap.URLs, URL{
+				Loc:     fmt.Sprintf("%s://%s/%s", scheme, r.Host, p.URI),
+				LastMod: post.ToISODate(p.Date),
+			})
+		}
 
-	output, err := xml.MarshalIndent(sitemap, "  ", "    ")
-	if err != nil {
-		return err
-	}
-	_, err = w.Write([]byte(xml.Header + string(output)))
-	if err != nil {
-		return err
-	}
+		output, err := xml.MarshalIndent(sitemap, "  ", "    ")
+		if err != nil {
+			return err
+		}
+		_, err = w.Write([]byte(xml.Header + string(output)))
+		if err != nil {
+			return err
+		}
 
-	return nil
+		return nil
+	}
 }

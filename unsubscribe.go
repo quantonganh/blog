@@ -3,44 +3,28 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/pkg/errors"
+	"github.com/quantonganh/blog/subscriber/hash"
 )
 
-func (b *Blog) unsubscribeHandler(w http.ResponseWriter, r *http.Request) error {
+const unsubscribeMessage = "Unsubscribed"
+
+func (a *app) unsubscribeHandler(w http.ResponseWriter, r *http.Request) error {
 	query := r.URL.Query()
 	email := query.Get("email")
-	hash := query.Get("hash")
-	expectedHash, err := computeHmac256(email, b.config.HMAC.Secret)
+	hashValue := query.Get("hash")
+	expectedHash, err := hash.ComputeHmac256(email, a.Config.Newsletter.HMAC.Secret)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	f, err := os.OpenFile(subscribersFile, os.O_RDWR, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		_ = f.Close()
-	}()
-
-	ml := &mailingList{}
-	if hash == expectedHash {
-		if err := ml.Load(f); err != nil {
-			return errors.Errorf("failed to load file %subscribers: %v", subscribersFile, err)
+	if hashValue == expectedHash {
+		if err := a.MailingList.Unsubscribe(email); err != nil {
+			return err
 		}
 
-		for i, s := range ml.Subscribers {
-			if s.Email == email {
-				ml.Subscribers = append(ml.Subscribers[:i], ml.Subscribers[i+1:]...)
-				if err := ml.Save(f); err != nil {
-					return err
-				}
-				return b.renderSubscribe(w, "Unsubscribed")
-			}
-		}
+		return a.renderSubscribe(w, unsubscribeMessage)
 	}
 
-	return b.renderSubscribe(w, "Either email or hash is invalid.")
+	return a.renderSubscribe(w, "Either email or hash is invalid.")
 }
