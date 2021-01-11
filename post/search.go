@@ -1,4 +1,4 @@
-package main
+package post
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (b *Blog) indexPosts(path string) (bleve.Index, error) {
+func (b *blog) IndexPosts(path string) (bleve.Index, error) {
 	indexMapping := bleve.NewIndexMapping()
 	index, err := bleve.NewUsing(path, indexMapping, scorch.Name, scorch.Name, nil)
 	if err != nil {
@@ -67,7 +67,7 @@ func indexPost(ctx context.Context, mapping *mapping.IndexMappingImpl, index ble
 	}
 }
 
-func (b *Blog) search(index bleve.Index, value string) ([]*Post, error) {
+func (b *blog) Search(index bleve.Index, value string) ([]*Post, error) {
 	query := bleve.NewMatchQuery(value)
 	request := bleve.NewSearchRequest(query)
 	request.Fields = []string{"_source"}
