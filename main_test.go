@@ -9,28 +9,38 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/quantonganh/blog/post"
 )
 
 func TestHandler(t *testing.T) {
-	posts, err := getAllPosts("posts")
+	posts, err := post.GetAllPosts("posts")
 	assert.NoError(t, err)
 	assert.NotZero(t, len(posts))
-	b := Blog{
-		posts: posts,
+	a := app{
+		Blog: post.NewBlog(posts),
 	}
 
-	t.Run("homeHandler", b.testHomeHandler)
+	t.Run("homeHandler", func(t *testing.T) {
+		a.testHomeHandler(t, posts)
+	})
 
-	t.Run("postHandler", b.testPostHandler)
+	t.Run("postHandler", a.testPostHandler)
 
-	t.Run("tagHandler", b.testTagHandler)
+	t.Run("tagHandler", a.testTagHandler)
 
-	t.Run("searchHandler", b.testSearchHandler)
+	t.Run("searchHandler", a.testSearchHandler)
+
+	t.Run("subscribeHandler", a.testSubscribeHandler)
+
+	t.Run("confirmHandler", a.testConfirmHandler)
+
+	t.Run("unsubscribeHandler", a.testUnsubscribeHandler)
 }
 
-func (b *Blog) testHomeHandler(t *testing.T) {
+func (a *app) testHomeHandler(t *testing.T, posts []*post.Post) {
 	router := mux.NewRouter()
-	router.HandleFunc("/", mwError(b.homeHandler))
+	router.HandleFunc("/", mwError(a.homeHandler(posts)))
 
 	writer := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/", nil)
@@ -40,9 +50,9 @@ func (b *Blog) testHomeHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, writer.Code)
 }
 
-func (b *Blog) testPostHandler(t *testing.T) {
+func (a *app) testPostHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mwError(b.postHandler))
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mwError(a.postHandler))
 
 	writer := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/2019/09/19/about", nil)
@@ -52,9 +62,9 @@ func (b *Blog) testPostHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, writer.Code)
 }
 
-func (b *Blog) testTagHandler(t *testing.T) {
+func (a *app) testTagHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/tag/test", mwError(b.tagHandler))
+	router.HandleFunc("/tag/test", mwError(a.tagHandler))
 
 	writer := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/tag/test", nil)
@@ -64,9 +74,9 @@ func (b *Blog) testTagHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, writer.Code)
 }
 
-func (b *Blog) testSearchHandler(t *testing.T) {
+func (a *app) testSearchHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/search", mwError(b.searchHandler))
+	router.HandleFunc("/search", mwError(a.searchHandler))
 
 	writer := httptest.NewRecorder()
 	formData := url.Values{}
