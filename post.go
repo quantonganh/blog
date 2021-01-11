@@ -14,8 +14,8 @@ import (
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/pkg/errors"
+	bf "github.com/russross/blackfriday/v2"
 	"golang.org/x/sync/errgroup"
-	bf "gopkg.in/russross/blackfriday.v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -110,7 +110,7 @@ func parseMarkdown(ctx context.Context, filename string) (*Post, error) {
 
 		content := strings.Join(lines[closingMetadataLine+1:], "\n")
 		options := []html.Option{
-			html.WithLineNumbers(),
+			html.WithLineNumbers(true),
 		}
 
 		p.Content = template.HTML(bf.Run(

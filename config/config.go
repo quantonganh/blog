@@ -11,6 +11,15 @@ type Config struct {
 	Navbar struct {
 		Items []Item
 	}
+	SMTP struct {
+		Host     string
+		Port     int
+		Username string
+		Password string
+	}
+	HMAC struct {
+		Secret string
+	}
 }
 
 type Item struct {
