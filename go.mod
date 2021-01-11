@@ -17,9 +17,14 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/satori/go.uuid v1.2.0
+	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.6.1
+	go.mongodb.org/mongo-driver v1.4.4
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/mail.v2 v2.3.1
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
+	gopkg.in/yaml.v2 v2.2.8
 )
