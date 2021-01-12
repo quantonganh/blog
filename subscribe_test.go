@@ -87,9 +87,10 @@ func getResponseMessage(body io.ReadCloser) string {
 	tokenizer := html.NewTokenizer(body)
 	for {
 		tokenType := tokenizer.Next()
-
-		if err := tokenizer.Err(); err == io.EOF {
-			break
+		if tokenType == html.ErrorToken {
+			if err := tokenizer.Err(); err == io.EOF {
+				break
+			}
 		}
 
 		token := tokenizer.Token()

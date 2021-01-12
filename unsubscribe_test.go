@@ -31,6 +31,7 @@ newsletter:
 
 	email := "foo@gmail.com"
 	hashValue, err := hash.ComputeHmac256(email, a.Config.Newsletter.HMAC.Secret)
+	require.NoError(t, err)
 
 	ml := new(subscriberMocks.MailingList)
 	ml.On("Unsubscribe", email).Return(nil)
