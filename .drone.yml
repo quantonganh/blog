@@ -54,6 +54,15 @@ steps:
       CGO_ENABLED: 0
       GO111MODULE: "on"
 
+  - name: index-posts
+    image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
+    privileged: true
+    volumes:
+      - name: cache
+        path: /go
+    commands:
+      - go run -mod=vendor cmd/index/main.go
+
   - name: build
     image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
     privileged: true
