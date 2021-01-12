@@ -22,6 +22,9 @@ steps:
   - name: go-mod
     image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
     privileged: true
+    volumes:
+      - name: cache
+        path: /go
     commands:
       - go mod vendor
     environment:
@@ -30,6 +33,9 @@ steps:
   - name: static-check
     image: golangci/golangci-lint:v1.33-alpine@sha256:0b26f3287b14b4f254b26f42cd250f25f4bdc69c1a4fc0db53093976372f70b2
     privileged: true
+    volumes:
+      - name: cache
+        path: /go
     commands:
       - golangci-lint run --modules-download-mode=vendor --deadline=2m -v ./...
     environment:
@@ -39,6 +45,9 @@ steps:
   - name: test
     image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
     privileged: true
+    volumes:
+      - name: cache
+        path: /go
     commands:
       - go test -mod=vendor -v ./...
     environment:
@@ -48,6 +57,9 @@ steps:
   - name: build
     image: golang:1.15@sha256:4e8d5b8651f6ad69d9d15cf14ae8cfbc94fa33269f521e42598a2c7dbe2cfedd
     privileged: true
+    volumes:
+      - name: cache
+        path: /go
     environment:
       CGO_ENABLED: 0
     commands:
@@ -84,6 +96,11 @@ steps:
     when:
       branch:
         - master
+
+volumes:
+  - name: cache
+    temp:
+      medium: memory
 
 image_pull_secrets:
   - dockerconfigjson
