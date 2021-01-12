@@ -65,6 +65,9 @@ steps:
         from_secret: docker_password
       tags:
         - ${DRONE_SOURCE_BRANCH}
+      cache_from:
+        - docker.quantonganh.com/quanta/blog:master
+        - docker.quantonganh.com/quanta/blog:${DRONE_SOURCE_BRANCH}
 
   - name: deploy
     image: appleboy/drone-ssh:1.6-linux-arm64
