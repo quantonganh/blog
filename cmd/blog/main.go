@@ -19,7 +19,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/quantonganh/blog/subscriber/mail"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,6 +27,7 @@ import (
 	"github.com/quantonganh/blog/config"
 	"github.com/quantonganh/blog/post"
 	"github.com/quantonganh/blog/subscriber"
+	"github.com/quantonganh/blog/subscriber/mail"
 )
 
 const (
