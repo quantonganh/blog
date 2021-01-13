@@ -1,5 +1,5 @@
 .env
 .idea
-blog
-config/config.yaml
-posts.bleve
+/blog
+/config.yaml
+/posts.bleve
