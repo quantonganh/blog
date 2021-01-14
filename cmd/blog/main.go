@@ -26,6 +26,7 @@ func main() {
 	}
 
 	viper.SetDefault("posts.dir", "posts")
+	viper.SetDefault("templates.dir", "http/html/templates")
 	viper.SetDefault("http.domain", "http://localhost")
 	viper.SetDefault("db.dsn", "mongodb://localhost:27017")
 
