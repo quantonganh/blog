@@ -30,11 +30,11 @@ func (s *Server) subscribeHandler(token string) mw.ErrHandlerFunc {
 		subscribe, err := s.SubscribeService.FindByEmail(email)
 		if err != nil {
 			if err == gomongo.ErrNoDocuments {
-				if err := s.SubscribeService.Insert(newSubscriber); err != nil {
+				if err := s.SMTPService.SendConfirmationEmail(email, token); err != nil {
 					return err
 				}
 
-				if err := s.SMTPService.SendConfirmationEmail(email, token); err != nil {
+				if err := s.SubscribeService.Insert(newSubscriber); err != nil {
 					return err
 				}
 
