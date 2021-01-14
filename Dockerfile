@@ -1,6 +1,6 @@
 FROM scratch
 
-COPY assets assets
+COPY http/assets assets
 COPY favicon.ico .
 COPY posts posts
 COPY posts.bleve posts.bleve
