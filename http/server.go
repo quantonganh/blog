@@ -108,5 +108,5 @@ func (s *Server) Close() error {
 }
 
 func logging(next http.Handler) http.Handler {
-	return handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, next))
+	return mw.URLHost(handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, next)))
 }
