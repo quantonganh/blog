@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/Depado/bfchroma v1.3.0
+	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/alecthomas/chroma v0.8.2
 	github.com/astaxie/beego v1.12.0
 	github.com/blevesearch/bleve v1.0.14
