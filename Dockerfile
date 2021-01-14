@@ -4,7 +4,7 @@ COPY http/assets assets
 COPY favicon.ico .
 COPY posts posts
 COPY posts.bleve posts.bleve
-COPY templates templates
+COPY http/html/templates html/templates
 COPY blog .
 
 EXPOSE 80
