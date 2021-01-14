@@ -25,9 +25,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	viper.SetDefault("http.addr", ":80")
 	viper.SetDefault("posts.dir", "posts")
 	viper.SetDefault("templates.dir", "http/html/templates")
-	viper.SetDefault("http.domain", "http://localhost")
 	viper.SetDefault("db.dsn", "mongodb://localhost:27017")
 
 	var cfg *blog.Config
@@ -83,17 +83,20 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
+	a.httpServer.Addr = a.config.HTTP.Addr
+	a.httpServer.Domain = a.config.HTTP.Domain
+
+	if err := a.httpServer.Open(); err != nil {
+		return err
+	}
+
 	subscribeService := mongo.NewSubscribeService(a.db)
 	a.httpServer.SubscribeService = subscribeService
-	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.Templates, subscribeService)
+	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.URL(), a.httpServer.Templates, subscribeService)
 
 	latestPosts := a.httpServer.PostService.GetLatestPosts(a.config.Newsletter.Frequency)
 	if len(latestPosts) > 0 {
 		a.httpServer.SMTPService.SendNewsletter(latestPosts)
-	}
-
-	if err := a.httpServer.Open(); err != nil {
-		return err
 	}
 
 	return nil
