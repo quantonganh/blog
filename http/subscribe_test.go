@@ -1,4 +1,4 @@
-package main
+package http
 
 import (
 	"fmt"
@@ -12,31 +12,32 @@ import (
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
+	gomongo "go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/net/html"
 
-	"github.com/quantonganh/blog/subscriber"
-	mailMocks "github.com/quantonganh/blog/subscriber/mail/mocks"
-	subscriberMocks "github.com/quantonganh/blog/subscriber/mocks"
+	"github.com/quantonganh/blog"
+	"github.com/quantonganh/blog/http/mw"
+	"github.com/quantonganh/blog/mock"
+	"github.com/quantonganh/blog/mongo"
 )
 
-func (a *app) testSubscribeHandler(t *testing.T) {
+func (s *Server) testSubscribeHandler(t *testing.T) {
 	email := "foo@gmail.com"
 	token := uuid.NewV4().String()
 
-	s := &subscriber.Subscriber{}
-	ml := new(subscriberMocks.MailingList)
-	ml.On("FindByEmail", email).Return(s, mongo.ErrNoDocuments)
-	ml.On("Insert", subscriber.New(email, token)).Return(nil)
+	subscribe := &blog.Subscribe{}
+	subscribeService := new(mock.SubscribeService)
+	subscribeService.On("FindByEmail", email).Return(subscribe, gomongo.ErrNoDocuments)
+	subscribeService.On("Insert", blog.NewSubscribe(email, token, mongo.StatusPending)).Return(nil)
 
-	mailer := new(mailMocks.Mailer)
-	mailer.On("SendConfirmationEmail", email, token).Return(nil)
+	smtpService := new(mock.SMTPService)
+	smtpService.On("SendConfirmationEmail", email, token).Return(nil)
 
-	a.MailingList = ml
-	a.Mailer = mailer
+	s.SubscribeService = subscribeService
+	s.SMTPService = smtpService
 
 	router := mux.NewRouter()
-	router.HandleFunc("/subscribe", mwError(a.subscribeHandler(token))).Methods(http.MethodPost)
+	router.HandleFunc("/subscribe", mw.Error(s.subscribeHandler(token))).Methods(http.MethodPost)
 
 	form := url.Values{}
 	form.Add("email", email)
@@ -52,23 +53,23 @@ func (a *app) testSubscribeHandler(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf(confirmationMessage, email), getResponseMessage(resp.Body))
 }
 
-func (a *app) testConfirmHandler(t *testing.T) {
+func (s *Server) testConfirmHandler(t *testing.T) {
 	email := "foo@gmail.com"
 	token := uuid.NewV4().String()
 
-	s := subscriber.New(email, token)
-	ml := new(subscriberMocks.MailingList)
-	ml.On("Subscribe", token).Return(nil)
-	ml.On("FindByToken", token).Return(s, nil)
+	subscribe := blog.NewSubscribe(email, token, mongo.StatusPending)
+	subscribeService := new(mock.SubscribeService)
+	subscribeService.On("Subscribe", token).Return(nil)
+	subscribeService.On("FindByToken", token).Return(subscribe, nil)
 
-	mailer := new(mailMocks.Mailer)
-	mailer.On("SendThankYouEmail", email).Return(nil)
+	smtpService := new(mock.SMTPService)
+	smtpService.On("SendThankYouEmail", email).Return(nil)
 
-	a.MailingList = ml
-	a.Mailer = mailer
+	s.SubscribeService = subscribeService
+	s.SMTPService = smtpService
 
 	router := mux.NewRouter()
-	router.HandleFunc("/subscribe/confirm", mwError(a.confirmHandler))
+	router.HandleFunc("/subscribe/confirm", mw.Error(s.confirmHandler))
 
 	form := url.Values{}
 	form.Add("email", email)

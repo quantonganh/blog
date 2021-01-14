@@ -1,103 +1,34 @@
-package post
+package ondisk
 
 import (
 	"context"
 	"html/template"
+	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Depado/bfchroma"
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
-	"github.com/blevesearch/bleve"
 	"github.com/pkg/errors"
 	bf "github.com/russross/blackfriday/v2"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
+
+	"github.com/quantonganh/blog"
 )
 
 const (
 	yamlSeparator = "---"
-
-	layoutUnix = "Mon Jan 2 15:04:05 -07 2006"
-	layoutISO  = "2006-01-02"
 )
 
-type Blog interface {
-	GetLatestPosts(days int) []*Post
-	GetRelatedPosts(currentPost *Post) (map[string]*Post, error)
-	GetPostsByTag(tag string) ([]*Post, error)
-	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
-	IndexPosts(path string) (bleve.Index, error)
-	Search(index bleve.Index, value string) ([]*Post, error)
-}
-
-type Post struct {
-	URI         string
-	Title       string
-	Date        publishDate
-	Description string
-	Content     template.HTML
-	Tags        []string
-	HasPrev     bool
-	HasNext     bool
-}
-
-type publishDate struct {
-	time.Time
-}
-
-func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var pd string
-	if err := unmarshal(&pd); err != nil {
-		return err
-	}
-
-	layouts := []string{layoutUnix, layoutISO}
-	for _, layout := range layouts {
-		date, err := time.Parse(layout, pd)
-		if err == nil {
-			d.Time = date
-			return nil
-		}
-	}
-
-	return errors.Errorf("Unrecognized date format: %s", pd)
-}
-
-func ToISODate(d publishDate) string {
-	return d.Time.Format(layoutISO)
-}
-
-func getYear(d publishDate) string {
-	return strconv.Itoa(d.Time.Year())
-}
-
-func getMonth(d publishDate) string {
-	month := int(d.Time.Month())
-	if month < 10 {
-		return "0" + strconv.Itoa(month)
-	}
-
-	return strconv.Itoa(month)
-}
-
-func getDay(d publishDate) string {
-	day := d.Time.Day()
-	if day < 10 {
-		return "0" + strconv.Itoa(day)
-	}
-
-	return strconv.Itoa(day)
-}
-
-func GetAllPosts(root string) ([]*Post, error) {
+func GetAllPosts(root string) ([]*blog.Post, error) {
 	g, ctx := errgroup.WithContext(context.Background())
 	paths := make(chan string)
 	g.Go(func() error {
@@ -118,9 +49,13 @@ func GetAllPosts(root string) ([]*Post, error) {
 		})
 	})
 
-	postsCh := make(chan *Post)
+	postsCh := make(chan *blog.Post)
 	g.Go(func() error {
-		for f := range paths {
+		for p := range paths {
+			f, err := os.Open(p)
+			if err != nil {
+				return errors.Wrapf(err, "failed to open file: %s", p)
+			}
 			post, err := ParseMarkdown(ctx, f)
 			if err != nil {
 				return err
@@ -139,7 +74,7 @@ func GetAllPosts(root string) ([]*Post, error) {
 		close(postsCh)
 	}()
 
-	var posts []*Post
+	var posts []*blog.Post
 	for post := range postsCh {
 		posts = append(posts, post)
 	}
@@ -155,22 +90,32 @@ func GetAllPosts(root string) ([]*Post, error) {
 	return posts, nil
 }
 
-type blog struct {
-	posts []*Post
+type postService struct {
+	posts []*blog.Post
 }
 
-func NewBlog(posts []*Post) *blog {
-	return &blog{
+func NewPostService(posts []*blog.Post) *postService {
+	return &postService{
 		posts: posts,
 	}
 }
 
-func (b *blog) GetLatestPosts(days int) []*Post {
+func (ps *postService) GetPostByURI(uri string) *blog.Post {
+	for _, p := range ps.posts {
+		if p.URI == uri {
+			return p
+		}
+	}
+
+	return nil
+}
+
+func (ps *postService) GetLatestPosts(days int) []*blog.Post {
 	var (
 		now         = time.Now()
-		latestPosts []*Post
+		latestPosts []*blog.Post
 	)
-	for _, post := range b.posts {
+	for _, post := range ps.posts {
 		if post.Date.Time.AddDate(0, 0, days).After(now) {
 			latestPosts = append(latestPosts, post)
 		} else {
@@ -181,14 +126,14 @@ func (b *blog) GetLatestPosts(days int) []*Post {
 	return latestPosts
 }
 
-func ParseMarkdown(ctx context.Context, filename string) (*Post, error) {
+func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		postContent, err := ioutil.ReadFile(filename)
+		postContent, err := ioutil.ReadAll(r)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read file: %s", filename)
+			return nil, errors.Wrapf(err, "failed to read from io.Reader")
 		}
 
 		var closingMetadataLine int
@@ -203,12 +148,17 @@ func ParseMarkdown(ctx context.Context, filename string) (*Post, error) {
 
 		metadata := strings.Join(lines[1:closingMetadataLine], "\n")
 
-		p := Post{}
+		p := blog.Post{}
 		if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
-			return nil, errors.Wrapf(err, "failed to decode metadata of file: %s", filename)
+			return nil, errors.Wrapf(err, "failed to decode metadata")
 		}
-		basename := filepath.Base(filename)
-		p.URI = path.Join(getYear(p.Date), getMonth(p.Date), getDay(p.Date), strings.TrimSuffix(basename, filepath.Ext(basename)))
+		switch v := r.(type) {
+		case *os.File:
+			basename := filepath.Base(v.Name())
+			p.URI = path.Join(blog.GetYear(p.Date), blog.GetMonth(p.Date), blog.GetDay(p.Date), strings.TrimSuffix(basename, filepath.Ext(basename)))
+		default:
+			p.URI = path.Join(blog.GetYear(p.Date), blog.GetMonth(p.Date), blog.GetDay(p.Date), url.QueryEscape(strings.ToLower(p.Title)))
+		}
 
 		content := strings.Join(lines[closingMetadataLine+1:], "\n")
 		options := []html.Option{
@@ -230,10 +180,10 @@ func ParseMarkdown(ctx context.Context, filename string) (*Post, error) {
 	}
 }
 
-func (b *blog) GetRelatedPosts(currentPost *Post) (map[string]*Post, error) {
-	relatedPosts := make(map[string]*Post)
+func (ps *postService) GetRelatedPosts(currentPost *blog.Post) (map[string]*blog.Post, error) {
+	relatedPosts := make(map[string]*blog.Post)
 	for _, tag := range currentPost.Tags {
-		postsByTag, err := b.GetPostsByTag(tag)
+		postsByTag, err := ps.GetPostsByTag(tag)
 		if err != nil {
 			return nil, err
 		}
@@ -248,9 +198,9 @@ func (b *blog) GetRelatedPosts(currentPost *Post) (map[string]*Post, error) {
 	return relatedPosts, nil
 }
 
-func (b *blog) GetPostsByTag(tag string) ([]*Post, error) {
-	var postsByTag []*Post
-	for _, post := range b.posts {
+func (ps *postService) GetPostsByTag(tag string) ([]*blog.Post, error) {
+	var postsByTag []*blog.Post
+	for _, post := range ps.posts {
 		for _, t := range post.Tags {
 			if t == tag {
 				postsByTag = append(postsByTag, post)
@@ -261,14 +211,14 @@ func (b *blog) GetPostsByTag(tag string) ([]*Post, error) {
 	return postsByTag, nil
 }
 
-func (b *blog) GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post) {
-	for i, post := range b.posts {
+func (ps *postService) GetPreviousAndNextPost(currentPost *blog.Post) (previousPost, nextPost *blog.Post) {
+	for i, post := range ps.posts {
 		if currentPost.URI == post.URI {
-			if i < len(b.posts)-1 {
-				previousPost = b.posts[i+1]
+			if i < len(ps.posts)-1 {
+				previousPost = ps.posts[i+1]
 			}
 			if i > 0 {
-				nextPost = b.posts[i-1]
+				nextPost = ps.posts[i-1]
 			}
 			break
 		}
