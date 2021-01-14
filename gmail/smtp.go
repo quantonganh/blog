@@ -19,14 +19,16 @@ import (
 )
 
 type smtpService struct {
+	ServerURL string
 	*blog.Config
 	*template.Template
 	blog.SubscribeService
 }
 
-func NewSMTPService(config *blog.Config, template *template.Template, subscribeService blog.SubscribeService) *smtpService {
+func NewSMTPService(config *blog.Config, serverURL string, template *template.Template, subscribeService blog.SubscribeService) *smtpService {
 	return &smtpService{
 		Config:           config,
+		ServerURL:        serverURL,
 		Template:         template,
 		SubscribeService: subscribeService,
 	}
@@ -36,7 +38,7 @@ func (smtp *smtpService) SendConfirmationEmail(to, token string) error {
 	h := hermes.Hermes{
 		Product: hermes.Product{
 			Name: smtp.Config.Newsletter.Product.Name,
-			Link: smtp.Config.HTTP.Domain,
+			Link: smtp.ServerURL,
 		},
 	}
 
@@ -52,7 +54,7 @@ func (smtp *smtpService) SendConfirmationEmail(to, token string) error {
 					Button: hermes.Button{
 						Color: "#22BC66",
 						Text:  "Confirm your subscription",
-						Link:  fmt.Sprintf("%s/subscribe/confirm?token=%s", smtp.Config.HTTP.Domain, token),
+						Link:  fmt.Sprintf("%s/subscribe/confirm?token=%s", smtp.ServerURL, token),
 					},
 				},
 			},
@@ -71,7 +73,7 @@ func (smtp *smtpService) SendThankYouEmail(to string) error {
 	h := hermes.Hermes{
 		Product: hermes.Product{
 			Name: smtp.Config.Newsletter.Product.Name,
-			Link: smtp.Config.HTTP.Domain,
+			Link: smtp.ServerURL,
 		},
 	}
 
@@ -119,7 +121,7 @@ func (smtp *smtpService) SendNewsletter(posts []*blog.Post) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			data := pongo2.Context{"posts": posts, "pageURL": smtp.Config.HTTP.Domain, "email": s.Email, "hash": hash}
+			data := pongo2.Context{"posts": posts, "pageURL": smtp.ServerURL, "email": s.Email, "hash": hash}
 			if err := smtp.Template.ExecuteTemplate(buf, "newsletter", data); err != nil {
 				log.Fatal(err)
 			}

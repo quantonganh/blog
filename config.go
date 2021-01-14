@@ -14,6 +14,7 @@ type Config struct {
 	}
 
 	HTTP struct {
+		Addr   string
 		Domain string
 	}
 
