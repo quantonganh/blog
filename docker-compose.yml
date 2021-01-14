@@ -9,6 +9,8 @@ volumes:
     driver: local
   registry:
     driver: local
+  mongo:
+    driver: local
 
 services:
   traefik:
@@ -95,6 +97,14 @@ services:
       - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
       - DRONE_RUNNER_CAPACITY=2
 
+  mongo:
+    image: mongo:4.4@sha256:66fd4f8f09e92de8744c76702e836f0fc5831255318373435935bc3d589b5f08
+    privileged: true
+    container_name: mongo
+    restart: always
+    volumes:
+      - mongo:/data/db
+
   blog:
     image: docker.quantonganh.com/quanta/blog:master
     container_name: blog
@@ -115,6 +125,27 @@ services:
       - traefik.http.routers.blog-secured.entrypoints=https
       - traefik.http.routers.blog-secured.tls=true
       - traefik.http.routers.blog-secured.tls.certresolver=le
+
+  dev:
+    image: docker.quantonganh.com/quanta/blog:dev
+    container_name: dev
+    restart: always
+    volumes:
+      - ./config.yaml:/config.yaml:ro
+    command: -config config.yaml
+    environment:
+      - REMARK_URL=https://${REMARK_DOMAIN}
+      - PAGE_URL=https://dev.${BLOG_DOMAIN}
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.dev.loadbalancer.server.port=80
+      - traefik.http.routers.dev.rule=Host(`dev.${BLOG_DOMAIN}`)
+      - traefik.http.routers.dev.entrypoints=http
+      - traefik.http.routers.dev.middlewares=https-redirect@file
+      - traefik.http.routers.dev-secured.rule=Host(`dev.${BLOG_DOMAIN}`)
+      - traefik.http.routers.dev-secured.entrypoints=https
+      - traefik.http.routers.dev-secured.tls=true
+      - traefik.http.routers.dev-secured.tls.certresolver=le
 
   remark42:
     build: .
