@@ -73,7 +73,7 @@ steps:
     environment:
       CGO_ENABLED: 0
     commands:
-      - go build -ldflags="-s -w" -mod=vendor -v
+      - go build -o blog -v -ldflags="-s -w" -mod=vendor cmd/blog/main.go
 
   - name: publish
     image: plugins/docker:19.03@sha256:783a12ee229cdc23bf0926fdd7055033229d0b0fcc2b4a4d337d0d550a46f185
