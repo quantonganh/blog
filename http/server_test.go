@@ -1,14 +1,17 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,48 +64,71 @@ func (s *Server) testHomeHandler(t *testing.T, posts []*blog.Post) {
 	router := mux.NewRouter()
 	router.HandleFunc("/", mw.Error(s.homeHandler(posts)))
 
-	writer := httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/", nil)
 	assert.NoError(t, err)
-	router.ServeHTTP(writer, request)
+	router.ServeHTTP(rr, request)
 
-	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
 }
 
 func (s *Server) testPostHandler(t *testing.T) {
 	router := mux.NewRouter()
 	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mw.Error(s.postHandler))
 
-	writer := httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/2019/09/19/test", nil)
 	assert.NoError(t, err)
-	router.ServeHTTP(writer, request)
+	router.ServeHTTP(rr, request)
 
-	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "/tag/test", getLinkByText(t, rr.Body, "#test"))
 }
 
 func (s *Server) testTagHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/tag/test", mw.Error(s.tagHandler))
+	router.HandleFunc("/tag/{tagName}", mw.Error(s.tagHandler))
 
-	writer := httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/tag/test", nil)
 	assert.NoError(t, err)
-	router.ServeHTTP(writer, request)
+	router.ServeHTTP(rr, request)
 
-	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
 }
 
 func (s *Server) testSearchHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/search", mw.Error(s.searchHandler))
+	router.HandleFunc("/search", mw.Error(s.searchHandler("test.bleve")))
 
-	writer := httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 	formData := url.Values{}
-	formData.Add("search", "test")
+	formData.Add("q", "test")
 	request, err := http.NewRequest(http.MethodPost, "/search", strings.NewReader(formData.Encode()))
 	assert.NoError(t, err)
-	router.ServeHTTP(writer, request)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	router.ServeHTTP(rr, request)
 
-	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
+
+	t.Cleanup(func() {
+		_ = os.RemoveAll("test.bleve")
+	})
+}
+
+func getLinkByText(t *testing.T, body *bytes.Buffer, text string) string {
+	doc, err := goquery.NewDocumentFromReader(body)
+	require.NoError(t, err)
+
+	var link string
+	doc.Find("article a").Each(func(_ int, s *goquery.Selection) {
+		if s.Text() == text {
+			link, _ = s.Attr("href")
+		}
+	})
+
+	return link
 }
