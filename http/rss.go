@@ -1,4 +1,4 @@
-package main
+package http
 
 import (
 	"fmt"
@@ -6,10 +6,12 @@ import (
 
 	"github.com/gorilla/feeds"
 	"github.com/pkg/errors"
-	"github.com/quantonganh/blog/post"
+
+	"github.com/quantonganh/blog"
+	"github.com/quantonganh/blog/http/mw"
 )
 
-func (a *app) rssHandler(posts []*post.Post) handlerFunc {
+func (s *Server) rssHandler(posts []*blog.Post) mw.ErrHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		scheme := "http"
 		if xForwardedProto := r.Header.Get("X-Forwarded-Proto"); xForwardedProto != "" {
