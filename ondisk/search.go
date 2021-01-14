@@ -1,4 +1,4 @@
-package post
+package ondisk
 
 import (
 	"bytes"
@@ -12,9 +12,11 @@ import (
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/quantonganh/blog"
 )
 
-func (b *blog) IndexPosts(path string) (bleve.Index, error) {
+func (ps *postService) IndexPosts(path string) (bleve.Index, error) {
 	indexMapping := bleve.NewIndexMapping()
 	index, err := bleve.NewUsing(path, indexMapping, scorch.Name, scorch.Name, nil)
 	if err != nil {
@@ -22,7 +24,7 @@ func (b *blog) IndexPosts(path string) (bleve.Index, error) {
 	}
 
 	g, ctx := errgroup.WithContext(context.Background())
-	for _, post := range b.posts {
+	for _, post := range ps.posts {
 		post := post // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
 			return indexPost(ctx, indexMapping, index, post)
@@ -36,7 +38,7 @@ func (b *blog) IndexPosts(path string) (bleve.Index, error) {
 	return index, nil
 }
 
-func indexPost(ctx context.Context, mapping *mapping.IndexMappingImpl, index bleve.Index, post *Post) error {
+func indexPost(ctx context.Context, mapping *mapping.IndexMappingImpl, index bleve.Index, post *blog.Post) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -67,7 +69,7 @@ func indexPost(ctx context.Context, mapping *mapping.IndexMappingImpl, index ble
 	}
 }
 
-func (b *blog) Search(index bleve.Index, value string) ([]*Post, error) {
+func (ps *postService) Search(index bleve.Index, value string) ([]*blog.Post, error) {
 	query := bleve.NewMatchQuery(value)
 	request := bleve.NewSearchRequest(query)
 	request.Fields = []string{"_source"}
@@ -76,9 +78,9 @@ func (b *blog) Search(index bleve.Index, value string) ([]*Post, error) {
 		return nil, errors.Errorf("failed to execute a search request: %v", err)
 	}
 
-	var searchPosts []*Post
+	var searchPosts []*blog.Post
 	for _, result := range searchResults.Hits {
-		var post *Post
+		var post *blog.Post
 		b := bytes.NewBuffer([]byte(fmt.Sprintf("%v", result.Fields["_source"])))
 		dec := gob.NewDecoder(b)
 		if err = dec.Decode(&post); err != nil {

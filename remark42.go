@@ -1,4 +1,4 @@
-package main
+package blog
 
 import (
 	"net/url"
@@ -10,7 +10,7 @@ type remark struct {
 	PageURL *url.URL
 }
 
-func getRemarkURL() (*remark, error) {
+func GetRemarkURL() (*remark, error) {
 	remarkURL, err := url.Parse(os.Getenv("REMARK_URL"))
 	if err != nil {
 		return nil, err
