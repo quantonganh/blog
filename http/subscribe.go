@@ -8,7 +8,6 @@ import (
 	gomongo "go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/mongo"
 )
@@ -25,7 +24,6 @@ func (s *Server) subscribeHandler(token string) mw.ErrHandlerFunc {
 		email := r.FormValue("email")
 		newSubscriber := blog.NewSubscribe(email, token, mongo.StatusPending)
 
-		tmpl := html.NewSubscribe(s.Templates)
 		subscribe, err := s.SubscribeService.FindByEmail(email)
 		if err != nil {
 			if err == gomongo.ErrNoDocuments {
@@ -37,7 +35,7 @@ func (s *Server) subscribeHandler(token string) mw.ErrHandlerFunc {
 					return err
 				}
 
-				if err := tmpl.Render(w, fmt.Sprintf(confirmationMessage, newSubscriber.Email)); err != nil {
+				if err := s.Renderer.RenderSubscribeMessage(w, fmt.Sprintf(confirmationMessage, newSubscriber.Email)); err != nil {
 					return err
 				}
 			} else {
@@ -46,11 +44,11 @@ func (s *Server) subscribeHandler(token string) mw.ErrHandlerFunc {
 		} else {
 			switch subscribe.Status {
 			case mongo.StatusPending:
-				if err := tmpl.Render(w, pendingMessage); err != nil {
+				if err := s.Renderer.RenderSubscribeMessage(w, pendingMessage); err != nil {
 					return err
 				}
 			case mongo.StatusSubscribed:
-				if err := tmpl.Render(w, alreadySubscribedMessage); err != nil {
+				if err := s.Renderer.RenderSubscribeMessage(w, alreadySubscribedMessage); err != nil {
 					return err
 				}
 			default:
@@ -58,7 +56,7 @@ func (s *Server) subscribeHandler(token string) mw.ErrHandlerFunc {
 					return err
 				}
 
-				if err := tmpl.Render(w, resubscribedMessage); err != nil {
+				if err := s.Renderer.RenderSubscribeMessage(w, resubscribedMessage); err != nil {
 					return err
 				}
 			}
@@ -87,5 +85,5 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return html.NewSubscribe(s.Templates).Render(w, thankyouMessage)
+	return s.Renderer.RenderSubscribeMessage(w, thankyouMessage)
 }

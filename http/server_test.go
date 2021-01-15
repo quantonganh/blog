@@ -13,15 +13,27 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/quantonganh/blog"
+	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/ondisk"
 )
 
 func TestHandler(t *testing.T) {
+	viper.SetConfigType("yaml")
+	var yamlConfig = []byte(`
+newsletter:
+  hmac:
+    secret: da02e221bc331c9875c5e1299fa8d765
+`)
+	require.NoError(t, viper.ReadConfig(bytes.NewBuffer(yamlConfig)))
+	var cfg *blog.Config
+	require.NoError(t, viper.Unmarshal(&cfg))
+
 	r := strings.NewReader(`---
 title: Test
 date: Thu Sep 19 21:48:39 +07 2019
@@ -39,13 +51,15 @@ Test.`)
 	assert.Equal(t, template.HTML("<p>Test.</p>\n"), testPost.Content)
 
 	posts := []*blog.Post{testPost}
-	s := &Server{
-		Templates:   template.Must(template.New("").Funcs(funcMap).ParseGlob("html/templates/*.tmpl")),
-		PostService: ondisk.NewPostService(posts),
+	funcMap := template.FuncMap{
+		"toISODate": blog.ToISODate,
 	}
-	t.Run("homeHandler", func(t *testing.T) {
-		s.testHomeHandler(t, posts)
-	})
+	tmpl := template.Must(template.New("").Funcs(funcMap).ParseGlob("html/templates/*.tmpl"))
+	s := &Server{
+		PostService: ondisk.NewPostService(posts),
+		Renderer:    html.NewRender(cfg, tmpl),
+	}
+	t.Run("homeHandler", s.testHomeHandler)
 
 	t.Run("postHandler", s.testPostHandler)
 
@@ -57,12 +71,14 @@ Test.`)
 
 	t.Run("confirmHandler", s.testConfirmHandler)
 
-	t.Run("unsubscribeHandler", s.testUnsubscribeHandler)
+	t.Run("unsubscribeHandler", func(t *testing.T) {
+		s.testUnsubscribeHandler(t, cfg.Newsletter.HMAC.Secret)
+	})
 }
 
-func (s *Server) testHomeHandler(t *testing.T, posts []*blog.Post) {
+func (s *Server) testHomeHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/", mw.Error(s.homeHandler(posts)))
+	router.HandleFunc("/", mw.Error(s.homeHandler))
 
 	rr := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/", nil)

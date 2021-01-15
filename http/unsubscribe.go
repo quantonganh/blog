@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/pkg/hash"
 )
@@ -29,9 +28,9 @@ func (s *Server) unsubscribeHandler(hmacSecret string) mw.ErrHandlerFunc {
 				return err
 			}
 
-			return html.NewSubscribe(s.Templates).Render(w, unsubscribeMessage)
+			return s.Renderer.RenderSubscribeMessage(w, unsubscribeMessage)
 		}
 
-		return html.NewSubscribe(s.Templates).Render(w, invalidUnsubscribeMessage)
+		return s.Renderer.RenderSubscribeMessage(w, invalidUnsubscribeMessage)
 	}
 }

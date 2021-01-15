@@ -1,6 +1,10 @@
 package blog
 
 type Config struct {
+	Navbar struct {
+		Items []*Item
+	}
+
 	Posts struct {
 		Dir string
 	}
@@ -37,4 +41,9 @@ type Config struct {
 			Secret string
 		}
 	}
+}
+
+type Item struct {
+	Text string
+	URL  string
 }
