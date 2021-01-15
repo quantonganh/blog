@@ -4,8 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/quantonganh/blog/http/html"
 )
 
 func (s *Server) tagHandler(w http.ResponseWriter, r *http.Request) error {
@@ -16,9 +14,5 @@ func (s *Server) tagHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if err := html.NewPost(s.Templates).Render(w, r, postsByTag); err != nil {
-		return err
-	}
-
-	return nil
+	return s.Renderer.RenderPosts(w, r, postsByTag)
 }

@@ -1,13 +1,10 @@
 package gmail
 
 import (
-	"bytes"
 	"fmt"
-	"html/template"
 	"log"
 	"os"
 
-	"github.com/flosch/pongo2"
 	"github.com/matcornic/hermes/v2"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
@@ -15,22 +12,21 @@ import (
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/mongo"
-	"github.com/quantonganh/blog/pkg/hash"
 )
 
 type smtpService struct {
 	ServerURL string
 	*blog.Config
-	*template.Template
 	blog.SubscribeService
+	blog.Renderer
 }
 
-func NewSMTPService(config *blog.Config, serverURL string, template *template.Template, subscribeService blog.SubscribeService) *smtpService {
+func NewSMTPService(config *blog.Config, serverURL string, subscribeService blog.SubscribeService, renderer blog.Renderer) *smtpService {
 	return &smtpService{
 		Config:           config,
 		ServerURL:        serverURL,
-		Template:         template,
 		SubscribeService: subscribeService,
+		Renderer:         renderer,
 	}
 }
 
@@ -66,7 +62,7 @@ func (smtp *smtpService) SendConfirmationEmail(to, token string) error {
 		return errors.Errorf("failed to generate HTML email: %v", err)
 	}
 
-	return smtp.sendEmail([]string{to}, "Confirm subscription", emailBody)
+	return smtp.sendEmail(to, "Confirm subscription", emailBody)
 }
 
 func (smtp *smtpService) SendThankYouEmail(to string) error {
@@ -96,39 +92,27 @@ func (smtp *smtpService) SendThankYouEmail(to string) error {
 		return errors.Errorf("failed to generate HTML email: %v", err)
 	}
 
-	return smtp.sendEmail([]string{to}, "Thank you for subscribing", emailBody)
+	return smtp.sendEmail(to, "Thank you for subscribing", emailBody)
 }
 
-func (smtp *smtpService) SendNewsletter(posts []*blog.Post) {
+func (smtp *smtpService) SendNewsletter(latestPosts []*blog.Post) {
 	c := cron.New(
 		cron.WithLogger(
 			cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
 	_, _ = c.AddFunc(smtp.Config.Newsletter.Cron.Spec, func() {
 
-		var (
-			recipients []string
-			buf        = new(bytes.Buffer)
-		)
 		subscribers, err := smtp.SubscribeService.FindByStatus(mongo.StatusSubscribed)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, s := range subscribers {
-			recipients = append(recipients, s.Email)
-
-			hash, err := hash.ComputeHmac256(s.Email, smtp.Config.Newsletter.HMAC.Secret)
+			buf, err := smtp.Renderer.RenderNewsletter(latestPosts, smtp.ServerURL, s.Email)
 			if err != nil {
 				log.Fatal(err)
 			}
-			data := pongo2.Context{"posts": posts, "pageURL": smtp.ServerURL, "email": s.Email, "hash": hash}
-			if err := smtp.Template.ExecuteTemplate(buf, "newsletter", data); err != nil {
-				log.Fatal(err)
-			}
-		}
 
-		if len(recipients) > 0 {
-			if err := smtp.sendEmail(recipients, fmt.Sprintf("%s newsletter", smtp.Config.Newsletter.Product.Name), buf.String()); err != nil {
+			if err := smtp.sendEmail(s.Email, fmt.Sprintf("%s newsletter", smtp.Config.Newsletter.Product.Name), buf.String()); err != nil {
 				log.Fatal(err)
 			}
 		}
@@ -137,14 +121,10 @@ func (smtp *smtpService) SendNewsletter(posts []*blog.Post) {
 	c.Start()
 }
 
-func (smtp *smtpService) sendEmail(to []string, subject, body string) error {
+func (smtp *smtpService) sendEmail(to string, subject, body string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", smtp.Config.SMTP.Username)
-	addresses := make([]string, 0, len(to))
-	for _, address := range to {
-		addresses = append(addresses, m.FormatAddress(address, ""))
-	}
-	m.SetHeader("To", addresses...)
+	m.SetHeader("To", to)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 	d := gomail.NewDialer(smtp.Config.SMTP.Host, smtp.Config.SMTP.Port, smtp.Config.SMTP.Username, smtp.Config.SMTP.Password)
