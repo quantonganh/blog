@@ -7,7 +7,6 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/pkg/errors"
 
-	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/http/mw"
 )
 
@@ -43,10 +42,6 @@ func (s *Server) searchHandler(indexPath string) mw.ErrHandlerFunc {
 			return errors.Errorf("failed to search: %v", err)
 		}
 
-		if err := html.NewPost(s.Templates).Render(w, r, searchPosts); err != nil {
-			return errors.Errorf("failed to render HTML: %v", err)
-		}
-
-		return nil
+		return s.Renderer.RenderPosts(w, r, searchPosts)
 	}
 }

@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"net"
 	"net/http"
 	"os"
@@ -15,7 +14,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/ondisk"
 )
@@ -23,12 +21,6 @@ import (
 const (
 	IndexPath       = "posts.bleve"
 	shutdownTimeout = 1 * time.Second
-)
-
-var (
-	funcMap = template.FuncMap{
-		"toISODate": blog.ToISODate,
-	}
 )
 
 type Server struct {
@@ -39,11 +31,10 @@ type Server struct {
 	Addr   string
 	Domain string
 
-	Templates *template.Template
-
 	PostService      blog.PostService
 	SubscribeService blog.SubscribeService
 	SMTPService      blog.SMTPService
+	Renderer         blog.Renderer
 }
 
 func NewServer(config *blog.Config, posts []*blog.Post) *Server {
@@ -53,22 +44,19 @@ func NewServer(config *blog.Config, posts []*blog.Post) *Server {
 		PostService: ondisk.NewPostService(posts),
 	}
 
-	s.Templates = template.Must(
-		template.New("").Funcs(funcMap).ParseGlob(fmt.Sprintf("%s/*.tmpl", config.Templates.Dir)))
-
 	s.router.Use(logging)
 
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)
 
 	s.router.HandleFunc("/favicon.ico", faviconHandler)
-	s.router.HandleFunc("/", mw.Error(s.homeHandler(posts)))
-	s.router.NotFoundHandler = mw.Error(s.homeHandler(posts))
+	s.router.HandleFunc("/", mw.Error(s.homeHandler))
+	s.router.NotFoundHandler = mw.Error(s.homeHandler)
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mw.Error(s.postHandler))
 	s.router.HandleFunc("/tag/{tagName}", mw.Error(s.tagHandler))
 	s.router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("http/assets"))))
 	s.router.HandleFunc("/search", mw.Error(s.searchHandler(IndexPath)))
-	s.router.HandleFunc("/sitemap.xml", mw.Error(s.SitemapHandler(posts)))
-	s.router.HandleFunc("/rss.xml", mw.Error(s.rssHandler(posts)))
+	s.router.HandleFunc("/sitemap.xml", mw.Error(s.sitemapHandler))
+	s.router.HandleFunc("/rss.xml", mw.Error(s.rssHandler))
 
 	s.router.HandleFunc("/subscribe", mw.Error(s.subscribeHandler(uuid.NewV4().String()))).Methods(http.MethodPost)
 	subRouter := s.router.PathPrefix("/subscribe").Subrouter()
@@ -114,10 +102,8 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "favicon.ico")
 }
 
-func (s *Server) homeHandler(posts []*blog.Post) mw.ErrHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
-		return html.NewPost(s.Templates).Render(w, r, posts)
-	}
+func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) error {
+	return s.Renderer.RenderPosts(w, r, s.PostService.GetAllPosts())
 }
 
 func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {

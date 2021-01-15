@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"log"
 	"os"
 	"os/signal"
@@ -12,6 +13,7 @@ import (
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/gmail"
 	"github.com/quantonganh/blog/http"
+	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/mongo"
 	"github.com/quantonganh/blog/ondisk"
 )
@@ -90,9 +92,16 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
+	funcMap := template.FuncMap{
+		"toISODate": blog.ToISODate,
+	}
+	tmpl := template.Must(
+		template.New("").Funcs(funcMap).ParseGlob(fmt.Sprintf("%s/*.tmpl", a.config.Templates.Dir)))
+	a.httpServer.Renderer = html.NewRender(a.config, tmpl)
+
 	subscribeService := mongo.NewSubscribeService(a.db)
 	a.httpServer.SubscribeService = subscribeService
-	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.URL(), a.httpServer.Templates, subscribeService)
+	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.URL(), subscribeService, a.httpServer.Renderer)
 
 	latestPosts := a.httpServer.PostService.GetLatestPosts(a.config.Newsletter.Frequency)
 	if len(latestPosts) > 0 {
