@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"log"
 	"os"
 	"os/signal"
@@ -13,7 +12,6 @@ import (
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/gmail"
 	"github.com/quantonganh/blog/http"
-	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/mongo"
 	"github.com/quantonganh/blog/ondisk"
 )
@@ -91,13 +89,6 @@ func (a *app) Run(ctx context.Context) error {
 	if err := a.httpServer.Open(); err != nil {
 		return err
 	}
-
-	funcMap := template.FuncMap{
-		"toISODate": blog.ToISODate,
-	}
-	tmpl := template.Must(
-		template.New("").Funcs(funcMap).ParseGlob(fmt.Sprintf("%s/*.html", a.config.Templates.Dir)))
-	a.httpServer.Renderer = html.NewRender(a.config, tmpl)
 
 	subscribeService := mongo.NewSubscribeService(a.db)
 	a.httpServer.SubscribeService = subscribeService

@@ -5,13 +5,10 @@ import (
 	"os"
 
 	"github.com/blevesearch/bleve"
-	"github.com/pkg/errors"
-
-	"github.com/quantonganh/blog/http/mw"
 )
 
-func (s *Server) searchHandler(indexPath string) mw.ErrHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) searchHandler(indexPath string) ErrHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) *AppError {
 		var (
 			index bleve.Index
 			err   error
@@ -19,14 +16,22 @@ func (s *Server) searchHandler(indexPath string) mw.ErrHandlerFunc {
 		if _, err = os.Stat(indexPath); os.IsNotExist(err) {
 			index, err = s.PostService.IndexPosts(indexPath)
 			if err != nil {
-				return errors.Errorf("failed to index posts: %v", err)
+				return &AppError{
+					Error:   err,
+					Message: "failed to index posts",
+					Code:    http.StatusInternalServerError,
+				}
 			}
 		} else if err == nil {
 			index, err = bleve.OpenUsing(indexPath, map[string]interface{}{
 				"read_only": true,
 			})
 			if err != nil {
-				return errors.Errorf("failed to open index at %s: %v", indexPath, err)
+				return &AppError{
+					Error:   err,
+					Message: "failed to open index",
+					Code:    http.StatusInternalServerError,
+				}
 			}
 		}
 		defer func() {
@@ -34,14 +39,28 @@ func (s *Server) searchHandler(indexPath string) mw.ErrHandlerFunc {
 		}()
 
 		if err := r.ParseForm(); err != nil {
-			return errors.Errorf("failed to parse form: %v", err)
+			return &AppError{
+				Error:   err,
+				Message: "failed to parse raw query",
+				Code:    http.StatusInternalServerError,
+			}
 		}
 
 		searchPosts, err := s.PostService.Search(index, r.FormValue("q"))
 		if err != nil {
-			return errors.Errorf("failed to search: %v", err)
+			return &AppError{
+				Error: err,
+				Code:  http.StatusInternalServerError,
+			}
 		}
 
-		return s.Renderer.RenderPosts(w, r, searchPosts)
+		if err := s.Renderer.RenderPosts(w, r, searchPosts); err != nil {
+			return &AppError{
+				Error: err,
+				Code:  http.StatusInternalServerError,
+			}
+		}
+
+		return nil
 	}
 }

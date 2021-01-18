@@ -19,7 +19,6 @@ import (
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/http/html"
-	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/ondisk"
 )
 
@@ -78,7 +77,7 @@ Test.`)
 
 func (s *Server) testHomeHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/", mw.Error(s.homeHandler))
+	router.HandleFunc("/", s.Error(s.homeHandler))
 
 	rr := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/", nil)
@@ -91,7 +90,7 @@ func (s *Server) testHomeHandler(t *testing.T) {
 
 func (s *Server) testPostHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mw.Error(s.postHandler))
+	router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler))
 
 	rr := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/2019/09/19/test", nil)
@@ -104,7 +103,7 @@ func (s *Server) testPostHandler(t *testing.T) {
 
 func (s *Server) testTagHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/tag/{tagName}", mw.Error(s.tagHandler))
+	router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
 
 	rr := httptest.NewRecorder()
 	request, err := http.NewRequest(http.MethodGet, "/tag/test", nil)
@@ -117,7 +116,7 @@ func (s *Server) testTagHandler(t *testing.T) {
 
 func (s *Server) testSearchHandler(t *testing.T) {
 	router := mux.NewRouter()
-	router.HandleFunc("/search", mw.Error(s.searchHandler("test.bleve")))
+	router.HandleFunc("/search", s.Error(s.searchHandler("test.bleve")))
 
 	rr := httptest.NewRecorder()
 	formData := url.Values{}
