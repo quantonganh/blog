@@ -87,13 +87,13 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 	return nil
 }
 
-func (r *render) RenderSubscribeMessage(w http.ResponseWriter, message string) error {
+func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) error {
 	data := pongo2.Context{
 		"navbarItems": r.config.Navbar.Items,
 		"message":     message,
 	}
 
-	if err := r.tmpl.ExecuteTemplate(w, "subscribe", data); err != nil {
+	if err := r.tmpl.ExecuteTemplate(w, "response", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
 	}
 

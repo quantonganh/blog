@@ -8,6 +8,7 @@ import (
 	"github.com/matcornic/hermes/v2"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
+	uuid "github.com/satori/go.uuid"
 	"gopkg.in/gomail.v2"
 
 	"github.com/quantonganh/blog"
@@ -133,4 +134,12 @@ func (smtp *smtpService) sendEmail(to string, subject, body string) error {
 	}
 
 	return nil
+}
+
+func (smtp *smtpService) GenerateNewUUID() string {
+	return uuid.NewV4().String()
+}
+
+func (smtp *smtpService) GetHMACSecret() string {
+	return smtp.Config.Newsletter.HMAC.Secret
 }

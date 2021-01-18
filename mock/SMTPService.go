@@ -12,6 +12,34 @@ type SMTPService struct {
 	mock.Mock
 }
 
+// GenerateNewUUID provides a mock function with given fields:
+func (_m *SMTPService) GenerateNewUUID() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// GetHMACSecret provides a mock function with given fields:
+func (_m *SMTPService) GetHMACSecret() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // SendConfirmationEmail provides a mock function with given fields: to, token
 func (_m *SMTPService) SendConfirmationEmail(to string, token string) error {
 	ret := _m.Called(to, token)
