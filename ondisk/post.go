@@ -100,6 +100,10 @@ func NewPostService(posts []*blog.Post) *postService {
 	}
 }
 
+func (ps *postService) GetAllPosts() []*blog.Post {
+	return ps.posts
+}
+
 func (ps *postService) GetPostByURI(uri string) *blog.Post {
 	for _, p := range ps.posts {
 		if p.URI == uri {
