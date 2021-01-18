@@ -54,7 +54,7 @@ Test.`)
 	funcMap := template.FuncMap{
 		"toISODate": blog.ToISODate,
 	}
-	tmpl := template.Must(template.New("").Funcs(funcMap).ParseGlob("html/templates/*.tmpl"))
+	tmpl := template.Must(template.New("").Funcs(funcMap).ParseGlob("html/templates/*.html"))
 	s := &Server{
 		PostService: ondisk.NewPostService(posts),
 		Renderer:    html.NewRender(cfg, tmpl),
