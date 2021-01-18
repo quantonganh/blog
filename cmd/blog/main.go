@@ -96,7 +96,7 @@ func (a *app) Run(ctx context.Context) error {
 		"toISODate": blog.ToISODate,
 	}
 	tmpl := template.Must(
-		template.New("").Funcs(funcMap).ParseGlob(fmt.Sprintf("%s/*.tmpl", a.config.Templates.Dir)))
+		template.New("").Funcs(funcMap).ParseGlob(fmt.Sprintf("%s/*.html", a.config.Templates.Dir)))
 	a.httpServer.Renderer = html.NewRender(a.config, tmpl)
 
 	subscribeService := mongo.NewSubscribeService(a.db)
