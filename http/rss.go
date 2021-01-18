@@ -5,10 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/feeds"
-	"github.com/pkg/errors"
 )
 
-func (s *Server) rssHandler(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) rssHandler(w http.ResponseWriter, r *http.Request) *AppError {
 	feed := &feeds.Feed{
 		Title: fmt.Sprintf("%s app", r.Host),
 		Link: &feeds.Link{
@@ -31,12 +30,20 @@ func (s *Server) rssHandler(w http.ResponseWriter, r *http.Request) error {
 
 	rss, err := feed.ToRss()
 	if err != nil {
-		return errors.Errorf("failed to create RSS: %v", err)
+		return &AppError{
+			Error:   err,
+			Message: "failed to create RSS",
+			Code:    http.StatusInternalServerError,
+		}
 	}
 
 	_, err = w.Write([]byte(rss))
 	if err != nil {
-		return err
+		return &AppError{
+			Error:   err,
+			Message: "Can't write the data to the connection as part of a HTTP reply",
+			Code:    http.StatusInternalServerError,
+		}
 	}
 
 	return nil
