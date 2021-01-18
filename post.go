@@ -15,6 +15,7 @@ const (
 )
 
 type PostService interface {
+	GetAllPosts() []*Post
 	GetPostByURI(uri string) *Post
 	GetLatestPosts(days int) []*Post
 	GetRelatedPosts(currentPost *Post) (map[string]*Post, error)
