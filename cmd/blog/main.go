@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/quantonganh/blog"
+	"github.com/quantonganh/blog/bolt"
 	"github.com/quantonganh/blog/gmail"
 	"github.com/quantonganh/blog/http"
-	"github.com/quantonganh/blog/mongo"
 	"github.com/quantonganh/blog/ondisk"
 )
 
@@ -28,7 +28,6 @@ func main() {
 	viper.SetDefault("http.addr", ":80")
 	viper.SetDefault("posts.dir", "posts")
 	viper.SetDefault("templates.dir", "http/html/templates")
-	viper.SetDefault("db.dsn", "mongodb://localhost:27017")
 
 	var cfg *blog.Config
 	if err := viper.Unmarshal(&cfg); err != nil {
@@ -66,14 +65,14 @@ func main() {
 
 type app struct {
 	config     *blog.Config
-	db         *mongo.DB
+	db         *bolt.DB
 	httpServer *http.Server
 }
 
 func NewApp(config *blog.Config, posts []*blog.Post) *app {
 	return &app{
 		config:     config,
-		db:         mongo.NewDB(config.DB.DSN),
+		db:         bolt.NewDB("subscribe.db"),
 		httpServer: http.NewServer(config, posts),
 	}
 }
@@ -90,9 +89,8 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
-	subscribeService := mongo.NewSubscribeService(a.db)
-	a.httpServer.SubscribeService = subscribeService
-	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.URL(), subscribeService, a.httpServer.Renderer)
+	a.httpServer.SubscribeService = a.db
+	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.URL(), a.httpServer.SubscribeService, a.httpServer.Renderer)
 
 	latestPosts := a.httpServer.PostService.GetLatestPosts(a.config.Newsletter.Frequency)
 	if len(latestPosts) > 0 {

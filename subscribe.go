@@ -10,10 +10,17 @@ type SubscribeService interface {
 }
 
 type Subscribe struct {
-	Email  string `bson:"email"`
-	Token  string `bson:"token"`
-	Status string `bson:"status"`
+	ID     int    `storm:"id,increment"`
+	Email  string `storm:"unique"`
+	Token  string `storm:"index"`
+	Status string `storm:"index"`
 }
+
+const (
+	StatusPending      = "pending"
+	StatusSubscribed   = "subscribed"
+	StatusUnsubscribed = "unsubscribed"
+)
 
 func NewSubscribe(email, token, status string) *Subscribe {
 	return &Subscribe{

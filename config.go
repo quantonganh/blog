@@ -14,7 +14,7 @@ type Config struct {
 	}
 
 	DB struct {
-		DSN string
+		Name string
 	}
 
 	HTTP struct {
