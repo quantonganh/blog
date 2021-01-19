@@ -3,6 +3,8 @@ package http
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/getsentry/sentry-go"
 )
 
 type AppError struct {
@@ -20,6 +22,7 @@ func (s *Server) Error(hf ErrHandlerFunc) http.HandlerFunc {
 				e.Message = "An error has occurred."
 			}
 			fmt.Printf("%+v\n", e.Error)
+			sentry.CaptureException(e.Error)
 			w.WriteHeader(e.Code)
 			_ = s.Renderer.RenderResponseMessage(w, e.Message)
 		}
