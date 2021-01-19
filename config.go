@@ -41,6 +41,10 @@ type Config struct {
 			Secret string
 		}
 	}
+
+	Sentry struct {
+		DSN string
+	}
 }
 
 type Item struct {
