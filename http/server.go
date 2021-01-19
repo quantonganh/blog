@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -39,6 +42,15 @@ type Server struct {
 }
 
 func NewServer(config *blog.Config, posts []*blog.Post) *Server {
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn: config.Sentry.DSN,
+	}); err != nil {
+		log.Fatal(err)
+	}
+	defer sentry.Flush(2 * time.Second)
+
+	sentryHandler := sentryhttp.New(sentryhttp.Options{})
+
 	funcMap := template.FuncMap{
 		"toISODate": blog.ToISODate,
 	}
@@ -52,6 +64,7 @@ func NewServer(config *blog.Config, posts []*blog.Post) *Server {
 	}
 
 	s.router.Use(logging)
+	s.router.Use(sentryHandler.Handle)
 
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)
 
