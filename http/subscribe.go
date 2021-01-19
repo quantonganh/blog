@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/asdine/storm/v3"
 	"github.com/pkg/errors"
-	gomongo "go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/mongo"
 )
 
 const (
@@ -22,11 +21,11 @@ const (
 func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) *AppError {
 	email := r.FormValue("email")
 	token := s.SMTPService.GenerateNewUUID()
-	newSubscriber := blog.NewSubscribe(email, token, mongo.StatusPending)
+	newSubscriber := blog.NewSubscribe(email, token, blog.StatusPending)
 
 	subscribe, err := s.SubscribeService.FindByEmail(email)
 	if err != nil {
-		if err == gomongo.ErrNoDocuments {
+		if errors.Is(err, storm.ErrNotFound) {
 			if err := s.SMTPService.SendConfirmationEmail(email, token); err != nil {
 				return &AppError{
 					Error:   err,
@@ -58,7 +57,7 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) *AppEr
 		}
 	} else {
 		switch subscribe.Status {
-		case mongo.StatusPending:
+		case blog.StatusPending:
 			if err := s.Renderer.RenderResponseMessage(w, pendingMessage); err != nil {
 				return &AppError{
 					Error:   err,
@@ -66,7 +65,7 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) *AppEr
 					Code:    http.StatusInternalServerError,
 				}
 			}
-		case mongo.StatusSubscribed:
+		case blog.StatusSubscribed:
 			if err := s.Renderer.RenderResponseMessage(w, alreadySubscribedMessage); err != nil {
 				return &AppError{
 					Error:   err,

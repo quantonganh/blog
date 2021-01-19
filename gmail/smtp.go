@@ -12,7 +12,6 @@ import (
 	"gopkg.in/gomail.v2"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/mongo"
 )
 
 type smtpService struct {
@@ -102,20 +101,12 @@ func (smtp *smtpService) SendNewsletter(latestPosts []*blog.Post) {
 			cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
 	_, _ = c.AddFunc(smtp.Config.Newsletter.Cron.Spec, func() {
 
-		subscribers, err := smtp.SubscribeService.FindByStatus(mongo.StatusSubscribed)
-		if err != nil {
-			log.Fatal(err)
-		}
+		subscribers, _ := smtp.SubscribeService.FindByStatus(blog.StatusSubscribed)
 
 		for _, s := range subscribers {
-			buf, err := smtp.Renderer.RenderNewsletter(latestPosts, smtp.ServerURL, s.Email)
-			if err != nil {
-				log.Fatal(err)
-			}
+			buf, _ := smtp.Renderer.RenderNewsletter(latestPosts, smtp.ServerURL, s.Email)
 
-			if err := smtp.sendEmail(s.Email, fmt.Sprintf("%s newsletter", smtp.Config.Newsletter.Product.Name), buf.String()); err != nil {
-				log.Fatal(err)
-			}
+			_ = smtp.sendEmail(s.Email, fmt.Sprintf("%s newsletter", smtp.Config.Newsletter.Product.Name), buf.String())
 		}
 	})
 

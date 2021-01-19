@@ -6,11 +6,13 @@ require (
 	github.com/Depado/bfchroma v1.3.0
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/alecthomas/chroma v0.8.2
+	github.com/asdine/storm/v3 v3.2.1
 	github.com/astaxie/beego v1.12.0
 	github.com/blevesearch/bleve v1.0.14
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
 	github.com/getsentry/sentry-go v0.9.0
+	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/handlers v1.4.1
 	github.com/gorilla/mux v1.7.3

@@ -36,13 +36,13 @@ func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) *App
 				Code:    http.StatusInternalServerError,
 			}
 		}
-	}
-
-	if err := s.Renderer.RenderResponseMessage(w, invalidUnsubscribeMessage); err != nil {
-		return &AppError{
-			Error:   err,
-			Message: "Failed to render subscribe template.",
-			Code:    http.StatusInternalServerError,
+	} else {
+		if err := s.Renderer.RenderResponseMessage(w, invalidUnsubscribeMessage); err != nil {
+			return &AppError{
+				Error:   err,
+				Message: "Failed to render subscribe template.",
+				Code:    http.StatusInternalServerError,
+			}
 		}
 	}
 
