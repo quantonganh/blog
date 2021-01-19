@@ -29,7 +29,7 @@ jobs:
       run: go run cmd/index/main.go
 
     - name: Build
-      run: go build -o blog -v -ldflags="-s -w" cmd/blog/main.go
+      run: CGO_ENABLED=0 GOARCH=arm64 go build -o blog -v -ldflags="-s -w" cmd/blog/main.go
 
     - name: Log into GitHub Container Registry
       uses: docker/login-action@v1
