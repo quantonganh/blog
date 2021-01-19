@@ -25,6 +25,9 @@ jobs:
     - name: Test
       run: go test -v ./...
 
+    - name: Index posts
+      run: go run cmd/index/main.go
+
     - name: Build
       run: go build -o blog -v -ldflags="-s -w" cmd/blog/main.go
 
