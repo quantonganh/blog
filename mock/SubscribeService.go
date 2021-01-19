@@ -122,3 +122,17 @@ func (_m *SubscribeService) Unsubscribe(email string) error {
 
 	return r0
 }
+
+// UpdateStatus provides a mock function with given fields: email
+func (_m *SubscribeService) UpdateStatus(email string) error {
+	ret := _m.Called(email)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
