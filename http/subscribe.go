@@ -8,7 +8,6 @@ import (
 	gomongo "go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/mongo"
 )
 
@@ -20,71 +19,124 @@ const (
 	resubscribedMessage      = "You have been re-subscribed to this app."
 )
 
-func (s *Server) subscribeHandler(token string) mw.ErrHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) error {
-		email := r.FormValue("email")
-		newSubscriber := blog.NewSubscribe(email, token, mongo.StatusPending)
+func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) *AppError {
+	email := r.FormValue("email")
+	token := s.SMTPService.GenerateNewUUID()
+	newSubscriber := blog.NewSubscribe(email, token, mongo.StatusPending)
 
-		subscribe, err := s.SubscribeService.FindByEmail(email)
-		if err != nil {
-			if err == gomongo.ErrNoDocuments {
-				if err := s.SMTPService.SendConfirmationEmail(email, token); err != nil {
-					return err
+	subscribe, err := s.SubscribeService.FindByEmail(email)
+	if err != nil {
+		if err == gomongo.ErrNoDocuments {
+			if err := s.SMTPService.SendConfirmationEmail(email, token); err != nil {
+				return &AppError{
+					Error:   err,
+					Message: "There is an error when sending confirmation email.",
+					Code:    http.StatusInternalServerError,
 				}
+			}
 
-				if err := s.SubscribeService.Insert(newSubscriber); err != nil {
-					return err
+			if err := s.SubscribeService.Insert(newSubscriber); err != nil {
+				return &AppError{
+					Error:   err,
+					Message: "Failed to insert new subscriber.",
+					Code:    http.StatusInternalServerError,
 				}
+			}
 
-				if err := s.Renderer.RenderSubscribeMessage(w, fmt.Sprintf(confirmationMessage, newSubscriber.Email)); err != nil {
-					return err
+			if err := s.Renderer.RenderResponseMessage(w, fmt.Sprintf(confirmationMessage, newSubscriber.Email)); err != nil {
+				return &AppError{
+					Error:   err,
+					Message: "There is an error when inserting new subscriber into database.",
+					Code:    http.StatusInternalServerError,
 				}
-			} else {
-				return err
 			}
 		} else {
-			switch subscribe.Status {
-			case mongo.StatusPending:
-				if err := s.Renderer.RenderSubscribeMessage(w, pendingMessage); err != nil {
-					return err
+			return &AppError{
+				Error: err,
+				Code:  http.StatusNotFound,
+			}
+		}
+	} else {
+		switch subscribe.Status {
+		case mongo.StatusPending:
+			if err := s.Renderer.RenderResponseMessage(w, pendingMessage); err != nil {
+				return &AppError{
+					Error:   err,
+					Message: "There is an error when rendering subscribe template.",
+					Code:    http.StatusInternalServerError,
 				}
-			case mongo.StatusSubscribed:
-				if err := s.Renderer.RenderSubscribeMessage(w, alreadySubscribedMessage); err != nil {
-					return err
+			}
+		case mongo.StatusSubscribed:
+			if err := s.Renderer.RenderResponseMessage(w, alreadySubscribedMessage); err != nil {
+				return &AppError{
+					Error:   err,
+					Message: "There is an error when rendering subscribe template.",
+					Code:    http.StatusInternalServerError,
 				}
-			default:
-				if err := s.SubscribeService.Subscribe(subscribe.Token); err != nil {
-					return err
+			}
+		default:
+			if err := s.SubscribeService.Subscribe(subscribe.Token); err != nil {
+				return &AppError{
+					Error: err,
+					Code:  http.StatusInternalServerError,
 				}
+			}
 
-				if err := s.Renderer.RenderSubscribeMessage(w, resubscribedMessage); err != nil {
-					return err
+			if err := s.Renderer.RenderResponseMessage(w, resubscribedMessage); err != nil {
+				return &AppError{
+					Error:   err,
+					Message: "There is an error when rendering subscribe template.",
+					Code:    http.StatusInternalServerError,
 				}
 			}
 		}
-
-		return nil
 	}
+
+	return nil
 }
 
-func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) *AppError {
 	token := r.URL.Query().Get("token")
 	if len(token) == 0 {
-		return errors.New("token is not present")
+		return &AppError{
+			Error:   errors.New("token is not present"),
+			Message: "Missing token",
+			Code:    http.StatusNotFound,
+		}
 	}
 
 	if err := s.SubscribeService.Subscribe(token); err != nil {
-		return err
+		return &AppError{
+			Error:   err,
+			Message: "failed to update subscribe status",
+			Code:    http.StatusInternalServerError,
+		}
 	}
 
 	subscribe, err := s.SubscribeService.FindByToken(token)
 	if err != nil {
-		return err
+		return &AppError{
+			Error:   err,
+			Message: "Cannot find subscriber by token",
+			Code:    http.StatusNotFound,
+		}
 	}
 
 	if err := s.SMTPService.SendThankYouEmail(subscribe.Email); err != nil {
-		return err
+		return &AppError{
+			Error:   err,
+			Message: fmt.Sprintf("There is a problem when sending thank you email to %s", subscribe.Email),
+			Code:    http.StatusInternalServerError,
+		}
 	}
 
-	return s.Renderer.RenderSubscribeMessage(w, thankyouMessage)
+	if err := s.Renderer.RenderResponseMessage(w, thankyouMessage); err != nil {
+		return &AppError{
+			Error:   err,
+			Message: "failed to render subscribe template",
+			Code:    http.StatusInternalServerError,
+		}
+	}
+
+	return nil
 }
