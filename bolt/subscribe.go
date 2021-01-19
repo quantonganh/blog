@@ -23,6 +23,20 @@ func (db *DB) Insert(s *blog.Subscribe) error {
 	return nil
 }
 
+func (db *DB) UpdateStatus(email string) error {
+	s, err := db.FindByEmail(email)
+	if err != nil {
+		return err
+	}
+
+	s.Status = blog.StatusPending
+	if err := db.db.Save(s); err != nil {
+		return errors.Errorf("failed to save: %v", err)
+	}
+
+	return nil
+}
+
 func (db *DB) FindByToken(token string) (*blog.Subscribe, error) {
 	var s blog.Subscribe
 	if err := db.db.One("Token", token, &s); err != nil {

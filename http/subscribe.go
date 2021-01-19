@@ -73,18 +73,17 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) *AppEr
 				}
 			}
 		default:
-			if err := s.SubscribeService.Subscribe(subscribe.Token); err != nil {
+			if err := s.SMTPService.SendConfirmationEmail(email, token); err != nil {
 				return &AppError{
 					Error: err,
 					Code:  http.StatusInternalServerError,
 				}
 			}
 
-			if err := s.Renderer.RenderResponseMessage(w, resubscribedMessage); err != nil {
+			if err := s.SubscribeService.UpdateStatus(email); err != nil {
 				return &AppError{
-					Error:   err,
-					Message: "There is an error when rendering subscribe template.",
-					Code:    http.StatusInternalServerError,
+					Error: err,
+					Code:  http.StatusInternalServerError,
 				}
 			}
 		}
