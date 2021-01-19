@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/mock"
 	"github.com/quantonganh/blog/pkg/hash"
 )
@@ -25,8 +24,12 @@ func (s *Server) testUnsubscribeHandler(t *testing.T, secret string) {
 
 	s.SubscribeService = subscribeService
 
+	smtpService := new(mock.SMTPService)
+	smtpService.On("GetHMACSecret").Return(secret)
+	s.SMTPService = smtpService
+
 	router := mux.NewRouter()
-	router.HandleFunc("/unsubscribe", mw.Error(s.unsubscribeHandler(secret)))
+	router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
 
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/unsubscribe?email=%s&hash=%s", email, hashValue), nil)
 	assert.NoError(t, err)

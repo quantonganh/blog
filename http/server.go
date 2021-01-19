@@ -3,17 +3,21 @@ package http
 import (
 	"context"
 	"fmt"
+	"html/template"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 
 	"github.com/quantonganh/blog"
+	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/ondisk"
 )
@@ -38,30 +42,46 @@ type Server struct {
 }
 
 func NewServer(config *blog.Config, posts []*blog.Post) *Server {
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn: config.Sentry.DSN,
+	}); err != nil {
+		log.Fatal(err)
+	}
+	defer sentry.Flush(2 * time.Second)
+
+	sentryHandler := sentryhttp.New(sentryhttp.Options{})
+
+	funcMap := template.FuncMap{
+		"toISODate": blog.ToISODate,
+	}
+	tmpl := template.Must(
+		template.New("").Funcs(funcMap).ParseGlob(fmt.Sprintf("%s/*.html", config.Templates.Dir)))
 	s := &Server{
 		server:      &http.Server{},
 		router:      mux.NewRouter(),
 		PostService: ondisk.NewPostService(posts),
+		Renderer:    html.NewRender(config, tmpl),
 	}
 
 	s.router.Use(logging)
+	s.router.Use(sentryHandler.Handle)
 
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)
 
 	s.router.HandleFunc("/favicon.ico", faviconHandler)
-	s.router.HandleFunc("/", mw.Error(s.homeHandler))
-	s.router.NotFoundHandler = mw.Error(s.homeHandler)
-	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", mw.Error(s.postHandler))
-	s.router.HandleFunc("/tag/{tagName}", mw.Error(s.tagHandler))
+	s.router.HandleFunc("/", s.Error(s.homeHandler))
+	s.router.NotFoundHandler = s.Error(s.homeHandler)
+	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler))
+	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
 	s.router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("http/assets"))))
-	s.router.HandleFunc("/search", mw.Error(s.searchHandler(IndexPath)))
-	s.router.HandleFunc("/sitemap.xml", mw.Error(s.sitemapHandler))
-	s.router.HandleFunc("/rss.xml", mw.Error(s.rssHandler))
+	s.router.HandleFunc("/search", s.Error(s.searchHandler(IndexPath)))
+	s.router.HandleFunc("/sitemap.xml", s.Error(s.sitemapHandler))
+	s.router.HandleFunc("/rss.xml", s.Error(s.rssHandler))
 
-	s.router.HandleFunc("/subscribe", mw.Error(s.subscribeHandler(uuid.NewV4().String()))).Methods(http.MethodPost)
+	s.router.HandleFunc("/subscribe", s.Error(s.subscribeHandler)).Methods(http.MethodPost)
 	subRouter := s.router.PathPrefix("/subscribe").Subrouter()
-	subRouter.HandleFunc("/confirm", mw.Error(s.confirmHandler))
-	s.router.HandleFunc("/unsubscribe", mw.Error(s.unsubscribeHandler(config.Newsletter.HMAC.Secret)))
+	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
+	s.router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
 
 	return s
 }
@@ -102,8 +122,15 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "favicon.ico")
 }
 
-func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) error {
-	return s.Renderer.RenderPosts(w, r, s.PostService.GetAllPosts())
+func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) *AppError {
+	if err := s.Renderer.RenderPosts(w, r, s.PostService.GetAllPosts()); err != nil {
+		return &AppError{
+			Error: err,
+			Code:  http.StatusInternalServerError,
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {

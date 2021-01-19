@@ -16,7 +16,6 @@ import (
 	"golang.org/x/net/html"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/mock"
 	"github.com/quantonganh/blog/mongo"
 )
@@ -32,12 +31,13 @@ func (s *Server) testSubscribeHandler(t *testing.T) {
 
 	smtpService := new(mock.SMTPService)
 	smtpService.On("SendConfirmationEmail", email, token).Return(nil)
+	smtpService.On("GenerateNewUUID").Return(token)
 
 	s.SubscribeService = subscribeService
 	s.SMTPService = smtpService
 
 	router := mux.NewRouter()
-	router.HandleFunc("/subscribe", mw.Error(s.subscribeHandler(token))).Methods(http.MethodPost)
+	router.HandleFunc("/subscribe", s.Error(s.subscribeHandler)).Methods(http.MethodPost)
 
 	form := url.Values{}
 	form.Add("email", email)
@@ -69,7 +69,7 @@ func (s *Server) testConfirmHandler(t *testing.T) {
 	s.SMTPService = smtpService
 
 	router := mux.NewRouter()
-	router.HandleFunc("/subscribe/confirm", mw.Error(s.confirmHandler))
+	router.HandleFunc("/subscribe/confirm", s.Error(s.confirmHandler))
 
 	form := url.Values{}
 	form.Add("email", email)

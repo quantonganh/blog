@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) *AppError {
 	vars := mux.Vars(r)
 	year := vars["year"]
 	month := vars["month"]
@@ -18,7 +18,11 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) error {
 
 	relatedPosts, err := s.PostService.GetRelatedPosts(currentPost)
 	if err != nil {
-		return err
+		return &AppError{
+			Error:   err,
+			Message: "failed to get related posts",
+			Code:    http.StatusInternalServerError,
+		}
 	}
 
 	previousPost, nextPost := s.PostService.GetPreviousAndNextPost(currentPost)
@@ -29,5 +33,12 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) error {
 		currentPost.HasNext = true
 	}
 
-	return s.Renderer.RenderPost(w, currentPost, relatedPosts, previousPost, currentPost)
+	if err := s.Renderer.RenderPost(w, currentPost, relatedPosts, previousPost, currentPost); err != nil {
+		return &AppError{
+			Error: err,
+			Code:  http.StatusInternalServerError,
+		}
+	}
+
+	return nil
 }
