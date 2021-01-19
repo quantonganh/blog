@@ -10,12 +10,6 @@ import (
 	"github.com/quantonganh/blog"
 )
 
-const (
-	StatusPending      = "pending"
-	StatusSubscribed   = "subscribed"
-	StatusUnsubscribed = "unsubscribed"
-)
-
 type subscribeService struct {
 	collection *mongo.Collection
 }
@@ -77,7 +71,7 @@ func (ss *subscribeService) Subscribe(token string) error {
 
 	update := bson.M{
 		"$set": bson.M{
-			"status": StatusSubscribed,
+			"status": blog.StatusSubscribed,
 		},
 	}
 
@@ -94,7 +88,7 @@ func (ss *subscribeService) Unsubscribe(email string) error {
 
 	update := bson.M{
 		"$set": bson.M{
-			"status": StatusUnsubscribed,
+			"status": blog.StatusUnsubscribed,
 		},
 	}
 

@@ -9,15 +9,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/asdine/storm/v3"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	gomongo "go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/net/html"
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/mock"
-	"github.com/quantonganh/blog/mongo"
 )
 
 func (s *Server) testSubscribeHandler(t *testing.T) {
@@ -26,8 +25,8 @@ func (s *Server) testSubscribeHandler(t *testing.T) {
 
 	subscribe := &blog.Subscribe{}
 	subscribeService := new(mock.SubscribeService)
-	subscribeService.On("FindByEmail", email).Return(subscribe, gomongo.ErrNoDocuments)
-	subscribeService.On("Insert", blog.NewSubscribe(email, token, mongo.StatusPending)).Return(nil)
+	subscribeService.On("FindByEmail", email).Return(subscribe, storm.ErrNotFound)
+	subscribeService.On("Insert", blog.NewSubscribe(email, token, blog.StatusPending)).Return(nil)
 
 	smtpService := new(mock.SMTPService)
 	smtpService.On("SendConfirmationEmail", email, token).Return(nil)
@@ -57,7 +56,7 @@ func (s *Server) testConfirmHandler(t *testing.T) {
 	email := "foo@gmail.com"
 	token := uuid.NewV4().String()
 
-	subscribe := blog.NewSubscribe(email, token, mongo.StatusPending)
+	subscribe := blog.NewSubscribe(email, token, blog.StatusPending)
 	subscribeService := new(mock.SubscribeService)
 	subscribeService.On("Subscribe", token).Return(nil)
 	subscribeService.On("FindByToken", token).Return(subscribe, nil)
