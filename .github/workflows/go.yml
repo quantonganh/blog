@@ -38,17 +38,27 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.CR_PAT }}
 
+    - name: Get branch name (merge)
+      if: github.event_name != 'pull_request'
+      shell: bash
+      run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+    - name: Get branch name (pull request)
+      if: github.event_name == 'pull_request'
+      shell: bash
+      run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
     - name: Push to Github Container Registry
       uses: docker/build-push-action@v2
       with:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ghcr.io/${{ github.repository }}:${{ github.head_ref }}
+        tags: ghcr.io/${{ github.repository }}:${{ env.BRANCH_NAME }}
 
     - name: Deploy
       uses: appleboy/ssh-action@master
-      if: github.head_ref == 'master'
+      if: github.ref == 'refs/heads/master'
       with:
         host: ${{ secrets.HOST }}
         port: ${{ secrets.PORT }}
