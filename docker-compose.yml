@@ -106,7 +106,7 @@ services:
       - mongo:/data/db
 
   blog:
-    image: docker.quantonganh.com/quanta/blog:master
+    image: ghcr.io/quantonganh/blog:master
     container_name: blog
     restart: always
     volumes:
