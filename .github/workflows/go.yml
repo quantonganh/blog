@@ -45,3 +45,16 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: ghcr.io/${{ github.repository }}:${{ github.head_ref }}
+
+    - name: Deploy
+      uses: appleboy/ssh-action@master
+      if: github.head_ref == 'master'
+      with:
+        host: ${{ secrets.HOST }}
+        port: ${{ secrets.PORT }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        script: |
+          cd /data
+          docker-compose pull blog
+          docker-compose up -d blog
