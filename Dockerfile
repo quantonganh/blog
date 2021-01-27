@@ -1,8 +1,5 @@
-FROM alpine:3.12 as builder
+FROM alpine:3.13
 RUN apk add --no-cache ca-certificates
-
-FROM scratch
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY http/assets http/assets
 COPY favicon.ico .
 COPY posts posts
