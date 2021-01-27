@@ -11,6 +11,8 @@ volumes:
     driver: local
   mongo:
     driver: local
+  bolt:
+    driver: local
 
 services:
   traefik:
@@ -111,6 +113,7 @@ services:
     restart: always
     volumes:
       - ./config.yaml:/config.yaml:ro
+      - bolt:/db
     command: -config config.yaml
     environment:
       - REMARK_URL=https://${REMARK_DOMAIN}
