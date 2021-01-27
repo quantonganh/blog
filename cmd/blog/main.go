@@ -72,7 +72,7 @@ type app struct {
 func NewApp(config *blog.Config, posts []*blog.Post) *app {
 	return &app{
 		config:     config,
-		db:         bolt.NewDB("subscribe.db"),
+		db:         bolt.NewDB(config.DB.Path),
 		httpServer: http.NewServer(config, posts),
 	}
 }

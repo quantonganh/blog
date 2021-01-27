@@ -14,7 +14,7 @@ type Config struct {
 	}
 
 	DB struct {
-		Name string
+		Path string
 	}
 
 	HTTP struct {
