@@ -102,6 +102,12 @@ func (a *app) Run(ctx context.Context) error {
 
 func (a *app) Close() error {
 	if a.httpServer != nil {
+		if a.httpServer.SMTPService != nil {
+			if err := a.httpServer.SMTPService.Stop(); err != nil {
+				return err
+			}
+		}
+
 		if err := a.httpServer.Close(); err != nil {
 			return err
 		}
