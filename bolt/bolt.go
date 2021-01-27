@@ -7,15 +7,15 @@ import (
 )
 
 type DB struct {
-	name   string
+	path   string
 	db     *storm.DB
 	ctx    context.Context
 	cancel func()
 }
 
-func NewDB(name string) *DB {
+func NewDB(path string) *DB {
 	db := &DB{
-		name: name,
+		path: path,
 	}
 
 	db.ctx, db.cancel = context.WithCancel(context.Background())
@@ -24,7 +24,7 @@ func NewDB(name string) *DB {
 }
 
 func (db *DB) Open() error {
-	stormDB, err := storm.Open(db.name)
+	stormDB, err := storm.Open(db.path)
 	if err != nil {
 		return err
 	}
