@@ -6,4 +6,5 @@ type SMTPService interface {
 	SendNewsletter(posts []*Post)
 	GenerateNewUUID() string
 	GetHMACSecret() string
+	Stop() error
 }
