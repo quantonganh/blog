@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/matcornic/hermes/v2"
 	"github.com/pkg/errors"
@@ -19,6 +20,7 @@ type smtpService struct {
 	*blog.Config
 	blog.SubscribeService
 	blog.Renderer
+	*cron.Cron
 }
 
 func NewSMTPService(config *blog.Config, serverURL string, subscribeService blog.SubscribeService, renderer blog.Renderer) *smtpService {
@@ -27,6 +29,7 @@ func NewSMTPService(config *blog.Config, serverURL string, subscribeService blog
 		ServerURL:        serverURL,
 		SubscribeService: subscribeService,
 		Renderer:         renderer,
+		Cron:             cron.New(cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags)))),
 	}
 }
 
@@ -96,10 +99,7 @@ func (smtp *smtpService) SendThankYouEmail(to string) error {
 }
 
 func (smtp *smtpService) SendNewsletter(latestPosts []*blog.Post) {
-	c := cron.New(
-		cron.WithLogger(
-			cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
-	_, _ = c.AddFunc(smtp.Config.Newsletter.Cron.Spec, func() {
+	_, _ = smtp.Cron.AddFunc(smtp.Config.Newsletter.Cron.Spec, func() {
 
 		subscribers, _ := smtp.SubscribeService.FindByStatus(blog.StatusSubscribed)
 
@@ -110,7 +110,19 @@ func (smtp *smtpService) SendNewsletter(latestPosts []*blog.Post) {
 		}
 	})
 
-	c.Start()
+	smtp.Cron.Start()
+}
+
+func (smtp *smtpService) Stop() error {
+	ctx := smtp.Cron.Stop()
+	log.Println("Shutting down cron...")
+	select {
+	case <-time.After(10 * time.Second):
+		return errors.New("Cron forced to shutdown...")
+	case <-ctx.Done():
+		log.Println("Cron exiting...")
+		return ctx.Err()
+	}
 }
 
 func (smtp *smtpService) sendEmail(to string, subject, body string) error {
