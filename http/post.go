@@ -16,14 +16,7 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) *AppError {
 
 	currentPost := s.PostService.GetPostByURI(filepath.Join(year, month, day, fileName))
 
-	relatedPosts, err := s.PostService.GetRelatedPosts(currentPost)
-	if err != nil {
-		return &AppError{
-			Error:   err,
-			Message: "failed to get related posts",
-			Code:    http.StatusInternalServerError,
-		}
-	}
+	relatedPosts := s.PostService.GetRelatedPosts(currentPost)
 
 	previousPost, nextPost := s.PostService.GetPreviousAndNextPost(currentPost)
 	if previousPost != nil {

@@ -91,12 +91,20 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 }
 
 type postService struct {
-	posts []*blog.Post
+	posts     []*blog.Post
+	postByURI map[string]*blog.Post
 }
 
 func NewPostService(posts []*blog.Post) *postService {
+	postByURI := make(map[string]*blog.Post, len(posts))
+	for i, p := range posts {
+		p.ID = i + 1
+		postByURI[p.URI] = p
+	}
+
 	return &postService{
-		posts: posts,
+		posts:     posts,
+		postByURI: postByURI,
 	}
 }
 
@@ -105,10 +113,9 @@ func (ps *postService) GetAllPosts() []*blog.Post {
 }
 
 func (ps *postService) GetPostByURI(uri string) *blog.Post {
-	for _, p := range ps.posts {
-		if p.URI == uri {
-			return p
-		}
+	p, ok := ps.postByURI[uri]
+	if ok {
+		return p
 	}
 
 	return nil
@@ -184,25 +191,35 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 	}
 }
 
-func (ps *postService) GetRelatedPosts(currentPost *blog.Post) (map[string]*blog.Post, error) {
+func (ps *postService) GetRelatedPosts(currentPost *blog.Post) map[string]*blog.Post {
 	relatedPosts := make(map[string]*blog.Post)
-	for _, tag := range currentPost.Tags {
-		postsByTag, err := ps.GetPostsByTag(tag)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, post := range postsByTag {
-			if post.URI != currentPost.URI {
+	for _, post := range ps.posts {
+		if post.ID != currentPost.ID {
+			if isRelated(post.Tags, currentPost.Tags) {
 				relatedPosts[post.URI] = post
 			}
 		}
 	}
 
-	return relatedPosts, nil
+	return relatedPosts
 }
 
-func (ps *postService) GetPostsByTag(tag string) ([]*blog.Post, error) {
+func isRelated(tags, tags2 []string) bool {
+	m := make(map[string]bool)
+	for _, tag := range tags {
+		m[tag] = true
+	}
+
+	for _, tag := range tags2 {
+		if m[tag] {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (ps *postService) GetPostsByTag(tag string) []*blog.Post {
 	var postsByTag []*blog.Post
 	for _, post := range ps.posts {
 		for _, t := range post.Tags {
@@ -212,20 +229,16 @@ func (ps *postService) GetPostsByTag(tag string) ([]*blog.Post, error) {
 		}
 	}
 
-	return postsByTag, nil
+	return postsByTag
 }
 
 func (ps *postService) GetPreviousAndNextPost(currentPost *blog.Post) (previousPost, nextPost *blog.Post) {
-	for i, post := range ps.posts {
-		if currentPost.URI == post.URI {
-			if i < len(ps.posts)-1 {
-				previousPost = ps.posts[i+1]
-			}
-			if i > 0 {
-				nextPost = ps.posts[i-1]
-			}
-			break
-		}
+	id := currentPost.ID
+	if id < len(ps.posts)-1 {
+		previousPost = ps.posts[id+1]
+	}
+	if id > 0 {
+		nextPost = ps.posts[id-1]
 	}
 
 	return previousPost, nextPost
