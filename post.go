@@ -18,14 +18,15 @@ type PostService interface {
 	GetAllPosts() []*Post
 	GetPostByURI(uri string) *Post
 	GetLatestPosts(days int) []*Post
-	GetRelatedPosts(currentPost *Post) (map[string]*Post, error)
-	GetPostsByTag(tag string) ([]*Post, error)
+	GetRelatedPosts(currentPost *Post) map[string]*Post
+	GetPostsByTag(tag string) []*Post
 	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
 	IndexPosts(path string) (bleve.Index, error)
 	Search(index bleve.Index, value string) ([]*Post, error)
 }
 
 type Post struct {
+	ID          int
 	URI         string
 	Title       string
 	Date        publishDate

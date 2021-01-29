@@ -131,7 +131,7 @@ func TestSearchHandler(t *testing.T) {
 	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
 
 	t.Cleanup(func() {
-		_ = os.RemoveAll("test.bleve")
+		_ = os.RemoveAll("posts.bleve")
 	})
 }
 
