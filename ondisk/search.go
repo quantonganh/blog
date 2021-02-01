@@ -2,78 +2,66 @@ package ondisk
 
 import (
 	"bytes"
-	"context"
 	"encoding/gob"
 	"fmt"
+	"os"
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/document"
 	"github.com/blevesearch/bleve/index/scorch"
-	"github.com/blevesearch/bleve/mapping"
 	"github.com/pkg/errors"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/quantonganh/blog"
 )
 
-func (ps *postService) IndexPosts(path string) (bleve.Index, error) {
-	indexMapping := bleve.NewIndexMapping()
-	index, err := bleve.NewUsing(path, indexMapping, scorch.Name, scorch.Name, nil)
-	if err != nil {
-		return nil, errors.Errorf("failed to create index at %s: %v", path, err)
+func indexPosts(posts []*blog.Post, indexPath string) (bleve.Index, error) {
+	var index bleve.Index
+	mapping := bleve.NewIndexMapping()
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		index, err = bleve.NewUsing(indexPath, mapping, scorch.Name, scorch.Name, nil)
+		if err != nil {
+			return nil, errors.Errorf("failed to create index at %s: %v", indexPath, err)
+		}
+	} else if err == nil {
+		index, err = bleve.OpenUsing(indexPath, nil)
+		if err != nil {
+			return nil, errors.Errorf("failed to open index at %s: %v", indexPath, err)
+		}
 	}
 
-	g, ctx := errgroup.WithContext(context.Background())
-	for _, post := range ps.posts {
-		post := post // https://golang.org/doc/faq#closures_and_goroutines
-		g.Go(func() error {
-			return indexPost(ctx, indexMapping, index, post)
-		})
-	}
-
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
-
-	return index, nil
-}
-
-func indexPost(ctx context.Context, mapping *mapping.IndexMappingImpl, index bleve.Index, post *blog.Post) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
+	batch := index.NewBatch()
+	for _, post := range posts {
 		doc := document.Document{
 			ID: post.URI,
 		}
 		if err := mapping.MapDocument(&doc, post); err != nil {
-			return errors.Errorf("failed to map document: %v", err)
+			return nil, errors.Errorf("failed to map document: %v", err)
 		}
 
 		var b bytes.Buffer
 		enc := gob.NewEncoder(&b)
 		if err := enc.Encode(post); err != nil {
-			return errors.Errorf("failed to encode post: %v", err)
+			return nil, errors.Errorf("failed to encode post: %v", err)
 		}
 
 		field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
-		batch := index.NewBatch()
 		if err := batch.IndexAdvanced(doc.AddField(field)); err != nil {
-			return errors.Errorf("failed to add index to the batch: %v", err)
+			return nil, errors.Errorf("failed to add index to the batch: %v", err)
 		}
-		if err := index.Batch(batch); err != nil {
-			return errors.Errorf("failed to index batch: %v", err)
-		}
-
-		return nil
 	}
+
+	if err := index.Batch(batch); err != nil {
+		return nil, errors.Errorf("failed to index batch: %v", err)
+	}
+
+	return index, nil
 }
 
-func (ps *postService) Search(index bleve.Index, value string) ([]*blog.Post, error) {
+func (ps *postService) Search(value string) ([]*blog.Post, error) {
 	query := bleve.NewMatchQuery(value)
 	request := bleve.NewSearchRequest(query)
 	request.Fields = []string{"_source"}
-	searchResults, err := index.Search(request)
+	searchResults, err := ps.index.Search(request)
 	if err != nil {
 		return nil, errors.Errorf("failed to execute a search request: %v", err)
 	}

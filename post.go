@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/blevesearch/bleve"
 	"github.com/pkg/errors"
 )
 
@@ -21,8 +20,8 @@ type PostService interface {
 	GetRelatedPosts(currentPost *Post) map[string]*Post
 	GetPostsByTag(tag string) []*Post
 	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
-	IndexPosts(path string) (bleve.Index, error)
-	Search(index bleve.Index, value string) ([]*Post, error)
+	Search(value string) ([]*Post, error)
+	CloseIndex() error
 }
 
 type Post struct {

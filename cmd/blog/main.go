@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 
 	"github.com/spf13/viper"
 
@@ -70,10 +71,11 @@ type app struct {
 }
 
 func NewApp(config *blog.Config, posts []*blog.Post) *app {
+	indexPath := path.Join(path.Dir(config.Posts.Dir), path.Base(config.Posts.Dir)+".bleve")
 	return &app{
 		config:     config,
 		db:         bolt.NewDB(config.DB.Path),
-		httpServer: http.NewServer(config, posts),
+		httpServer: http.NewServer(config, posts, indexPath),
 	}
 }
 
@@ -102,6 +104,12 @@ func (a *app) Run(ctx context.Context) error {
 
 func (a *app) Close() error {
 	if a.httpServer != nil {
+		if a.httpServer.PostService != nil {
+			if err := a.httpServer.PostService.CloseIndex(); err != nil {
+				return err
+			}
+		}
+
 		if a.httpServer.SMTPService != nil {
 			if err := a.httpServer.SMTPService.Stop(); err != nil {
 				return err

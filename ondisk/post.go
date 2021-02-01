@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"path"
@@ -16,6 +17,7 @@ import (
 	"github.com/Depado/bfchroma"
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
+	"github.com/blevesearch/bleve"
 	"github.com/pkg/errors"
 	bf "github.com/russross/blackfriday/v2"
 	"golang.org/x/sync/errgroup"
@@ -93,18 +95,25 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 type postService struct {
 	posts     []*blog.Post
 	postByURI map[string]*blog.Post
+	index     bleve.Index
 }
 
-func NewPostService(posts []*blog.Post) *postService {
+func NewPostService(posts []*blog.Post, indexPath string) *postService {
 	postByURI := make(map[string]*blog.Post, len(posts))
 	for i, p := range posts {
 		p.ID = i + 1
 		postByURI[p.URI] = p
 	}
 
+	index, err := indexPosts(posts, indexPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &postService{
 		posts:     posts,
 		postByURI: postByURI,
+		index:     index,
 	}
 }
 
@@ -242,4 +251,8 @@ func (ps *postService) GetPreviousAndNextPost(currentPost *blog.Post) (previousP
 	}
 
 	return previousPost, nextPost
+}
+
+func (ps *postService) CloseIndex() error {
+	return ps.index.Close()
 }
