@@ -101,7 +101,7 @@ type postService struct {
 func NewPostService(posts []*blog.Post, indexPath string) *postService {
 	postByURI := make(map[string]*blog.Post, len(posts))
 	for i, p := range posts {
-		p.ID = i + 1
+		p.ID = i
 		postByURI[p.URI] = p
 	}
 
