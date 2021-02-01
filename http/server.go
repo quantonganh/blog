@@ -23,7 +23,6 @@ import (
 )
 
 const (
-	IndexPath       = "posts.bleve"
 	shutdownTimeout = 1 * time.Second
 )
 
@@ -74,7 +73,7 @@ func NewServer(config *blog.Config, posts []*blog.Post) *Server {
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler))
 	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
 	s.router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("http/assets"))))
-	s.router.HandleFunc("/search", s.Error(s.searchHandler(IndexPath)))
+	s.router.HandleFunc("/search", s.Error(s.searchHandler))
 	s.router.HandleFunc("/sitemap.xml", s.Error(s.sitemapHandler))
 	s.router.HandleFunc("/rss.xml", s.Error(s.rssHandler))
 

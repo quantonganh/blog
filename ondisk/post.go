@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"path"
@@ -16,6 +17,7 @@ import (
 	"github.com/Depado/bfchroma"
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
+	"github.com/blevesearch/bleve"
 	"github.com/pkg/errors"
 	bf "github.com/russross/blackfriday/v2"
 	"golang.org/x/sync/errgroup"
@@ -26,6 +28,7 @@ import (
 
 const (
 	yamlSeparator = "---"
+	IndexPath     = "posts.bleve"
 )
 
 func GetAllPosts(root string) ([]*blog.Post, error) {
@@ -93,6 +96,7 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 type postService struct {
 	posts     []*blog.Post
 	postByURI map[string]*blog.Post
+	index     bleve.Index
 }
 
 func NewPostService(posts []*blog.Post) *postService {
@@ -102,9 +106,28 @@ func NewPostService(posts []*blog.Post) *postService {
 		postByURI[p.URI] = p
 	}
 
+	var index bleve.Index
+	if _, err := os.Stat(IndexPath); os.IsNotExist(err) {
+		index, err = IndexPosts(posts, IndexPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if err == nil {
+		index, err = bleve.OpenUsing(IndexPath, map[string]interface{}{
+			"read_only": true,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer func() {
+			_ = index.Close()
+		}()
+	}
+
 	return &postService{
 		posts:     posts,
 		postByURI: postByURI,
+		index:     index,
 	}
 }
 

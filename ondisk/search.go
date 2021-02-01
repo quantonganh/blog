@@ -16,7 +16,7 @@ import (
 	"github.com/quantonganh/blog"
 )
 
-func (ps *postService) IndexPosts(path string) (bleve.Index, error) {
+func IndexPosts(posts []*blog.Post, path string) (bleve.Index, error) {
 	indexMapping := bleve.NewIndexMapping()
 	index, err := bleve.NewUsing(path, indexMapping, scorch.Name, scorch.Name, nil)
 	if err != nil {
@@ -24,7 +24,7 @@ func (ps *postService) IndexPosts(path string) (bleve.Index, error) {
 	}
 
 	g, ctx := errgroup.WithContext(context.Background())
-	for _, post := range ps.posts {
+	for _, post := range posts {
 		post := post // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
 			return indexPost(ctx, indexMapping, index, post)
@@ -69,11 +69,11 @@ func indexPost(ctx context.Context, mapping *mapping.IndexMappingImpl, index ble
 	}
 }
 
-func (ps *postService) Search(index bleve.Index, value string) ([]*blog.Post, error) {
+func (ps *postService) Search(value string) ([]*blog.Post, error) {
 	query := bleve.NewMatchQuery(value)
 	request := bleve.NewSearchRequest(query)
 	request.Fields = []string{"_source"}
-	searchResults, err := index.Search(request)
+	searchResults, err := ps.index.Search(request)
 	if err != nil {
 		return nil, errors.Errorf("failed to execute a search request: %v", err)
 	}
