@@ -21,6 +21,7 @@ type PostService interface {
 	GetPostsByTag(tag string) []*Post
 	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
 	Search(value string) ([]*Post, error)
+	CloseIndex() error
 }
 
 type Post struct {

@@ -28,6 +28,8 @@ import (
 	"github.com/quantonganh/blog/pkg/hash"
 )
 
+const indexPath = "test.bleve"
+
 var (
 	cfg  *blog.Config
 	post *blog.Post
@@ -65,7 +67,7 @@ Test.`)
 		log.Fatal(err)
 	}
 
-	s = NewServer(cfg, []*blog.Post{post})
+	s = NewServer(cfg, []*blog.Post{post}, indexPath)
 
 	os.Exit(m.Run())
 }
@@ -131,7 +133,7 @@ func TestSearchHandler(t *testing.T) {
 	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
 
 	t.Cleanup(func() {
-		_ = os.RemoveAll("posts.bleve")
+		_ = os.RemoveAll(indexPath)
 	})
 }
 
