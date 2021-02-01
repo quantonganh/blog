@@ -28,7 +28,6 @@ import (
 
 const (
 	yamlSeparator = "---"
-	IndexPath     = "posts.bleve"
 )
 
 func GetAllPosts(root string) ([]*blog.Post, error) {
@@ -99,29 +98,16 @@ type postService struct {
 	index     bleve.Index
 }
 
-func NewPostService(posts []*blog.Post) *postService {
+func NewPostService(posts []*blog.Post, indexPath string) *postService {
 	postByURI := make(map[string]*blog.Post, len(posts))
 	for i, p := range posts {
 		p.ID = i + 1
 		postByURI[p.URI] = p
 	}
 
-	var index bleve.Index
-	if _, err := os.Stat(IndexPath); os.IsNotExist(err) {
-		index, err = IndexPosts(posts, IndexPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else if err == nil {
-		index, err = bleve.OpenUsing(IndexPath, map[string]interface{}{
-			"read_only": true,
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer func() {
-			_ = index.Close()
-		}()
+	index, err := indexPosts(posts, indexPath)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return &postService{
@@ -265,4 +251,8 @@ func (ps *postService) GetPreviousAndNextPost(currentPost *blog.Post) (previousP
 	}
 
 	return previousPost, nextPost
+}
+
+func (ps *postService) CloseIndex() error {
+	return ps.index.Close()
 }
