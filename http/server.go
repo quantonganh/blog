@@ -40,7 +40,7 @@ type Server struct {
 	Renderer         blog.Renderer
 }
 
-func NewServer(config *blog.Config, posts []*blog.Post) *Server {
+func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Server {
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn: config.Sentry.DSN,
 	}); err != nil {
@@ -58,7 +58,7 @@ func NewServer(config *blog.Config, posts []*blog.Post) *Server {
 	s := &Server{
 		server:      &http.Server{},
 		router:      mux.NewRouter(),
-		PostService: ondisk.NewPostService(posts),
+		PostService: ondisk.NewPostService(posts, indexPath),
 		Renderer:    html.NewRender(config, tmpl),
 	}
 
