@@ -26,7 +26,7 @@ func (s *Server) postHandler(w http.ResponseWriter, r *http.Request) *AppError {
 		currentPost.HasNext = true
 	}
 
-	if err := s.Renderer.RenderPost(w, currentPost, relatedPosts, previousPost, currentPost); err != nil {
+	if err := s.Renderer.RenderPost(w, currentPost, relatedPosts, previousPost, nextPost); err != nil {
 		return &AppError{
 			Error: err,
 			Code:  http.StatusInternalServerError,
