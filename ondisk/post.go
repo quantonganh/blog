@@ -93,27 +93,32 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 }
 
 type postService struct {
-	posts     []*blog.Post
-	postByURI map[string]*blog.Post
-	index     bleve.Index
+	posts []*blog.Post
+	index bleve.Index
 }
 
 func NewPostService(posts []*blog.Post, indexPath string) *postService {
-	postByURI := make(map[string]*blog.Post, len(posts))
-	for i, p := range posts {
-		p.ID = i
-		postByURI[p.URI] = p
-	}
-
-	index, err := indexPosts(posts, indexPath)
+	index, err := createOrOpenIndex(posts, indexPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	batch := index.NewBatch()
+	for i, post := range posts {
+		post.ID = i
+
+		if err := indexPost(post, batch); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if err := index.Batch(batch); err != nil {
+		log.Fatal(err)
+	}
+
 	return &postService{
-		posts:     posts,
-		postByURI: postByURI,
-		index:     index,
+		posts: posts,
+		index: index,
 	}
 }
 
@@ -122,9 +127,10 @@ func (ps *postService) GetAllPosts() []*blog.Post {
 }
 
 func (ps *postService) GetPostByURI(uri string) *blog.Post {
-	p, ok := ps.postByURI[uri]
-	if ok {
-		return p
+	for _, post := range ps.posts {
+		if post.URI == uri {
+			return post
+		}
 	}
 
 	return nil

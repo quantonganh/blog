@@ -14,11 +14,31 @@ import (
 	"github.com/quantonganh/blog"
 )
 
-func indexPosts(posts []*blog.Post, indexPath string) (bleve.Index, error) {
+func indexPost(post *blog.Post, batch *bleve.Batch) error {
+	doc := document.Document{
+		ID: post.URI,
+	}
+	if err := bleve.NewIndexMapping().MapDocument(&doc, post); err != nil {
+		return errors.Errorf("failed to map document: %v", err)
+	}
+
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	if err := enc.Encode(post); err != nil {
+		return errors.Errorf("failed to encode post: %v", err)
+	}
+
+	field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
+	if err := batch.IndexAdvanced(doc.AddField(field)); err != nil {
+		return errors.Errorf("failed to add index to the batch: %v", err)
+	}
+	return nil
+}
+
+func createOrOpenIndex(posts []*blog.Post, indexPath string) (bleve.Index, error) {
 	var index bleve.Index
-	mapping := bleve.NewIndexMapping()
 	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		index, err = bleve.NewUsing(indexPath, mapping, scorch.Name, scorch.Name, nil)
+		index, err = bleve.NewUsing(indexPath, bleve.NewIndexMapping(), scorch.Name, scorch.Name, nil)
 		if err != nil {
 			return nil, errors.Errorf("failed to create index at %s: %v", indexPath, err)
 		}
@@ -27,34 +47,46 @@ func indexPosts(posts []*blog.Post, indexPath string) (bleve.Index, error) {
 		if err != nil {
 			return nil, errors.Errorf("failed to open index at %s: %v", indexPath, err)
 		}
-	}
 
-	batch := index.NewBatch()
-	for _, post := range posts {
-		doc := document.Document{
-			ID: post.URI,
-		}
-		if err := mapping.MapDocument(&doc, post); err != nil {
-			return nil, errors.Errorf("failed to map document: %v", err)
-		}
-
-		var b bytes.Buffer
-		enc := gob.NewEncoder(&b)
-		if err := enc.Encode(post); err != nil {
-			return nil, errors.Errorf("failed to encode post: %v", err)
-		}
-
-		field := document.NewTextFieldWithIndexingOptions("_source", nil, b.Bytes(), document.StoreField)
-		if err := batch.IndexAdvanced(doc.AddField(field)); err != nil {
-			return nil, errors.Errorf("failed to add index to the batch: %v", err)
+		if err := deletePostsFromIndex(posts, index); err != nil {
+			return nil, err
 		}
 	}
-
-	if err := index.Batch(batch); err != nil {
-		return nil, errors.Errorf("failed to index batch: %v", err)
-	}
-
 	return index, nil
+}
+
+func deletePostsFromIndex(posts []*blog.Post, index bleve.Index) error {
+	count, err := index.DocCount()
+	if err != nil {
+		return errors.Errorf("failed to get number of documents in the index: %v", err)
+	}
+
+	query := bleve.NewMatchAllQuery()
+	searchRequest := bleve.NewSearchRequest(query)
+	searchRequest.Size = int(count)
+	searchResults, err := index.Search(searchRequest)
+	if err != nil {
+		return errors.Errorf("failed to find all documents in the index: %v", err)
+	}
+	for i := 0; i < len(searchResults.Hits); i++ {
+		uri := searchResults.Hits[i].ID
+		if !isContains(posts, uri) {
+			if err := index.Delete(uri); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func isContains(posts []*blog.Post, uri string) bool {
+	for _, post := range posts {
+		if post.URI == uri {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (ps *postService) Search(value string) ([]*blog.Post, error) {
