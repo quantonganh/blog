@@ -2,6 +2,8 @@
 title: Đầu tư
 date: Thu Mar 12 16:08:39 +07 2020
 description: Nghĩ nhiều khi cũng lạ.
+categories:
+    - Cuộc sống
 tags:
   - invest
   - goland

@@ -2,6 +2,10 @@
 title: Why my golang docker container exits immediately (code 127)?
 date: Wed Oct 30 10:31:36 +07 2019
 description: To trim the binary size, I used `LDFLAGS='-w -s'`, pack with `upx`, then build from scratch. The thing is when starting, it exited immediately with code 127. Why?
+categories:
+    - DevOps
+tags:
+    - docker
 ---
 My Dockerfile:
 

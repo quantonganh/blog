@@ -2,9 +2,11 @@
 title: "go/packages.Load: no packages found"
 date: Tue Oct 22 05:23:53 +07 2019
 description: Go to definition does not work in a mono-repo
+categories:
+    - Backend
 tags:
-  - go
-  - gopls
+    - go
+    - gopls
 ---
 I have a mono-repo, structure like this:
 

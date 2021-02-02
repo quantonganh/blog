@@ -2,9 +2,11 @@
 title: 36 things I learned before turning 37
 date: Mon Jan 20 07:18:30 +07 2020
 description: ...
+categories:
+    - Cuộc sống
 tags:
-  - life
-  - lessons
+    - life
+    - lessons
 ---
 1. Đọc sách chưa biết bổ ngang dọc ở đâu nhưng góc nhìn rộng hơn, tính tình thuần hơn. 
 2. Dành xèng để có những trải nghiệm bên người thân, bạn bè, … hình như vui lâu hơn mua thứ gì đó. 

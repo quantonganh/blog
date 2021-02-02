@@ -1,10 +1,12 @@
 ---
 title: "database/sql: never ignore errors"
 date: Wed Oct 16 09:50:28 +07 2019
+categories:
+    - Backend
 tags:
-  - golang
-  - restful
-  - sqlite3
+    - golang
+    - restful
+    - sqlite3
 ---
 I'm reading [Building RESTful Web Services with Go](https://www.amazon.com/Building-RESTful-Web-services-gracefully-ebook/dp/B072QB8KL10). And in chapter 4, there is [an example](https://github.com/narenaryan/gorestful/blob/master/chapter4/sqliteFundamentals.go) to play around with SQLite:
 
