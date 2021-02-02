@@ -2,6 +2,9 @@
 title: Resume
 date: Mon Sep 30 20:43:10 +07 2019
 description: My resume
+categories:
+  - DevOps
+  - Backend
 tags:
   - devops
   - golang

@@ -2,10 +2,12 @@
 title: How to trigger build steps based on modified directory?
 date: Fri Jun  26 14:11:19 +07 2020
 description: How Drone could handle monorepo?
+categories:
+    - DevOps
 tags:
-  - drone
-  - ci
-  - monorepo
+    - drone
+    - ci
+    - monorepo
 ---
 Using monorepo with multiple micro services, every single commit will trigger a full lint/test/build/publish for every service. What can I do to limit the scope?
 

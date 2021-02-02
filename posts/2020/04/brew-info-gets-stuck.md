@@ -2,9 +2,11 @@
 title: brew info gets stuck
 date: Sat Apr 25 08:44:15 +07 2020
 description: I managed my Mac with SaltStack https://github.com/quantonganh/salt-osx
+categories:
+    - DevOps
 tags:
-  - saltstack
-  - brew
+    - saltstack
+    - brew
 ---
 For some reasons, it gets stuck when running `brew` state:
 

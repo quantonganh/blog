@@ -3,6 +3,12 @@
 {{ range .posts }}
     <a href="/{{ .URI }}"><h2>{{ .Title }}</h2></a>
     <p>{{ .Date | toISODate }}</p>
+    <p>Categories:
+        {{ range $i, $category := .Categories }}
+        {{ if $i }}/ {{ end }}
+        <a href="/category/{{ $category }}">{{ $category }}</a>
+        {{ end }}
+    </p>
     <p>Tags:
         {{ range $_, $tag := .Tags }}
             <a href="/tag/{{ $tag }}">#{{ $tag }}</a>

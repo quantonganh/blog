@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	yamlSeparator = "---"
+	yamlSeparator   = "---"
+	defaultCategory = "Uncategorized"
 )
 
 func GetAllPosts(root string) ([]*blog.Post, error) {
@@ -178,6 +179,10 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 		if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
 			return nil, errors.Wrapf(err, "failed to decode metadata")
 		}
+		if len(p.Categories) == 0 {
+			p.Categories = []string{defaultCategory}
+		}
+
 		switch v := r.(type) {
 		case *os.File:
 			basename := filepath.Base(v.Name())
@@ -232,6 +237,19 @@ func isRelated(tags, tags2 []string) bool {
 	}
 
 	return false
+}
+
+func (ps *postService) GetPostsByCategory(category string) []*blog.Post {
+	var postsByCategory []*blog.Post
+	for _, post := range ps.posts {
+		for _, c := range post.Categories {
+			if c == category {
+				postsByCategory = append(postsByCategory, post)
+			}
+		}
+	}
+
+	return postsByCategory
 }
 
 func (ps *postService) GetPostsByTag(tag string) []*blog.Post {

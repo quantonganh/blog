@@ -71,6 +71,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 	s.router.HandleFunc("/", s.Error(s.homeHandler))
 	s.router.NotFoundHandler = s.Error(s.homeHandler)
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler))
+	s.router.HandleFunc("/category/{categoryName}", s.Error(s.categoryHandler))
 	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
 	s.router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("http/assets"))))
 	s.router.HandleFunc("/search", s.Error(s.searchHandler))
