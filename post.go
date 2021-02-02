@@ -18,6 +18,7 @@ type PostService interface {
 	GetPostByURI(uri string) *Post
 	GetLatestPosts(days int) []*Post
 	GetRelatedPosts(currentPost *Post) map[string]*Post
+	GetPostsByCategory(category string) []*Post
 	GetPostsByTag(tag string) []*Post
 	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
 	Search(value string) ([]*Post, error)
@@ -31,6 +32,7 @@ type Post struct {
 	Date        publishDate
 	Description string
 	Content     template.HTML
+	Categories  []string
 	Tags        []string
 	HasPrev     bool
 	HasNext     bool

@@ -2,6 +2,12 @@
 {{ template "header" . }}
 <h2>{{ .currentPost.Title }}</h2>
 <p>{{ .currentPost.Date | toISODate }}</p>
+<p>Categories:
+    {{ range $i, $category := .currentPost.Categories }}
+    {{ if $i }}/ {{ end }}
+    <a href="/category/{{ $category }}">{{ $category }}</a>
+    {{ end }}
+</p>
 <p>{{ .currentPost.Description }}</p>
 {{ .currentPost.Content }}
 <p>Related Posts:
