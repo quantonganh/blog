@@ -2,10 +2,13 @@
 title: How to perform integration testing in Go?
 date: 2020-09-29
 description:
+categories:
+    - DevOps
+    - Backend
 tags:
-  - golang
-  - drone
-  - integration-test
+    - golang
+    - drone
+    - integration-test
 ---
 Integration testing can be triggered by using Drone [downstream](http://plugins.drone.io/drone-plugins/drone-downstream/) plugin:
 

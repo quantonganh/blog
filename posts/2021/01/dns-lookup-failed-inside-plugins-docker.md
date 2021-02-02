@@ -2,11 +2,13 @@
 title: plugins/docker failed to resolve Keycloak hostname?
 date: Wed Jan 27 10:07:19 +07 2021
 description: After integrating Docker registry with Keycloak, the publishing step failed to authenticate with Docker Registry.
+categories:
+    - DevOps
 tags:
-  - drone
-  - ci
-  - docker
-  - dns
+    - drone
+    - ci
+    - docker
+    - dns
 ---
 The full error message is:
 
