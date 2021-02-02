@@ -2,12 +2,15 @@
 title: How to run a pipeline step only when pushing to a new branch?
 date: Thu Jan  7 09:55:59 +07 2021
 description: GitHub sends push hook when pushing to a new branch and merging a PR. How can we distinguish between them?
+categories:
+    - DevOps
+    - Backend
 tags:
-  - drone
-  - ci
-  - monorepo
-  - integration-test
-  - golang
+    - drone
+    - ci
+    - monorepo
+    - integration-test
+    - golang
 ---
 We are running [integration test](../../2020/09/integration-test-golang.md) by triggering a downstream build when a PR is merged into specific branches.
 In the downstream repository, we pull all the docker images which has been built and pushed from upstream.

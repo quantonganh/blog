@@ -2,10 +2,13 @@
 title: Save draft mail in Zimbra web client using ChromeDP
 date: 2020-07-03
 description:
+categories:
+    - Backend
+    - Side projects
 tags:
-  - chromedp
-  - golang
-  - cobra
+    - chromedp
+    - golang
+    - cobra
 ---
 As an engineer, I want to automate everything as much as possible.
 This CLI tool is created to save a draft mail in Zimbra web client.

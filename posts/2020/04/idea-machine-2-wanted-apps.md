@@ -1,9 +1,11 @@
 ---
 title: Kể tên 10 ứng dụng mà bạn muốn có
 date: Sun Apr 12 11:50:57 +07 2020
+categories:
+    - Ideas
 tags:
-  - idea-machine
-  - wanted-apps
+    - idea-machine
+    - wanted-apps
 ---
 1. Tổng hợp các co-working spaces ở Hà Nội, gửi mail khi có khuyến mại
 2. Ước lượng thời gian đi từ A đến B, kết hợp với tình hình thời tiết xem có nên đi không

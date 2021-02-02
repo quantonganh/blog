@@ -1,9 +1,11 @@
 ---
 title: Activities to be happy
 date: Tue Dec  3 14:44:57 +07 2019
+categories:
+    - Cuộc sống
 tags:
-  - activities
-  - happiness
+    - activities
+    - happiness
 ---
 - engage in sports activity
 - spend time with friends and family
