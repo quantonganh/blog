@@ -131,7 +131,7 @@ services:
       - traefik.http.routers.blog-secured.tls.certresolver=le
 
   dev:
-    image: docker.quantonganh.com/quanta/blog:dev
+    image: ghcr.io/quantonganh/blog:bleve-di
     container_name: dev
     restart: always
     volumes:
