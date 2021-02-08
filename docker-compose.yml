@@ -136,6 +136,7 @@ services:
     container_name: dev
     volumes:
       - ./config.yaml:/config.yaml:ro
+      - ./posts:/posts:ro
     command: -config config.yaml
     environment:
       - REMARK_URL=https://${REMARK_DOMAIN}
