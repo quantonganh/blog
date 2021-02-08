@@ -133,7 +133,6 @@ services:
   dev:
     image: ghcr.io/quantonganh/blog:bleve-di
     container_name: dev
-    restart: always
     volumes:
       - ./config.yaml:/config.yaml:ro
     command: -config config.yaml
