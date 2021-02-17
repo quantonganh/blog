@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"html/template"
 	"log"
@@ -40,6 +41,12 @@ type Server struct {
 	Renderer         blog.Renderer
 }
 
+//go:embed html/templates/*.html
+var htmlFiles embed.FS
+
+//go:embed assets/css/*.css assets/favicon.ico
+var assets embed.FS
+
 func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Server {
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn: config.Sentry.DSN,
@@ -53,8 +60,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 	funcMap := template.FuncMap{
 		"toISODate": blog.ToISODate,
 	}
-	tmpl := template.Must(
-		template.New("").Funcs(funcMap).ParseGlob(fmt.Sprintf("%s/*.html", config.Templates.Dir)))
+	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(htmlFiles, "html/templates/*.html"))
 	s := &Server{
 		server:      &http.Server{},
 		router:      mux.NewRouter(),
@@ -73,7 +79,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler))
 	s.router.HandleFunc("/category/{categoryName}", s.Error(s.categoryHandler))
 	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
-	s.router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("http/assets"))))
+	s.router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets)))
 	s.router.HandleFunc("/search", s.Error(s.searchHandler))
 	s.router.HandleFunc("/sitemap.xml", s.Error(s.sitemapHandler))
 	s.router.HandleFunc("/rss.xml", s.Error(s.rssHandler))
@@ -119,7 +125,8 @@ func (s *Server) URL() string {
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "favicon.ico")
+	file, _ := assets.ReadFile("assets/favicon.ico")
+	w.Write(file)
 }
 
 func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) *AppError {

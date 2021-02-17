@@ -9,10 +9,6 @@ type Config struct {
 		Dir string
 	}
 
-	Templates struct {
-		Dir string
-	}
-
 	DB struct {
 		Path string
 	}

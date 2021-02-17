@@ -28,7 +28,6 @@ func main() {
 
 	viper.SetDefault("http.addr", ":80")
 	viper.SetDefault("posts.dir", "posts")
-	viper.SetDefault("templates.dir", "http/html/templates")
 
 	var cfg *blog.Config
 	if err := viper.Unmarshal(&cfg); err != nil {
