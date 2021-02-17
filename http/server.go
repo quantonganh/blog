@@ -73,7 +73,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)
 
-	s.router.HandleFunc("/favicon.ico", faviconHandler)
+	s.router.HandleFunc("/favicon.ico", s.Error(faviconHandler))
 	s.router.HandleFunc("/", s.Error(s.homeHandler))
 	s.router.NotFoundHandler = s.Error(s.homeHandler)
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler))
@@ -124,9 +124,17 @@ func (s *Server) URL() string {
 	return fmt.Sprintf("%s://%s:%d", scheme, domain, s.Port())
 }
 
-func faviconHandler(w http.ResponseWriter, r *http.Request) {
+func faviconHandler(w http.ResponseWriter, r *http.Request) *AppError {
 	file, _ := assets.ReadFile("assets/favicon.ico")
-	w.Write(file)
+	_, err := w.Write(file)
+	if err != nil {
+		return &AppError{
+			Error: err,
+			Code:  http.StatusInternalServerError,
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) *AppError {
