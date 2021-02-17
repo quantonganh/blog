@@ -1,6 +1,6 @@
 module github.com/quantonganh/blog
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Depado/bfchroma v1.3.0
