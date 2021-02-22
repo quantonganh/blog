@@ -44,7 +44,7 @@ type Server struct {
 //go:embed html/templates/*.html
 var htmlFiles embed.FS
 
-//go:embed assets/css/*.css assets/favicon.ico
+//go:embed assets
 var assets embed.FS
 
 func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Server {

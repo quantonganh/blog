@@ -114,7 +114,6 @@ services:
     volumes:
       - ./config.yaml:/config.yaml:ro
       - ./posts:/posts:ro
-      - ./http/assets/images:/http/assets/images:ro
       - bolt:/db
     command: -config config.yaml
     environment:
