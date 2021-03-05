@@ -55,3 +55,7 @@ figure figcaption {
     font-style: italic;
     font-size: 0.8em;
 }
+
+a:visited {
+    color: rebeccapurple;
+}
