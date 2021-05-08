@@ -81,7 +81,7 @@ quantonganh@gmail.com\
 
 ***
 
-**Personal website: https://quanta.dynu.net**
+**Personal website: https://quantonganh.com**
 
 - Utilized html/template and markdown to build a static site generator.
 - Automated testing and delivery by using Drone CI.
