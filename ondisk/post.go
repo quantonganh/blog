@@ -186,9 +186,9 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 		switch v := r.(type) {
 		case *os.File:
 			basename := filepath.Base(v.Name())
-			p.URI = path.Join(blog.GetYear(p.Date), blog.GetMonth(p.Date), blog.GetDay(p.Date), strings.TrimSuffix(basename, filepath.Ext(basename)))
+			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), strings.TrimSuffix(basename, filepath.Ext(basename)))
 		default:
-			p.URI = path.Join(blog.GetYear(p.Date), blog.GetMonth(p.Date), blog.GetDay(p.Date), url.QueryEscape(strings.ToLower(p.Title)))
+			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), url.QueryEscape(strings.ToLower(p.Title)))
 		}
 
 		content := strings.Join(lines[closingMetadataLine+1:], "\n")
@@ -275,6 +275,36 @@ func (ps *postService) GetPreviousAndNextPost(currentPost *blog.Post) (previousP
 	}
 
 	return previousPost, nextPost
+}
+
+func (ps *postService) GetPostsByDate(year, month, day string) []*blog.Post {
+	var postsByDate []*blog.Post
+	for _, post := range ps.posts {
+		if post.Date.GetYear() == year && post.Date.GetMonth() == month && post.Date.GetDay() == day {
+			postsByDate = append(postsByDate, post)
+		}
+	}
+	return postsByDate
+}
+
+func (ps *postService) GetPostsByMonth(year, month string) []*blog.Post {
+	var postsByMonth []*blog.Post
+	for _, post := range ps.posts {
+		if post.Date.GetYear() == year && post.Date.GetMonth() == month {
+			postsByMonth = append(postsByMonth, post)
+		}
+	}
+	return postsByMonth
+}
+
+func (ps *postService) GetPostsByYear(year string) []*blog.Post {
+	var postsByYear []*blog.Post
+	for _, post := range ps.posts {
+		if post.Date.GetYear() == year {
+			postsByYear = append(postsByYear, post)
+		}
+	}
+	return postsByYear
 }
 
 func (ps *postService) CloseIndex() error {
