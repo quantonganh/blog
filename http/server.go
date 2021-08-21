@@ -63,7 +63,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(htmlFiles, "html/templates/*.html"))
 	s := &Server{
 		server:      &http.Server{},
-		router:      mux.NewRouter(),
+		router:      mux.NewRouter().StrictSlash(true),
 		PostService: ondisk.NewPostService(posts, indexPath),
 		Renderer:    html.NewRender(config, tmpl),
 	}
@@ -77,6 +77,9 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 	s.router.HandleFunc("/", s.Error(s.homeHandler))
 	s.router.NotFoundHandler = s.Error(s.homeHandler)
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler))
+	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}", s.Error(s.postsByDateHandler))
+	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}", s.Error(s.postsByMonthHandler))
+	s.router.HandleFunc("/{year:20[1-9][0-9]}", s.Error(s.postsByYearHandler))
 	s.router.HandleFunc("/category/{categoryName}", s.Error(s.categoryHandler))
 	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
 	s.router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets)))

@@ -21,6 +21,9 @@ type PostService interface {
 	GetPostsByCategory(category string) []*Post
 	GetPostsByTag(tag string) []*Post
 	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
+	GetPostsByDate(year, month, date string) []*Post
+	GetPostsByMonth(year, month string) []*Post
+	GetPostsByYear(year string) []*Post
 	Search(value string) ([]*Post, error)
 	CloseIndex() error
 }
@@ -64,11 +67,11 @@ func ToISODate(d publishDate) string {
 	return d.Time.Format(layoutISO)
 }
 
-func GetYear(d publishDate) string {
+func (d *publishDate) GetYear() string {
 	return strconv.Itoa(d.Time.Year())
 }
 
-func GetMonth(d publishDate) string {
+func (d *publishDate) GetMonth() string {
 	month := int(d.Time.Month())
 	if month < 10 {
 		return "0" + strconv.Itoa(month)
@@ -77,7 +80,7 @@ func GetMonth(d publishDate) string {
 	return strconv.Itoa(month)
 }
 
-func GetDay(d publishDate) string {
+func (d *publishDate) GetDay() string {
 	day := d.Time.Day()
 	if day < 10 {
 		return "0" + strconv.Itoa(day)
