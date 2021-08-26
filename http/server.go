@@ -13,13 +13,13 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/http/html"
-	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/ondisk"
 )
 
@@ -68,7 +68,24 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 		Renderer:    html.NewRender(config, tmpl),
 	}
 
-	s.router.Use(logging)
+	zlog := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Logger()
+	s.router.Use(hlog.NewHandler(zlog))
+	s.router.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
+		hlog.FromRequest(r).Info().
+			Str("method", r.Method).
+			Stringer("url", r.URL).
+			Int("status", status).
+			Int("size", size).
+			Dur("duration", duration).
+			Msg("")
+	}))
+	s.router.Use(hlog.RemoteAddrHandler("ip"))
+	s.router.Use(hlog.UserAgentHandler("user_agent"))
+	s.router.Use(hlog.RefererHandler("referer"))
+	s.router.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
+
 	s.router.Use(sentryHandler.Handle)
 
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)
@@ -172,8 +189,4 @@ func (s *Server) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 	return s.server.Shutdown(ctx)
-}
-
-func logging(next http.Handler) http.Handler {
-	return mw.URLHost(handlers.ProxyHeaders(handlers.LoggingHandler(os.Stdout, next)))
 }
