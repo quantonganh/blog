@@ -15,13 +15,17 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ml-auto">
-                    {{ range $_, $item := .navbarItems }}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ $item.URL }}">{{ $item.Text }}</a>
-                    </li>
-                    {{ end }}
-                </ul>
+                <div class="navbar-nav ml-auto dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="categoriesMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Categories
+                    </a>
+
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                        {{ range $category, $posts := .categories }}
+                        <a class="dropdown-item" href="/category/{{ $category }}">{{ $category }} ({{ len $posts }})</a>
+                        {{ end }}
+                    </div>
+                </div>
                 <form class="form-inline my-2 my-lg-0" action="/search">
                     <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="q">
                     <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
