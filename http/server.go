@@ -61,11 +61,12 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 		"toISODate": blog.ToISODate,
 	}
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(htmlFiles, "html/templates/*.html"))
+	postService := ondisk.NewPostService(posts, indexPath)
 	s := &Server{
 		server:      &http.Server{},
 		router:      mux.NewRouter().StrictSlash(true),
-		PostService: ondisk.NewPostService(posts, indexPath),
-		Renderer:    html.NewRender(config, tmpl),
+		PostService: postService,
+		Renderer:    html.NewRender(config, postService.GetAllCategories(), tmpl),
 	}
 
 	zlog := zerolog.New(os.Stdout).With().
