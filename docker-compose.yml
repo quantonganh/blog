@@ -107,6 +107,14 @@ services:
     volumes:
       - mongo:/data/db
 
+  watchtower:
+    image: containrrr/watchtower:arm64v8-1.3.0
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /root/.docker/config.json:/config.json
+    command: --interval 10 --debug blog
+
   blog:
     image: ghcr.io/quantonganh/blog:master
     container_name: blog
