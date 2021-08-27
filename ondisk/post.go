@@ -239,17 +239,19 @@ func isRelated(tags, tags2 []string) bool {
 	return false
 }
 
-func (ps *postService) GetPostsByCategory(category string) []*blog.Post {
-	var postsByCategory []*blog.Post
+func (ps *postService) GetAllCategories() map[string][]*blog.Post {
+	categories := make(map[string][]*blog.Post)
 	for _, post := range ps.posts {
 		for _, c := range post.Categories {
-			if c == category {
-				postsByCategory = append(postsByCategory, post)
-			}
+			categories[c] = append(categories[c], post)
 		}
 	}
 
-	return postsByCategory
+	return categories
+}
+
+func (ps *postService) GetPostsByCategory(category string) []*blog.Post {
+	return ps.GetAllCategories()[category]
 }
 
 func (ps *postService) GetPostsByTag(tag string) []*blog.Post {

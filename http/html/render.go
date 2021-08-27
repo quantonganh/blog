@@ -18,14 +18,16 @@ import (
 const defaultPostsPerPage = 10
 
 type render struct {
-	config *blog.Config
-	tmpl   *template.Template
+	config     *blog.Config
+	categories map[string][]*blog.Post
+	tmpl       *template.Template
 }
 
-func NewRender(config *blog.Config, tmpl *template.Template) *render {
+func NewRender(config *blog.Config, categories map[string][]*blog.Post, tmpl *template.Template) *render {
 	return &render{
-		config: config,
-		tmpl:   tmpl,
+		config:     config,
+		categories: categories,
+		tmpl:       tmpl,
 	}
 }
 
@@ -54,9 +56,9 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 	}
 
 	data := pongo2.Context{
-		"navbarItems": r.config.Navbar.Items,
-		"posts":       posts[offset:endPos],
-		"paginator":   paginator,
+		"categories": r.categories,
+		"posts":      posts[offset:endPos],
+		"paginator":  paginator,
 	}
 	if err := r.tmpl.ExecuteTemplate(w, "home", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
@@ -72,7 +74,7 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 	}
 
 	data := pongo2.Context{
-		"navbarItems":  r.config.Navbar.Items,
+		"categories":   r.categories,
 		"title":        currentPost.Title,
 		"currentPost":  currentPost,
 		"relatedPosts": relatedPosts,
@@ -89,8 +91,8 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 
 func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) error {
 	data := pongo2.Context{
-		"navbarItems": r.config.Navbar.Items,
-		"message":     message,
+		"categories": r.categories,
+		"message":    message,
 	}
 
 	if err := r.tmpl.ExecuteTemplate(w, "response", data); err != nil {
@@ -107,11 +109,11 @@ func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email str
 	}
 	buf := new(bytes.Buffer)
 	data := pongo2.Context{
-		"navbarItems": r.config.Navbar.Items,
-		"posts":       latestPosts,
-		"pageURL":     serverURL,
-		"email":       email,
-		"hash":        hash,
+		"categories": r.categories,
+		"posts":      latestPosts,
+		"pageURL":    serverURL,
+		"email":      email,
+		"hash":       hash,
 	}
 	if err := r.tmpl.ExecuteTemplate(buf, "newsletter", data); err != nil {
 		return nil, errors.Errorf("failed to execute template newsletter: %v", err)
