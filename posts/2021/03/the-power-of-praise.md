@@ -3,7 +3,7 @@ title: The power of praise
 date: 2021-03-18
 description: Sức mạnh của lời khen
 categories:
-- life
+- Cuộc sống
 tags:
 - praising
 ---
