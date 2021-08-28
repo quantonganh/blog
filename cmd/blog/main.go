@@ -71,10 +71,14 @@ type app struct {
 
 func NewApp(config *blog.Config, posts []*blog.Post) *app {
 	indexPath := path.Join(path.Dir(config.Posts.Dir), path.Base(config.Posts.Dir)+".bleve")
+	httpServer, err := http.NewServer(config, posts, indexPath)
+	if err != nil {
+		log.Fatalf("%+v\n", err)
+	}
 	return &app{
 		config:     config,
 		db:         bolt.NewDB(config.DB.Path),
-		httpServer: http.NewServer(config, posts, indexPath),
+		httpServer: httpServer,
 	}
 }
 

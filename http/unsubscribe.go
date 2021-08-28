@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/quantonganh/blog/pkg/hash"
@@ -18,7 +17,10 @@ func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) *App
 	hashValue := query.Get("hash")
 	expectedHash, err := hash.ComputeHmac256(email, s.SMTPService.GetHMACSecret())
 	if err != nil {
-		log.Fatal(err)
+		return &AppError{
+			Error: err,
+			Code:  http.StatusInternalServerError,
+		}
 	}
 
 	if hashValue == expectedHash {

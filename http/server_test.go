@@ -67,7 +67,10 @@ Test.`)
 		log.Fatal(err)
 	}
 
-	s = NewServer(cfg, []*blog.Post{post}, indexPath)
+	s, err = NewServer(cfg, []*blog.Post{post}, indexPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	os.Exit(m.Run())
 }
