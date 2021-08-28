@@ -2,6 +2,8 @@
 title: Troubleshooting slow network file transfer
 date: 2021-06-25
 description: 
+categories:
+- Networking
 tags:
 - iperf3
 - tcpdump
