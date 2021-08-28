@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path"
@@ -98,10 +97,10 @@ type postService struct {
 	index bleve.Index
 }
 
-func NewPostService(posts []*blog.Post, indexPath string) *postService {
+func NewPostService(posts []*blog.Post, indexPath string) (*postService, error) {
 	index, err := createOrOpenIndex(posts, indexPath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	batch := index.NewBatch()
@@ -109,18 +108,18 @@ func NewPostService(posts []*blog.Post, indexPath string) *postService {
 		post.ID = i
 
 		if err := indexPost(post, batch); err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 	}
 
 	if err := index.Batch(batch); err != nil {
-		log.Fatal(err)
+		return nil, errors.Wrapf(err, "failed to index batch")
 	}
 
 	return &postService{
 		posts: posts,
 		index: index,
-	}
+	}, nil
 }
 
 func (ps *postService) GetAllPosts() []*blog.Post {
