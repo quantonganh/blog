@@ -4,7 +4,6 @@ date: Thu Jan  7 09:55:59 +07 2021
 description: GitHub sends push hook when pushing to a new branch and merging a PR. How can we distinguish between them?
 categories:
     - DevOps
-    - Backend
 tags:
     - drone
     - ci

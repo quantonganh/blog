@@ -3,8 +3,7 @@ title: Google Calendar CLI
 date: 2020-04-13
 description: A simple tool to access Google Calendar API from CLI.
 categories:
-    - Backend
-    - Side projects
+    - Programming
 tags:
   - golang
   - cobra

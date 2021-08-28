@@ -2,6 +2,8 @@
 title: Automate office tasks with Python
 date: 2021-06-10
 description: Lập trình có gì hay?
+categories:
+- Programming
 tags:
 - python
 - pandas

@@ -2,6 +2,8 @@
 title: fish shell - very high CPU usage
 date: 2021-07-30
 description: Today I learned a new command.
+categories:
+  - Operating System
 tags:
   - osx
   - fish
