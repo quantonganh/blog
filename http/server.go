@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -47,11 +46,11 @@ var htmlFiles embed.FS
 //go:embed assets
 var assets embed.FS
 
-func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Server {
+func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Server, error) {
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn: config.Sentry.DSN,
 	}); err != nil {
-		log.Fatal(err)
+		return nil, errors.Wrapf(err, "failed to init Sentry, DSN: %s", config.Sentry.DSN)
 	}
 	defer sentry.Flush(2 * time.Second)
 
@@ -61,7 +60,10 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 		"toISODate": blog.ToISODate,
 	}
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(htmlFiles, "html/templates/*.html"))
-	postService := ondisk.NewPostService(posts, indexPath)
+	postService, err := ondisk.NewPostService(posts, indexPath)
+	if err != nil {
+		return nil, err
+	}
 	s := &Server{
 		server:      &http.Server{},
 		router:      mux.NewRouter().StrictSlash(true),
@@ -110,7 +112,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) *Serve
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
 
-	return s
+	return s, nil
 }
 
 func (s *Server) Scheme() string {
