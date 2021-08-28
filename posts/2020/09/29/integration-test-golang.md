@@ -4,7 +4,7 @@ date: 2020-09-29
 description:
 categories:
     - DevOps
-    - Backend
+    - Programming
 tags:
     - golang
     - drone

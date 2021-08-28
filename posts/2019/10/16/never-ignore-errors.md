@@ -2,7 +2,7 @@
 title: "database/sql: never ignore errors"
 date: Wed Oct 16 09:50:28 +07 2019
 categories:
-    - Backend
+    - Programming
 tags:
     - golang
     - restful

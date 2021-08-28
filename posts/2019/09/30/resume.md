@@ -2,9 +2,6 @@
 title: Resume
 date: Mon Sep 30 20:43:10 +07 2019
 description: My resume
-categories:
-  - DevOps
-  - Backend
 tags:
   - devops
   - golang
@@ -12,7 +9,6 @@ tags:
 ---
 **Quan Tong Anh**\
 quantonganh@gmail.com\
-(+84) 91 442 79 63\
 [github.com/quantonganh](https://github.com/quantonganh)
 
 ### Experience  

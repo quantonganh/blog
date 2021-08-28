@@ -4,7 +4,7 @@ date: Fri Sep 20 00:07:58 +07 2019
 description: When you developp a webserver with Go, you must compile each time you do an update in your code. Well.. this is redundant. With Gulp you can automatize this task… Indeed, when a go file is modified, a task compile the application in the “bin” folder (“gopath/bin”) then another launch the executable (the webserver).
 categories:
   - DevOps
-  - Backend
+  - Programming
 tags:
   - web
   - gulp
