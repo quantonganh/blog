@@ -3,7 +3,6 @@ title: Bằng về sớm với ba
 date: Mon Oct 21 08:27:39 +07 2019
 categories:
     - Cuộc sống
-    - Thơ
 tags:
     - Đón-Con
 ---

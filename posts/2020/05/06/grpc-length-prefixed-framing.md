@@ -4,7 +4,7 @@ date: Wed May  6 09:18:44 +07 2020
 description: Once we have the encoded data to send to the other end, we need to package the data in a way that other end can easily extract the information. gRPC uses a message framing technique called length-prefixed framing.
 categories:
     - DevOps
-    - Backend
+    - Networking
 tags:
     - grpc
     - protocol-buffers
