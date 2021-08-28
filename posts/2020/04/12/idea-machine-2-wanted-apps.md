@@ -1,8 +1,6 @@
 ---
 title: Kể tên 10 ứng dụng mà bạn muốn có
 date: Sun Apr 12 11:50:57 +07 2020
-categories:
-    - Ideas
 tags:
     - idea-machine
     - wanted-apps

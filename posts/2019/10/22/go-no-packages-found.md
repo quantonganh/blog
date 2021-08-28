@@ -3,7 +3,7 @@ title: "go/packages.Load: no packages found"
 date: Tue Oct 22 05:23:53 +07 2019
 description: Go to definition does not work in a mono-repo
 categories:
-    - Backend
+    - Programming
 tags:
     - go
     - gopls

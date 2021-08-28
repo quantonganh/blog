@@ -1,8 +1,6 @@
 ---
 title: Giải quyết 10 vấn đề khó khăn trong cuộc sống bằng thái độ biết ơn
 date: Wed Nov 27 18:46:41 +07 2019
-categories:
-    - Ideas
 tags:
     - idea-machine
     - positive-thinking

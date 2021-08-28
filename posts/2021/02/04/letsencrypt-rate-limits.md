@@ -5,6 +5,7 @@ description: Traefik is configured to use Let's Encrypt to generate certificate 
 categories:
   - DevOps
 tags:
+  - docker
   - letsencrypt
   - traefik
 ---
