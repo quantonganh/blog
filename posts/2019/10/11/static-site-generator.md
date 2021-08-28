@@ -3,8 +3,7 @@ title: How do I build this blog?
 date: Fri Oct 11 09:34:20 +07 2019
 description: Why I want to write a static site generator instead of using Hugo and GitHub Pages?
 categories:
-    - Backend
-    - Side projects
+    - Programming
 tags:
     - golang
     - static-site-generator
