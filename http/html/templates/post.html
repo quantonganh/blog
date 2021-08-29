@@ -10,15 +10,14 @@
 <p>{{ .currentPost.Date | toISODate }}</p>
 <p>Categories:
     {{ range $i, $category := .currentPost.Categories }}
-    {{ if $i }}/ {{ end }}
-    <a href="/category/{{ $category }}">{{ $category }}</a>
+    <a class="btn btn-outline-primary" href="/category/{{ $category }}" role="button">{{ $category }}</a>
     {{ end }}
 </p>
 <p>{{ .currentPost.Description }}</p>
 {{ .currentPost.Content }}
 <p>Tags:
     {{ range $_, $tag := .currentPost.Tags }}
-    <a href="/tag/{{ $tag }}">#{{ $tag }}</a>
+    <a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">{{ $tag }}</a>
     {{ end }}
 </p>
 <hr/>
