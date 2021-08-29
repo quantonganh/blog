@@ -5,13 +5,12 @@
     <p>{{ .Date | toISODate }}</p>
     <p>Categories:
         {{ range $i, $category := .Categories }}
-        {{ if $i }}/ {{ end }}
-        <a href="/category/{{ $category }}">{{ $category }}</a>
+        <a class="btn btn-outline-primary" href="/category/{{ $category }}" role="button">{{ $category }}</a>
         {{ end }}
     </p>
     <p>Tags:
         {{ range $_, $tag := .Tags }}
-            <a href="/tag/{{ $tag }}">#{{ $tag }}</a>
+            <a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">{{ $tag }}</a>
         {{ end }}
     </p>
     <p>{{ .Description }}</p>
