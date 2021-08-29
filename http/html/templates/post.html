@@ -16,17 +16,18 @@
 </p>
 <p>{{ .currentPost.Description }}</p>
 {{ .currentPost.Content }}
+<p>Tags:
+    {{ range $_, $tag := .currentPost.Tags }}
+    <a href="/tag/{{ $tag }}">#{{ $tag }}</a>
+    {{ end }}
+</p>
+<hr/>
 <p>Related Posts:
     <ul>
         {{ range $uri, $post := .relatedPosts }}
             <li><a href="/{{ $uri }}">{{ $post.Title }}</a></li>
         {{ end }}
     </ul>
-</p>
-<p>Tags:
-    {{ range $_, $tag := .currentPost.Tags }}
-        <a href="/tag/{{ $tag }}">#{{ $tag }}</a>
-    {{ end }}
 </p>
 <table>
     <tr>
