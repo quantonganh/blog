@@ -30,16 +30,26 @@
 </p>
 <table>
     <tr>
-        <td align="left">
-            {{ if .currentPost.HasPrev }}
-                <a href="/{{ .previousPost.URI }}"><< Previous</a>
-            {{ end }}
+        {{ if .currentPost.HasPrev }}
+        <td>
+            <div class="d-md-flex">
+                <a class="page-link" href="/{{ .previousPost.URI }}">
+                    <span aria-hidden="true">&laquo;</span>
+                    Previous
+                </a>
+            </div>
         </td>
-        <td align="right">
-            {{ if .currentPost.HasNext }}
-                <a href="/{{ .nextPost.URI }}">Next >></a>
-            {{ end }}
+        {{ end }}
+        {{ if .currentPost.HasNext }}
+        <td>
+            <div class="d-md-flex flex-md-row-reverse">
+                <a class="page-link" href="/{{ .nextPost.URI }}">
+                    Next
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </div>
         </td>
+        {{ end }}
     </tr>
 </table>
 <script>
