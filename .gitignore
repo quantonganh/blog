@@ -1,5 +1,7 @@
 .env
 .idea
 /blog
+/db
 /config.yaml
+/main
 /posts.bleve
