@@ -93,6 +93,13 @@ func (ps *postService) Search(value string) ([]*blog.Post, error) {
 	query := bleve.NewMatchQuery(value)
 	request := bleve.NewSearchRequest(query)
 	request.Fields = []string{"_source"}
+
+	size, err := ps.index.DocCount()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to count number of documents in the index")
+	}
+	request.Size = int(size)
+
 	searchResults, err := ps.index.Search(request)
 	if err != nil {
 		return nil, errors.Errorf("failed to execute a search request: %v", err)
