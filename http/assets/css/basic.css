@@ -25,6 +25,11 @@ img {
     width: 100%;
 }
 
+img + em {
+    display: block;
+    text-align: center;
+}
+
 .line-numbers a {
     text-decoration: none;
     color: #000;
