@@ -2,6 +2,7 @@ package blog
 
 import (
 	"html/template"
+	"sort"
 	"strconv"
 	"time"
 
@@ -22,6 +23,7 @@ type PostService interface {
 	GetPostsByCategory(category string) []*Post
 	GetPostsByTag(tag string) []*Post
 	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
+	GetYears() []string
 	GetPostsByDate(year, month, date string) []*Post
 	GetPostsByMonth(year, month string) []*Post
 	GetPostsByYear(year string) []*Post
@@ -66,6 +68,40 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func ToISODate(d publishDate) string {
 	return d.Time.Format(layoutISO)
+}
+
+func ToMonthName(month string) string {
+	m, _ := strconv.Atoi(month)
+	return time.Month(m).String()
+}
+
+func GetMonthsInYear(posts []*Post, year string) []string {
+	m := make(map[string]struct{})
+	for _, post := range posts {
+		if post.Date.GetYear() == year {
+			m[post.Date.GetMonth()] = struct{}{}
+		}
+	}
+
+	var monthsInYear []string
+	for month := range m {
+		monthsInYear = append(monthsInYear, month)
+	}
+	sort.Slice(monthsInYear, func(i, j int) bool {
+		return monthsInYear[i] > monthsInYear[j]
+	})
+
+	return monthsInYear
+}
+
+func GetPostsByMonth(posts []*Post, year, month string) []*Post {
+	var postsByMonth []*Post
+	for _, post := range posts {
+		if post.Date.GetYear() == year && post.Date.GetMonth() == month {
+			postsByMonth = append(postsByMonth, post)
+		}
+	}
+	return postsByMonth
 }
 
 func (d *publishDate) GetYear() string {

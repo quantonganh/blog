@@ -57,7 +57,10 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	sentryHandler := sentryhttp.New(sentryhttp.Options{})
 
 	funcMap := template.FuncMap{
-		"toISODate": blog.ToISODate,
+		"toISODate":       blog.ToISODate,
+		"toMonthName":     blog.ToMonthName,
+		"getMonthsInYear": blog.GetMonthsInYear,
+		"getPostsByMonth": blog.GetPostsByMonth,
 	}
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(htmlFiles, "html/templates/*.html"))
 	postService, err := ondisk.NewPostService(posts, indexPath)
@@ -68,7 +71,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 		server:      &http.Server{},
 		router:      mux.NewRouter().StrictSlash(true),
 		PostService: postService,
-		Renderer:    html.NewRender(config, postService.GetAllCategories(), tmpl),
+		Renderer:    html.NewRender(config, postService, tmpl),
 	}
 
 	zlog := zerolog.New(os.Stdout).With().
@@ -101,6 +104,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}", s.Error(s.postsByMonthHandler))
 	s.router.HandleFunc("/{year:20[1-9][0-9]}", s.Error(s.postsByYearHandler))
 	s.router.HandleFunc("/category/{categoryName}", s.Error(s.categoryHandler))
+	s.router.HandleFunc("/archives", s.Error(s.archivesHandler))
 	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
 	s.router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets)))
 	s.router.HandleFunc("/search", s.Error(s.searchHandler))

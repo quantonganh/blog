@@ -278,6 +278,22 @@ func (ps *postService) GetPreviousAndNextPost(currentPost *blog.Post) (previousP
 	return previousPost, nextPost
 }
 
+func (ps *postService) GetYears() []string {
+	m := make(map[string]struct{})
+	for _, post := range ps.posts {
+		m[post.Date.GetYear()] = struct{}{}
+	}
+
+	var years []string
+	for y := range m {
+		years = append(years, y)
+	}
+	sort.Slice(years, func(i, j int) bool {
+		return years[i] > years[j]
+	})
+	return years
+}
+
 func (ps *postService) GetPostsByDate(year, month, day string) []*blog.Post {
 	var postsByDate []*blog.Post
 	for _, post := range ps.posts {

@@ -6,6 +6,7 @@ import (
 )
 
 type Renderer interface {
+	RenderArchives(w http.ResponseWriter) error
 	RenderPosts(w http.ResponseWriter, r *http.Request, posts []*Post) error
 	RenderPost(w http.ResponseWriter, currentPost *Post, relatedPosts map[string]*Post, previousPost, nextPost *Post) error
 	RenderResponseMessage(w http.ResponseWriter, message string) error
