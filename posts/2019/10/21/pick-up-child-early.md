@@ -6,7 +6,7 @@ categories:
 tags:
     - Đón-Con
 ---
-![Father and son in Hakone](/assets/images/father-and-son-hakone.jpeg)
+![Father and son in Hakone](./father-and-son-hakone.jpeg)
 
 Bốn giờ con tan học\
 Ùa ra như bầy ong\
