@@ -6,8 +6,6 @@ categories:
 tags:
     - Đón-Con
 ---
-![Father and son in Hakone](./father-and-son-hakone.jpeg)
-
 Bốn giờ con tan học\
 Ùa ra như bầy ong\
 Chạy xuống sân đá bóng\
