@@ -8,7 +8,7 @@ tags:
   - invest
   - goland
 ---
-![Goland free evaluation](/assets/images/goland-free-evaluation.png)
+![Goland free evaluation](./goland-free-evaluation.png)
 
 - Nhậu một bữa hết mấy trăm K không thấy lăn tăn gì.
 - Lướt Medium thấy bài hay thì lại không đọc được. Mấy lần định bỏ ra $5 / tháng mà nghĩ lên nghĩ xuống.
