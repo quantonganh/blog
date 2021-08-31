@@ -214,8 +214,20 @@ func (ps *postService) GetRelatedPosts(currentPost *blog.Post) map[string]*blog.
 	relatedPosts := make(map[string]*blog.Post)
 	for _, post := range ps.posts {
 		if post.ID != currentPost.ID {
-			if isRelated(post.Tags, currentPost.Tags) {
+			if isRelated(post.Categories, currentPost.Categories) || isRelated(post.Tags, currentPost.Tags) {
 				relatedPosts[post.URI] = post
+			}
+		}
+	}
+
+	top5RelatedPosts := make(map[string]*blog.Post, 5)
+	if len(relatedPosts) >= 5 {
+		n := 0
+		for id, p := range relatedPosts {
+			top5RelatedPosts[id] = p
+			n++
+			if n == 5 {
+				return top5RelatedPosts
 			}
 		}
 	}
@@ -223,14 +235,14 @@ func (ps *postService) GetRelatedPosts(currentPost *blog.Post) map[string]*blog.
 	return relatedPosts
 }
 
-func isRelated(tags, tags2 []string) bool {
+func isRelated(s1, s2 []string) bool {
 	m := make(map[string]bool)
-	for _, tag := range tags {
-		m[tag] = true
+	for _, e := range s1 {
+		m[e] = true
 	}
 
-	for _, tag := range tags2 {
-		if m[tag] {
+	for _, e := range s2 {
+		if m[e] {
 			return true
 		}
 	}
