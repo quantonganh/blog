@@ -8,7 +8,7 @@ tags:
     - golang
     - static-site-generator
 ---
-![Raspberry Pi 4](/assets/images/pi4.jpg)
+![Raspberry Pi 4](./pi4.jpg)
 
 Recently, I decided to find a new job as a Golang developer. So, I updated my resume, sent to my friends to ask for review. Then I submitted it enclosed herewith a cover letter to recruiters. Some didn't reply, and the other replied with a message like this "You are so good, but I'm so sorry...".
 
