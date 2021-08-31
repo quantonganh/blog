@@ -97,6 +97,19 @@ func TestHomeHandler(t *testing.T) {
 	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
 }
 
+func TestArchivesHandler(t *testing.T) {
+	t.Parallel()
+
+	rr := httptest.NewRecorder()
+	request, err := http.NewRequest(http.MethodGet, "/archives", nil)
+	assert.NoError(t, err)
+	s.router.ServeHTTP(rr, request)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	body := rr.Body
+	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, body, "Test"))
+}
+
 func TestPostHandler(t *testing.T) {
 	t.Parallel()
 

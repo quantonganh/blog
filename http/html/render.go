@@ -18,17 +18,30 @@ import (
 const defaultPostsPerPage = 10
 
 type render struct {
-	config     *blog.Config
-	categories map[string][]*blog.Post
-	tmpl       *template.Template
+	config      *blog.Config
+	postService blog.PostService
+	tmpl        *template.Template
 }
 
-func NewRender(config *blog.Config, categories map[string][]*blog.Post, tmpl *template.Template) *render {
+func NewRender(config *blog.Config, postService blog.PostService, tmpl *template.Template) *render {
 	return &render{
-		config:     config,
-		categories: categories,
-		tmpl:       tmpl,
+		config:      config,
+		postService: postService,
+		tmpl:        tmpl,
 	}
+}
+
+func (r *render) RenderArchives(w http.ResponseWriter) error {
+	data := pongo2.Context{
+		"allPosts":   r.postService.GetAllPosts(),
+		"categories": r.postService.GetAllCategories(),
+		"years":      r.postService.GetYears(),
+	}
+	if err := r.tmpl.ExecuteTemplate(w, "archives", data); err != nil {
+		return errors.Errorf("failed to execute template: %v", err)
+	}
+
+	return nil
 }
 
 func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*blog.Post) error {
@@ -56,7 +69,7 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 	}
 
 	data := pongo2.Context{
-		"categories": r.categories,
+		"categories": r.postService.GetAllCategories(),
 		"posts":      posts[offset:endPos],
 		"paginator":  paginator,
 	}
@@ -74,7 +87,7 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 	}
 
 	data := pongo2.Context{
-		"categories":   r.categories,
+		"categories":   r.postService.GetAllCategories(),
 		"title":        currentPost.Title,
 		"currentPost":  currentPost,
 		"relatedPosts": relatedPosts,
@@ -91,7 +104,7 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 
 func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) error {
 	data := pongo2.Context{
-		"categories": r.categories,
+		"categories": r.postService.GetAllCategories(),
 		"message":    message,
 	}
 
@@ -109,7 +122,7 @@ func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email str
 	}
 	buf := new(bytes.Buffer)
 	data := pongo2.Context{
-		"categories": r.categories,
+		"categories": r.postService.GetAllCategories(),
 		"posts":      latestPosts,
 		"pageURL":    serverURL,
 		"email":      email,
