@@ -1,0 +1,30 @@
+{{ define "photos" }}
+{{ template "header" . }}
+<div class="container-fluid">
+	<div class="grid">
+		<div class="grid-sizer"></div>
+		{{ $allPosts := .allPosts }}
+		{{ range $_, $imageAddress := .imageAddresses }}
+		<div class="grid-item">
+			<a href="{{ getPostURIByImage $allPosts $imageAddress }}">
+				<img src="{{ $imageAddress }}" />
+			</a>
+		</div>
+		{{ end }}
+	</div>
+	<script>
+        // init Masonry
+        var $grid = $('.grid').masonry({
+            itemSelector: '.grid-item',
+            columnWidth: '.grid-sizer'
+            percentPosition: true,
+        });
+
+        // layout Masonry after each image loads
+        $grid.imagesLoaded().progress( function() {
+            $grid.masonry();
+        });
+	</script>
+</div>
+{{ template "footer" . }}
+{{ end }}

@@ -31,6 +31,19 @@ func NewRender(config *blog.Config, postService blog.PostService, tmpl *template
 	}
 }
 
+func (r *render) RenderPhotos(w http.ResponseWriter) error {
+	data := pongo2.Context{
+		"allPosts":       r.postService.GetAllPosts(),
+		"categories":     r.postService.GetAllCategories(),
+		"imageAddresses": r.postService.GetImageAddresses(),
+	}
+	if err := r.tmpl.ExecuteTemplate(w, "photos", data); err != nil {
+		return errors.Errorf("failed to execute template: %v", err)
+	}
+
+	return nil
+}
+
 func (r *render) RenderArchives(w http.ResponseWriter) error {
 	data := pongo2.Context{
 		"allPosts":   r.postService.GetAllPosts(),
