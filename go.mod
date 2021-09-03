@@ -14,7 +14,6 @@ require (
 	github.com/getsentry/sentry-go v0.9.0
 	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/feeds v1.1.1
-	github.com/gorilla/handlers v1.4.1
 	github.com/gorilla/mux v1.7.3
 	github.com/matcornic/hermes/v2 v2.1.0
 	github.com/pkg/errors v0.9.1

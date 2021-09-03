@@ -2,6 +2,8 @@
 title: Lên xuống dòng đời
 date: 2019-10-14
 description:
+images:
+- wien-hauptbahnhof-austria.jpg
 categories:
 - Du lịch
 tags:

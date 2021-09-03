@@ -29,6 +29,7 @@ const (
 	newLineSeparator = "\n"
 	yamlSeparator    = "---"
 	defaultCategory  = "Uncategorized"
+	travelCategory   = "Du lịch"
 	wordSeparator    = " "
 	summaryLength    = 70
 	threeBackticks   = "```"
@@ -186,12 +187,13 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 			p.Categories = []string{defaultCategory}
 		}
 
+		ymd := path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay())
 		switch v := r.(type) {
 		case *os.File:
 			basename := filepath.Base(v.Name())
-			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), strings.TrimSuffix(basename, filepath.Ext(basename)))
+			p.URI = path.Join(ymd, strings.TrimSuffix(basename, filepath.Ext(basename)))
 		default:
-			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), url.QueryEscape(strings.ToLower(p.Title)))
+			p.URI = path.Join(ymd, url.QueryEscape(strings.ToLower(p.Title)))
 		}
 
 		content := strings.Join(lines[closingMetadataLine+1:], newLineSeparator)
@@ -292,6 +294,18 @@ func (ps *postService) GetAllCategories() map[string][]*blog.Post {
 	}
 
 	return categories
+}
+
+func (ps *postService) GetImageAddresses() []string {
+	var imageAddresses []string
+	for _, post := range ps.posts {
+		if blog.Contains(post.Categories, travelCategory) {
+			for _, image := range post.Images {
+				imageAddresses = append(imageAddresses, path.Join(path.Dir(post.URI), image))
+			}
+		}
+	}
+	return imageAddresses
 }
 
 func (ps *postService) GetPostsByCategory(category string) []*blog.Post {
