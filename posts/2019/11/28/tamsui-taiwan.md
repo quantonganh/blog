@@ -8,7 +8,7 @@ tags:
 - taiwan
 - tamsui
 ---
-![Tamsui Taiwan](./tamsui-taiwan.jpg)
+![Tamsui Taiwan](/2019/11/28/tamsui-taiwan.jpg)
 *Tamsui, Taiwan.*
 
 Đáp MRT từ suối nước nóng Beitou về không kịp.

@@ -8,7 +8,7 @@ tags:
 - hakone
 - japan
 ---
-![Father and son in Hakone](./father-and-son-hakone.jpeg)
+![Father and son in Hakone](/2018/08/11/father-and-son-hakone.jpeg)
 *Father and son in Hakone.*
 
 Đáp Shinkansen từ Kyoto. Đến Odawara, gửi vali xong, lơ ngơ đi hỏi đường. Lên xe buýt rồi đi một chuyến tàu nữa mới đến được Hakone. Hơn 7h, trời mưa tầm tã.
