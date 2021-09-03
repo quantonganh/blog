@@ -1,6 +1,15 @@
 package blog
 
 type Config struct {
+	Site struct {
+		BaseURL string
+		Title   string
+		Params  struct {
+			Author      string
+			Description string
+		}
+	}
+
 	Navbar struct {
 		Items []*Item
 	}

@@ -8,7 +8,7 @@ tags:
 - wien-hauptbahnhof
 - austria
 ---
-![Wien Hauptbahnhof Austria](./wien-hauptbahnhof-austria.jpg)
+![Wien Hauptbahnhof Austria](/2019/10/14/wien-hauptbahnhof-austria.jpg)
 *Wien Hauptbahnhof, Austria.*
 
 Vừa đáp chuyến tàu đêm từ Zurich sang. May mà lần này mỗi khi tàu dừng, điều hoà không tắt thì phải. Cuốc bộ tiếp 1,5 km nữa để về khách sạn. Hồn nhiên đưa mail booking cho nhân viên, đang định hỏi xem có cho check in sớm không.

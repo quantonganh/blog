@@ -13,7 +13,6 @@
     <a class="btn btn-outline-primary" href="/category/{{ $category }}" role="button">{{ $category }}</a>
     {{ end }}
 </p>
-<p>{{ .currentPost.Description }}</p>
 {{ .currentPost.Content }}
 <p>Tags:
     {{ range $_, $tag := .currentPost.Tags }}

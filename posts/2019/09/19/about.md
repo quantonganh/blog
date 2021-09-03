@@ -1,11 +1,12 @@
 ---
 title: About me
 date: Thu Sep 19 21:48:39 +07 2019
-description: Hello. I'm Quan.
+description:
 tags:
   - introduction
   - myself
 ---
+Hello. I'm Quan.
 I started my career as a .NET developer. Then my passionate on Linux and open source led me to a different direction, a system administrator.
 With a strong background in Linux system administration, I was gradually moving to backend. I'm currently working as a software engineer. In spare time, I teach my wife to program to [automate her office tasks](../../../2021/06/10/automate-office-tasks).
 

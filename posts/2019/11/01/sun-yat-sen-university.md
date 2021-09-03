@@ -9,7 +9,7 @@ tags:
 - university
 - taiwan
 ---
-![Sun Yat-sen University](./sun-yat-sen-university.jpg)
+![Sun Yat-sen University](/2019/11/01/sun-yat-sen-university.jpg)
 *On the way go to Sun Yat-sen university.*
 
 Xuống xe buýt.
