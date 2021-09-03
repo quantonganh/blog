@@ -2,6 +2,8 @@
 title: Hanoi tour
 date: 2020-05-16
 description:
+images:
+- the-big-church-hanoi.jpg
 categories:
 - Du lịch
 tags:

@@ -1,7 +1,9 @@
 ---
 title: Lavender
-date: 2021-06-24
+date: 2019-06-17
 description:
+images:
+- lavender-provence.jpg
 categories:
 - Du lịch
 tags:
@@ -10,10 +12,8 @@ tags:
 - france
 ---
 
-![Lavender in Provence](/2021/06/24/lavender-provence.jpg)
+![Lavender in Provence](/2019/06/17/lavender-provence.jpg)
 *Lavender in Provence, France.*
-
-17-6-2019
 
 Marseille -> Provence: 150km
 

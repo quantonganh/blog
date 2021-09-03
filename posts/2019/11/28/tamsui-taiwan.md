@@ -2,6 +2,8 @@
 title: Đạm Thủy (Tamsui)
 date: 2019-11-28
 description:
+images:
+- tamsui-taiwan.jpg
 categories:
 - Du lịch
 tags:
