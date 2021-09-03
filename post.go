@@ -2,6 +2,7 @@ package blog
 
 import (
 	"html/template"
+	"path"
 	"sort"
 	"strconv"
 	"time"
@@ -20,6 +21,7 @@ type PostService interface {
 	GetLatestPosts(days int) []*Post
 	GetRelatedPosts(currentPost *Post) map[string]*Post
 	GetAllCategories() map[string][]*Post
+	GetImageAddresses() []string
 	GetPostsByCategory(category string) []*Post
 	GetPostsByTag(tag string) []*Post
 	GetPreviousAndNextPost(currentPost *Post) (previousPost, nextPost *Post)
@@ -37,6 +39,7 @@ type Post struct {
 	Title       string
 	Date        publishDate
 	Description string
+	Images      []string
 	Content     template.HTML
 	Summary     template.HTML
 	Truncated   bool
@@ -104,6 +107,24 @@ func GetPostsByMonth(posts []*Post, year, month string) []*Post {
 		}
 	}
 	return postsByMonth
+}
+
+func GetPostURIByImage(posts []*Post, imageAddress string) string {
+	for _, post := range posts {
+		if Contains(post.Images, path.Base(imageAddress)) {
+			return post.URI
+		}
+	}
+	return ""
+}
+
+func Contains(s []string, e string) bool {
+	for _, v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
 }
 
 func (d *publishDate) GetYear() string {
