@@ -1,7 +1,7 @@
 ---
 title: How to show all HTTP2 headers using tshark?
 date: Tue May  5 08:44:55 +07 2020
-description: After sniffing with tcpdump, show can I show all HTTP2 header using tshark?
+description:
 categories:
     - DevOps
     - Networking
@@ -10,6 +10,8 @@ tags:
     - http2
     - tshark
 ---
+After sniffing with tcpdump, show can I show all HTTP2 header using tshark?
+
 First, find the frame number based on method:
 
 ```

@@ -1,7 +1,7 @@
 ---
 title: How to run a pipeline step only when pushing to a new branch?
 date: Thu Jan  7 09:55:59 +07 2021
-description: GitHub sends push hook when pushing to a new branch and merging a PR. How can we distinguish between them?
+description:
 categories:
     - DevOps
 tags:
@@ -11,7 +11,9 @@ tags:
     - integration-test
     - golang
 ---
-We are running [integration test](../../2020/09/integration-test-golang.md) by triggering a downstream build when a PR is merged into specific branches.
+GitHub sends push hook when pushing to a new branch and merging a PR. How can we distinguish between them?
+
+We are running [integration test](/2020/09/29/integration-test-golang) by triggering a downstream build when a PR is merged into specific branches.
 In the downstream repository, we pull all the docker images which has been built and pushed from upstream.
 The thing is we also used the [drone-convert-pathschanged](https://github.com/meltwater/drone-convert-pathschanged) to [only publish what modules has been changed](../../2020/06/drone-trigger-based-on-modified-dir.md).
 

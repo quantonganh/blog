@@ -1,13 +1,15 @@
 ---
 title: A && B || C is not the same as if-then-else
 date: Sat Dec 26 16:06:55 +07 2020
-description: I have been thought that if-then-else statement can be written in one line by using `A && B || C` but I was wrong.
+description:
 categories:
   - DevOps
 tags:
   - bash
   - shell
 ---
+I have been thought that if-then-else statement can be written in one line by using `A && B || C` but I was wrong.
+    
 To speed up my Drone CI time, I configured the static-check step to only run when there are some `.go` files have been changed:
 
 ```shell script

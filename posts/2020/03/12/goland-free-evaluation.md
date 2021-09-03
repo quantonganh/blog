@@ -1,14 +1,16 @@
 ---
 title: Đầu tư
 date: Thu Mar 12 16:08:39 +07 2020
-description: Nghĩ nhiều khi cũng lạ.
+description:
 categories:
     - Cuộc sống
 tags:
   - invest
   - goland
 ---
-![Goland free evaluation](./goland-free-evaluation.png)
+![Goland free evaluation](/2020/03/12/goland-free-evaluation.png)
+
+Nghĩ nhiều khi cũng lạ.
 
 - Nhậu một bữa hết mấy trăm K không thấy lăn tăn gì.
 - Lướt Medium thấy bài hay thì lại không đọc được. Mấy lần định bỏ ra $5 / tháng mà nghĩ lên nghĩ xuống.

@@ -1,13 +1,14 @@
 ---
 title: Unable to obtain ACME certificate for domains
 date: Mon Dec 28 10:30:54 +07 2020
-description: Lets Encrypt tells me that my domain contains an invalid character. What is it?
+description:
 categories:
     - DevOps
 tags:
     - traefik
     - letsencrypt
 ---
+Lets Encrypt tells me that my domain contains an invalid character. What is it?
 
 `remark42` is configured like this:
 

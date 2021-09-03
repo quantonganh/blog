@@ -69,6 +69,7 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 	}
 
 	data := pongo2.Context{
+		"Site":       r.config.Site,
 		"categories": r.postService.GetAllCategories(),
 		"posts":      posts[offset:endPos],
 		"paginator":  paginator,
@@ -88,7 +89,8 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 
 	data := pongo2.Context{
 		"categories":   r.postService.GetAllCategories(),
-		"title":        currentPost.Title,
+		"Title":        currentPost.Title,
+		"Description":  currentPost.Description,
 		"currentPost":  currentPost,
 		"relatedPosts": relatedPosts,
 		"previousPost": previousPost,

@@ -1,7 +1,7 @@
 ---
 title: How a gRPC message uses length-prefixed framing?
 date: Wed May  6 09:18:44 +07 2020
-description: Once we have the encoded data to send to the other end, we need to package the data in a way that other end can easily extract the information. gRPC uses a message framing technique called length-prefixed framing.
+description:
 categories:
     - DevOps
     - Networking
@@ -10,6 +10,8 @@ tags:
     - protocol-buffers
     - length-prefixed-framing
 ---
+Once we have the encoded data to send to the other end, we need to package the data in a way that other end can easily extract the information. gRPC uses a message framing technique called length-prefixed framing.
+
 Filter gRPC messages:
 
 ```
