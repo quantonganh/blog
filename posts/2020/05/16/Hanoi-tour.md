@@ -9,7 +9,7 @@ tags:
 - cháo-quẩy
 - tào-phớ
 ---
-![The big church](./the-big-church-hanoi.jpg)
+![The big church](/2020/05/16/the-big-church-hanoi.jpg)
 *The big church, Hanoi.*
 
 Hà Nội Tour (nửa ngày, 0 đêm):

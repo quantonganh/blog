@@ -10,7 +10,7 @@ tags:
 - france
 ---
 
-![Lavender in Provence](./lavender-provence.jpg)
+![Lavender in Provence](/2021/06/24/lavender-provence.jpg)
 *Lavender in Provence, France.*
 
 17-6-2019

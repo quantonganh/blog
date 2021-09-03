@@ -1,7 +1,7 @@
 ---
 title: Let's Encrypt too many certificates already issued
 date: 2021-02-04
-description: Traefik is configured to use Let's Encrypt to generate certificate for my blog (and other services) automatically. One day after restarting, I cannot access to my blog via HTTPS anymore (NET::ERR_CERT_AUTHORITY_INVALID). Why?
+description: Why LE issued too many certificates for one domain?
 categories:
   - DevOps
 tags:
@@ -9,6 +9,8 @@ tags:
   - letsencrypt
   - traefik
 ---
+Traefik is configured to use Let's Encrypt to generate certificate for my blog (and other services) automatically. One day after restarting, I cannot access to my blog via HTTPS anymore (NET::ERR_CERT_AUTHORITY_INVALID). Why?
+
 By looking at the Traefik logs, I found this:
 
 > time="2021-02-04T01:54:33Z" level=error msg="Unable to obtain ACME certificate for domains \"quantonganh.com\": unable to generate a certificate for the domains [quantonganh.com]: acme: error: 429 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rateLimited :: Error creating new order :: too many certificates already issued for exact set of domains: quantonganh.com: see https://letsencrypt.org/docs/rate-limits/, url: " providerName=le.acme routerName=blog-secured@docker rule="Host(`quantonganh.com`)"
