@@ -26,8 +26,12 @@ import (
 )
 
 const (
-	yamlSeparator   = "---"
-	defaultCategory = "Uncategorized"
+	newLineSeparator = "\n"
+	yamlSeparator    = "---"
+	defaultCategory  = "Uncategorized"
+	wordSeparator    = " "
+	summaryLength    = 70
+	threeBackticks   = "```"
 )
 
 func GetAllPosts(root string) ([]*blog.Post, error) {
@@ -164,7 +168,7 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 
 		var closingMetadataLine int
 
-		lines := strings.Split(string(postContent), "\n")
+		lines := strings.Split(string(postContent), newLineSeparator)
 		for i := 1; i < len(lines); i++ {
 			if lines[i] == yamlSeparator {
 				closingMetadataLine = i
@@ -172,7 +176,7 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 			}
 		}
 
-		metadata := strings.Join(lines[1:closingMetadataLine], "\n")
+		metadata := strings.Join(lines[1:closingMetadataLine], newLineSeparator)
 
 		p := blog.Post{}
 		if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
@@ -190,13 +194,42 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), url.QueryEscape(strings.ToLower(p.Title)))
 		}
 
-		content := strings.Join(lines[closingMetadataLine+1:], "\n")
+		content := strings.Join(lines[closingMetadataLine+1:], newLineSeparator)
+		if len(strings.Split(content, wordSeparator)) > summaryLength {
+			p.Truncated = true
+		} else {
+			p.Truncated = false
+		}
 		options := []html.Option{
 			html.WithLineNumbers(true),
 		}
 
 		p.Content = template.HTML(bf.Run(
 			[]byte(content),
+			bf.WithRenderer(
+				bfchroma.NewRenderer(
+					bfchroma.WithoutAutodetect(),
+					bfchroma.ChromaOptions(options...),
+					bfchroma.ChromaStyle(styles.SolarizedDark),
+				),
+			),
+		))
+
+		var (
+			summaries         []string
+			numThreeBackticks int
+		)
+		for _, line := range lines[closingMetadataLine+1:] {
+			if strings.HasPrefix(line, threeBackticks) {
+				numThreeBackticks++
+			}
+			summaries = append(summaries, line)
+			if len(strings.Split(strings.Join(summaries, newLineSeparator), wordSeparator)) > summaryLength && numThreeBackticks%2 == 0 {
+				break
+			}
+		}
+		p.Summary = template.HTML(bf.Run(
+			[]byte(strings.Join(summaries, newLineSeparator)),
 			bf.WithRenderer(
 				bfchroma.NewRenderer(
 					bfchroma.WithoutAutodetect(),

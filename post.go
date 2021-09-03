@@ -38,6 +38,8 @@ type Post struct {
 	Date        publishDate
 	Description string
 	Content     template.HTML
+	Summary     template.HTML
+	Truncated   bool
 	Categories  []string
 	Tags        []string
 	HasPrev     bool

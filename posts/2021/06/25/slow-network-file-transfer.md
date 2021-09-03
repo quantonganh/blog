@@ -1,7 +1,7 @@
 ---
 title: Troubleshooting slow network file transfer
 date: 2021-06-25
-description: 
+description: Which switch port connected to a server?
 categories:
 - Networking
 tags:

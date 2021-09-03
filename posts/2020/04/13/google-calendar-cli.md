@@ -12,7 +12,7 @@ Our company allows us to work from home some days a week. To do that, we have to
 
 I created this tool to run it from CLI.
 
-First, take a look at this quickstart: https://developers.google.com/calendar/quickstart/go
+First, take a look at this [quickstart](https://developers.google.com/calendar/quickstart/go).
 
 Create initical code by running:
 

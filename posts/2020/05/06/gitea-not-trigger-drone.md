@@ -1,7 +1,7 @@
 ---
 title: Drone build is not triggered after pushing code to Gitea?
 date: Wed May  6 14:11:01 +07 2020
-description: I pushed code to Gitea and nothing happens in Drone. Why?
+description:
 categories:
     - DevOps
 tags:
@@ -9,6 +9,8 @@ tags:
     - drone
     - fstab
 ---
+I pushed code to Gitea and nothing happens in Drone. Why?
+
 But if I go to [Settings -> Webhooks](https://git-tea.dynu.net/quanta/blog/settings/hooks/1), then click "Test Delivery" -> build pipeline will be executed. Why?
 
 First, look at the "Recent Deliveries" to see if a webhook is triggerd here when you pushing code.

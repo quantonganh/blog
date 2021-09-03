@@ -1,7 +1,7 @@
 ---
 title: plugins/docker failed to resolve Keycloak hostname?
 date: Wed Jan 27 10:07:19 +07 2021
-description: After integrating Docker registry with Keycloak, the publishing step failed to authenticate with Docker Registry.
+description:
 categories:
     - DevOps
 tags:
@@ -10,9 +10,13 @@ tags:
     - docker
     - dns
 ---
+After integrating Docker registry with Keycloak, the publishing step failed to authenticate with Docker Registry.
+
 The full error message is:
 
-> time="2021-01-26T13:44:18.485121053Z" level=error msg="Handler for POST /v1.40/auth returned error: Get https://docker.domain.com/v2/: Get https://sso.domain.com/auth/realms/application/protocol/docker-v2/auth?account=******&client_id=docker&offline_token=true&service=aws-docker-registry: dial tcp: lookup sso.domain.com on 127.0.0.11:53: no such host"
+```
+time="2021-01-26T13:44:18.485121053Z" level=error msg="Handler for POST /v1.40/auth returned error: Get https://docker.domain.com/v2/: Get https://sso.domain.com/auth/realms/application/protocol/docker-v2/auth?account=******&client_id=docker&offline_token=true&service=aws-docker-registry: dial tcp: lookup sso.domain.com on 127.0.0.11:53: no such host"
+```
 
 `sso.domain.com` is a local hostname which can be resolved on the host. How can I make it resolvable inside the `plugins/docker` container?
 
