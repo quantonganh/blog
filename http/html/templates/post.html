@@ -7,7 +7,7 @@
     </a>
 </div>
 <h2>{{ .currentPost.Title }}</h2>
-<p>{{ .currentPost.Date | toISODate }}</p>
+<p class="text-secondary">{{ .currentPost.Date | toISODate }}</p>
 <p>Categories:
     {{ range $i, $category := .currentPost.Categories }}
     <a class="btn btn-outline-primary" href="/category/{{ $category }}" role="button">{{ $category }}</a>

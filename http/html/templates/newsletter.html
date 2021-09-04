@@ -1,7 +1,7 @@
 {{ define "newsletter" }}
     {{ range .posts }}
     <a href="{{ $.pageURL }}/{{ .URI }}"><h2>{{ .Title }}</h2></a>
-    <p>{{ .Date | toISODate }}</p>
+    <p class="text-secondary">{{ .Date | toISODate }}</p>
     <p>Tags:
         {{ range $_, $tag := .Tags }}
             <a href="{{ $.pageURL }}/tag/{{ $tag }}">#{{ $tag }}</a>
