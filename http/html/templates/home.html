@@ -2,7 +2,7 @@
 {{ template "header" . }}
 {{ range .posts }}
     <h2><a href="/{{ .URI }}">{{ .Title }}</a></h2>
-    <p>{{ .Date | toISODate }}</p>
+    <p class="text-secondary">{{ .Date | toISODate }}</p>
     {{ .Summary }}
     {{ if .Truncated }}
     <p class="text-right">
