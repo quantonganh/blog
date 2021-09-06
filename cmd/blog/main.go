@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
 	"github.com/quantonganh/blog"
@@ -88,7 +90,11 @@ func (a *app) Run(ctx context.Context) error {
 	}
 
 	a.httpServer.Addr = a.config.HTTP.Addr
-	a.httpServer.Domain = a.config.HTTP.Domain
+	baseURL, err := url.Parse(a.config.Site.BaseURL)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse URL %s", a.config.Site.BaseURL)
+	}
+	a.httpServer.Domain = baseURL.Hostname()
 
 	if err := a.httpServer.Open(); err != nil {
 		return err
