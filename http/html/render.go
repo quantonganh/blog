@@ -95,11 +95,6 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 }
 
 func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relatedPosts map[string]*blog.Post, previousPost, nextPost *blog.Post) error {
-	remark42, err := blog.GetRemarkURL()
-	if err != nil {
-		return err
-	}
-
 	data := pongo2.Context{
 		"categories":   r.postService.GetAllCategories(),
 		"Title":        currentPost.Title,
@@ -108,7 +103,6 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 		"relatedPosts": relatedPosts,
 		"previousPost": previousPost,
 		"nextPost":     nextPost,
-		"remark42":     remark42,
 	}
 	if err := r.tmpl.ExecuteTemplate(w, "post", data); err != nil {
 		return errors.Errorf("failed to render post %s: %v", currentPost.Title, err)
