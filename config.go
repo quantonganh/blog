@@ -23,8 +23,7 @@ type Config struct {
 	}
 
 	HTTP struct {
-		Addr   string
-		Domain string
+		Addr string
 	}
 
 	SMTP struct {
