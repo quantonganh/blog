@@ -1,6 +1,6 @@
 {{ define "paginator" }}
 {{if .paginator.HasPages}}
-<ul class="pagination">
+<ul class="pagination justify-content-center">
     {{if .paginator.HasPrev}}
         <li class="page-item"><a class="page-link" href="{{.paginator.PageLinkFirst}}">First</a></li>
         <li class="page-item"><a class="page-link" href="{{.paginator.PageLinkPrev}}">&laquo;</a></li>
