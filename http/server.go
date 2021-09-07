@@ -104,6 +104,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}", s.Error(s.postsByDateHandler))
 	s.router.HandleFunc("/{year:20[1-9][0-9]}/{month:0[1-9]|1[012]}", s.Error(s.postsByMonthHandler))
 	s.router.HandleFunc("/{year:20[1-9][0-9]}", s.Error(s.postsByYearHandler))
+	s.router.HandleFunc("/about", s.Error(s.aboutHandler))
 	s.router.HandleFunc("/photos", s.Error(s.photosHandler))
 	s.router.HandleFunc("/category/{categoryName}", s.Error(s.categoryHandler))
 	s.router.HandleFunc("/archives", s.Error(s.archivesHandler))
