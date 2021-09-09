@@ -5,9 +5,9 @@ description: Why LE issued too many certificates for one domain?
 categories:
   - DevOps
 tags:
-  - docker
   - letsencrypt
   - traefik
+  - docker
 ---
 Traefik is configured to use Let's Encrypt to generate certificate for my blog (and other services) automatically. One day after restarting, I cannot access to my blog via HTTPS anymore (NET::ERR_CERT_AUTHORITY_INVALID). Why?
 
