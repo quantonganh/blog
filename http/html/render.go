@@ -94,7 +94,7 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 	return nil
 }
 
-func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relatedPosts map[string]*blog.Post, previousPost, nextPost *blog.Post) error {
+func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relatedPosts []*blog.Post, previousPost, nextPost *blog.Post) error {
 	data := pongo2.Context{
 		"categories":   r.postService.GetAllCategories(),
 		"Title":        currentPost.Title,
