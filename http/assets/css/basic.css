@@ -6,13 +6,9 @@ article > p, ul, ol {
     --x-height-multiplier: 0.375;
     --baseline-multiplier: 0.17;
     letter-spacing: .01rem;
-    font-weight: 400;
-    font-style: normal;
-    font-size: 21px;
     line-height: 1.58;
     color: rgba(0,0,0,.84);
     text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
 }
 
 article > .aside {
@@ -21,7 +17,7 @@ article > .aside {
     font-size: 0.8em;
 }
 
-img {
+p > img {
     width: 100%;
 }
 
@@ -61,6 +57,42 @@ figure figcaption {
     font-size: 0.8em;
 }
 
-a:visited {
-    color: rebeccapurple;
+header .title {
+    font-size: 1.5em;
+}
+
+.quanface {
+    display: block;
+    border-radius: 75px;
+    margin: 5px auto;
+}
+
+header .navi ul {
+    padding: 0;
+}
+
+header .navi ul li {
+    display: inline;
+    margin: 0;
+    padding: 0 0.4em;
+}
+
+footer .elsewhere ul {
+    padding: 0;
+}
+
+footer .elsewhere ul li {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+footer .navi ul {
+    padding: 0;
+}
+
+footer .navi ul li {
+    display: inline;
+    margin: 0;
+    padding: 0 0.4em;
 }
