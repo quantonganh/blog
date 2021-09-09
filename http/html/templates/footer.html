@@ -1,59 +1,68 @@
-{{define "footer"}}
-        </article>
-        <nav class="navbar sticky-bottom navbar-light bg-light">
-                <ul class="nav">
-                        <li class="nav-item">
-                                <a class="btn btn-outline-info" href="https://github.com/quantonganh/" title="GitHub" target="_blank">
-                                        <i class="bi bi-github"></i>
-                                </a>
-                        </li>
-                        <li class="nav-item">
-                                <a class="btn btn-outline-info" href="https://www.linkedin.com/in/quantonganh/" title="LinkedIn" target="_blank">
-                                        <i class="bi bi-linkedin"></i>
-                                </a>
-                        </li>
-                        <li class="nav-item">
-                                <a class="btn btn-outline-info" href="https://serverfault.com/users/59925/quanta" title="Server Fault" target="_blank">
-                                        <i class="cib-server-fault"></i>
-                                </a>
-                        </li>
-                        <li class="nav-item">
-                                <a class="btn btn-outline-info" href="https://stackoverflow.com/users/631612/quanta" title="Stack Overflow" target="_blank">
-                                        <i class="cib-stackoverflow"></i>
-                                </a>
-                        </li>
-                </ul>
-                <form class="needs-validation ml-auto" method="post" action="/subscribe" novalidate>
-                        <div class="form-row">
-                                <div class="col-auto">
-                                        <label for="email">Subscribe to this blog</label>
-                                </div>
-                                <div class="col-auto">
-                                        <input type="email" class="form-control mr-sm-2" id="email" placeholder="Enter your email" aria-describedby="emailHelp" name="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$">
-                                </div>
-                                <div class="col-auto">
-                                        <button type="submit" class="btn btn-primary">Subscribe</button>
-                                </div>
-                        </div>
-                </form>
-        </nav>
-        <script>
-                (function() {
-                        'use strict';
-                        window.addEventListener('load', function() {
-                                let forms = document.getElementsByClassName('needs-validation');
-                                Array.prototype.filter.call(forms, function(form) {
-                                        form.addEventListener('submit', function(event) {
-                                                if (form.checkValidity() === false) {
-                                                        event.preventDefault();
-                                                        event.stopPropagation();
-                                                }
-                                                form.classList.add('was-validated');
-                                        }, false);
-                                });
-                        }, false);
-                })();
-        </script>
-</body>
+{{ define "footer" }}
+			<footer>
+				<div class="elsewhere">
+					<ul>
+						<li>
+							<a class="btn" href="https://github.com/quantonganh/" title="GitHub" target="_blank">
+								<i class="bi bi-github"></i>
+							</a>
+						</li>
+						<li>
+							<a class="btn" href="https://www.linkedin.com/in/quantonganh/" title="LinkedIn" target="_blank">
+								<i class="bi bi-linkedin"></i>
+							</a>
+						</li>
+						<li>
+							<a class="btn" href="https://serverfault.com/users/59925/quanta" title="Server Fault" target="_blank">
+								<i class="cib-server-fault"></i>
+							</a>
+						</li>
+						<li>
+							<a class="btn" href="https://stackoverflow.com/users/631612/quanta" title="Stack Overflow" target="_blank">
+								<i class="cib-stackoverflow"></i>
+							</a>
+						</li>
+					</ul>
+				</div>
+				<div class="navi">
+					<ul>
+						<li>
+							<a href="/sitemap.xml">Sitemap</a>
+						</li>
+						<li>
+							<a href="/rss.xml">RSS</a>
+						</li>
+					</ul>
+				</div>
+				<form class="needs-validation ml-auto d-flex justify-content-center" method="post" action="/subscribe" novalidate>
+					<div class="form-row">
+						<div class="col-auto">
+							<input type="email" class="form-control mr-sm-2" id="email" placeholder="Enter your email" aria-describedby="emailHelp" name="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$">
+						</div>
+						<div class="col-auto">
+							<button type="submit" class="btn btn-primary">Subscribe</button>
+						</div>
+					</div>
+				</form>
+			</footer>
+		</article>
+		<script>
+		    (function() {
+		        'use strict';
+		        window.addEventListener('load', function() {
+		            let forms = document.getElementsByClassName('needs-validation');
+		            Array.prototype.filter.call(forms, function(form) {
+		                form.addEventListener('submit', function(event) {
+		                    if (form.checkValidity() === false) {
+		                        event.preventDefault();
+		                        event.stopPropagation();
+		                    }
+		                    form.classList.add('was-validated');
+		                }, false);
+		            });
+		        }, false);
+		    })();
+		</script>
+	</body>
 </html>
-{{end}}
+{{ end }}
