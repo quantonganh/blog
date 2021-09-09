@@ -22,8 +22,8 @@
 <hr/>
 <p>Related Posts:
     <ul>
-        {{ range $uri, $post := .relatedPosts }}
-            <li><a href="/{{ $uri }}">{{ $post.Title }}</a></li>
+        {{ range $_, $post := .relatedPosts }}
+            <li><a href="/{{ $post.URI }}">{{ $post.Title }}</a></li>
         {{ end }}
     </ul>
 </p>

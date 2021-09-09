@@ -5,8 +5,9 @@ description: How to control startup order in Compose?
 categories:
 - DevOps
 tags:
-- docker
 - docker-compose
+- healthcheck
+- docker
 ---
 As version 3 no longer supports the `condition` form of `depends_on`, what is the alternative way to wait for a container to be started completely?
   
