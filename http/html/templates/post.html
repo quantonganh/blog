@@ -6,7 +6,7 @@
         Edit on GitHub
     </a>
 </div>
-<h2>{{ .currentPost.Title }}</h2>
+<h3>{{ .currentPost.Title }}</h3>
 <p class="text-secondary">{{ .currentPost.Date | toISODate }}</p>
 <p>Categories:
     {{ range $i, $category := .currentPost.Categories }}
