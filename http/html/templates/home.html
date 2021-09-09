@@ -1,7 +1,7 @@
 {{ define "home" }}
 {{ template "header" . }}
 {{ range .posts }}
-    <h2><a href="/{{ .URI }}">{{ .Title }}</a></h2>
+    <h3><a href="/{{ .URI }}">{{ .Title }}</a></h3>
     <p class="text-secondary">{{ .Date | toISODate }}</p>
     {{ .Summary }}
     {{ if .Truncated }}
