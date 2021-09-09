@@ -26,13 +26,14 @@ import (
 )
 
 const (
-	newLineSeparator = "\n"
-	yamlSeparator    = "---"
-	defaultCategory  = "Uncategorized"
-	travelCategory   = "Du lịch"
-	wordSeparator    = " "
-	summaryLength    = 70
-	threeBackticks   = "```"
+	newLineSeparator     = "\n"
+	yamlSeparator        = "---"
+	defaultCategory      = "Uncategorized"
+	travelCategory       = "Du lịch"
+	wordSeparator        = " "
+	summaryLength        = 70
+	threeBackticks       = "```"
+	numberOfRelatedPosts = 5
 )
 
 func GetAllPosts(root string) ([]*blog.Post, error) {
@@ -245,24 +246,39 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 	}
 }
 
-func (ps *postService) GetRelatedPosts(currentPost *blog.Post) map[string]*blog.Post {
-	relatedPosts := make(map[string]*blog.Post)
-	for _, post := range ps.posts {
-		if post.ID != currentPost.ID {
-			if isRelated(post.Categories, currentPost.Categories) || isRelated(post.Tags, currentPost.Tags) {
-				relatedPosts[post.URI] = post
+func (ps *postService) GetRelatedPosts(currentPost *blog.Post) []*blog.Post {
+	var (
+		m            = make(map[int]*blog.Post)
+		relatedPosts []*blog.Post
+	)
+	for _, tag := range currentPost.Tags {
+		for _, post := range ps.posts {
+			if post.ID != currentPost.ID && contains(post.Tags, tag) {
+				_, found := m[post.ID]
+				m[post.ID] = post
+				if !found {
+					relatedPosts = append(relatedPosts, post)
+				}
+			}
+
+			if len(relatedPosts) >= numberOfRelatedPosts {
+				return relatedPosts[:numberOfRelatedPosts]
 			}
 		}
 	}
 
-	top5RelatedPosts := make(map[string]*blog.Post, 5)
-	if len(relatedPosts) >= 5 {
-		n := 0
-		for id, p := range relatedPosts {
-			top5RelatedPosts[id] = p
-			n++
-			if n == 5 {
-				return top5RelatedPosts
+	for _, category := range currentPost.Categories {
+		for _, post := range ps.posts {
+			if post.ID != currentPost.ID && contains(post.Categories, category) {
+				_, found := m[post.ID]
+				m[post.ID] = post
+				if !found {
+					relatedPosts = append(relatedPosts, post)
+				}
+			}
+
+			if len(relatedPosts) >= numberOfRelatedPosts {
+				return relatedPosts[:numberOfRelatedPosts]
 			}
 		}
 	}
@@ -270,14 +286,9 @@ func (ps *postService) GetRelatedPosts(currentPost *blog.Post) map[string]*blog.
 	return relatedPosts
 }
 
-func isRelated(s1, s2 []string) bool {
-	m := make(map[string]bool)
-	for _, e := range s1 {
-		m[e] = true
-	}
-
-	for _, e := range s2 {
-		if m[e] {
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
 			return true
 		}
 	}
