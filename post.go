@@ -21,6 +21,7 @@ type PostService interface {
 	GetLatestPosts(days int) []*Post
 	GetRelatedPosts(currentPost *Post) []*Post
 	GetAllCategories() map[string][]*Post
+	GetAllTags() []string
 	GetImageAddresses() []string
 	GetPostsByCategory(category string) []*Post
 	GetPostsByTag(tag string) []*Post
@@ -73,6 +74,17 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func ToISODate(d publishDate) string {
 	return d.Time.Format(layoutISO)
+}
+
+func CountPostsOnATag(posts []*Post, tag string) int {
+	c := 0
+	for _, post := range posts {
+		if Contains(post.Tags, tag) {
+			c++
+		}
+	}
+
+	return c
 }
 
 func ToMonthName(month string) string {
