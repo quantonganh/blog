@@ -307,6 +307,38 @@ func (ps *postService) GetAllCategories() map[string][]*blog.Post {
 	return categories
 }
 
+func (ps *postService) GetAllTags() []string {
+	m := make(map[string]int)
+	for _, post := range ps.posts {
+		for _, t := range post.Tags {
+			m[t]++
+		}
+	}
+
+	type kv struct {
+		tag   string
+		count int
+	}
+
+	var tc []kv
+	for t, c := range m {
+		tc = append(tc, kv{
+			tag:   t,
+			count: c,
+		})
+	}
+	sort.Slice(tc, func(i, j int) bool {
+		return tc[i].count > tc[j].count
+	})
+
+	tags := make([]string, 0, len(m))
+	for _, kv := range tc {
+		tags = append(tags, kv.tag)
+	}
+
+	return tags
+}
+
 func (ps *postService) GetImageAddresses() []string {
 	var imageAddresses []string
 	for _, post := range ps.posts {

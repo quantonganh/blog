@@ -58,6 +58,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 
 	funcMap := template.FuncMap{
 		"toISODate":         blog.ToISODate,
+		"countPostsOnATag":  blog.CountPostsOnATag,
 		"toMonthName":       blog.ToMonthName,
 		"getMonthsInYear":   blog.GetMonthsInYear,
 		"getPostsByMonth":   blog.GetPostsByMonth,
@@ -107,6 +108,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	s.router.HandleFunc("/about", s.Error(s.aboutHandler))
 	s.router.HandleFunc("/photos", s.Error(s.photosHandler))
 	s.router.HandleFunc("/category/{categoryName}", s.Error(s.categoryHandler))
+	s.router.HandleFunc("/tags", s.Error(s.tagsHandler))
 	s.router.HandleFunc("/archives", s.Error(s.archivesHandler))
 	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
 	s.router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets)))
