@@ -44,6 +44,19 @@ func (r *render) RenderPhotos(w http.ResponseWriter) error {
 	return nil
 }
 
+func (r *render) RenderTags(w http.ResponseWriter) error {
+	data := pongo2.Context{
+		"allPosts":   r.postService.GetAllPosts(),
+		"categories": r.postService.GetAllCategories(),
+		"tags":       r.postService.GetAllTags(),
+	}
+	if err := r.tmpl.ExecuteTemplate(w, "tags", data); err != nil {
+		return errors.Errorf("failed to execute template: %v", err)
+	}
+
+	return nil
+}
+
 func (r *render) RenderArchives(w http.ResponseWriter) error {
 	data := pongo2.Context{
 		"allPosts":   r.postService.GetAllPosts(),
