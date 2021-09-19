@@ -1,9 +1,8 @@
 {{ define "tags" }}
 {{ template "header" . }}
-{{ $allPosts := .allPosts }}
 <p>
 	{{ range $_, $tag := .tags }}
-	<a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">{{ $tag }} ({{ countPostsOnATag $allPosts $tag }})</a>
+	<a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">{{ $tag }} ({{ index $.postsPerTag $tag }})</a>
 	{{ end }}
 </p>
 {{ template "footer" . }}

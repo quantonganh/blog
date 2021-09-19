@@ -74,7 +74,7 @@ func (s *Server) postsByMonthHandler(w http.ResponseWriter, r *http.Request) *Ap
 	year := vars["year"]
 	month := vars["month"]
 
-	if err := s.Renderer.RenderPosts(w, r, s.PostService.GetPostsByMonth(year, month)); err != nil {
+	if err := s.Renderer.RenderPosts(w, r, s.PostService.GetPostsByMonth()[year][month]); err != nil {
 		return &AppError{
 			Error: err,
 			Code:  http.StatusInternalServerError,

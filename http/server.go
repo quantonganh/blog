@@ -57,12 +57,8 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	sentryHandler := sentryhttp.New(sentryhttp.Options{})
 
 	funcMap := template.FuncMap{
-		"toISODate":         blog.ToISODate,
-		"countPostsOnATag":  blog.CountPostsOnATag,
-		"toMonthName":       blog.ToMonthName,
-		"getMonthsInYear":   blog.GetMonthsInYear,
-		"getPostsByMonth":   blog.GetPostsByMonth,
-		"getPostURIByImage": blog.GetPostURIByImage,
+		"toISODate":   blog.ToISODate,
+		"toMonthName": blog.ToMonthName,
 	}
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(htmlFiles, "html/templates/*.html"))
 	postService, err := ondisk.NewPostService(posts, indexPath)
