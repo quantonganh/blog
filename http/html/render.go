@@ -33,9 +33,9 @@ func NewRender(config *blog.Config, postService blog.PostService, tmpl *template
 
 func (r *render) RenderPhotos(w http.ResponseWriter) error {
 	data := pongo2.Context{
-		"allPosts":       r.postService.GetAllPosts(),
 		"categories":     r.postService.GetAllCategories(),
 		"imageAddresses": r.postService.GetImageAddresses(),
+		"postURIByImage": r.postService.GetPostURIByImage(),
 	}
 	if err := r.tmpl.ExecuteTemplate(w, "photos", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
@@ -46,9 +46,9 @@ func (r *render) RenderPhotos(w http.ResponseWriter) error {
 
 func (r *render) RenderTags(w http.ResponseWriter) error {
 	data := pongo2.Context{
-		"allPosts":   r.postService.GetAllPosts(),
-		"categories": r.postService.GetAllCategories(),
-		"tags":       r.postService.GetAllTags(),
+		"categories":  r.postService.GetAllCategories(),
+		"tags":        r.postService.GetAllTags(),
+		"postsPerTag": r.postService.GetPostsPerTag(),
 	}
 	if err := r.tmpl.ExecuteTemplate(w, "tags", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
@@ -59,9 +59,10 @@ func (r *render) RenderTags(w http.ResponseWriter) error {
 
 func (r *render) RenderArchives(w http.ResponseWriter) error {
 	data := pongo2.Context{
-		"allPosts":   r.postService.GetAllPosts(),
-		"categories": r.postService.GetAllCategories(),
-		"years":      r.postService.GetYears(),
+		"categories":   r.postService.GetAllCategories(),
+		"years":        r.postService.GetYears(),
+		"monthsInYear": r.postService.GetMonthsInYear(),
+		"postsByMonth": r.postService.GetPostsByMonth(),
 	}
 	if err := r.tmpl.ExecuteTemplate(w, "archives", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
