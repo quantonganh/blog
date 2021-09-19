@@ -307,13 +307,19 @@ func (ps *postService) GetAllCategories() map[string][]*blog.Post {
 	return categories
 }
 
-func (ps *postService) GetAllTags() []string {
+func (ps *postService) GetPostsPerTag() map[string]int {
 	m := make(map[string]int)
 	for _, post := range ps.posts {
 		for _, t := range post.Tags {
 			m[t]++
 		}
 	}
+
+	return m
+}
+
+func (ps *postService) GetAllTags() []string {
+	m := ps.GetPostsPerTag()
 
 	type kv struct {
 		tag   string
@@ -349,6 +355,18 @@ func (ps *postService) GetImageAddresses() []string {
 		}
 	}
 	return imageAddresses
+}
+
+func (ps *postService) GetPostURIByImage() map[string]string {
+	m := make(map[string]string)
+	for _, post := range ps.posts {
+		if blog.Contains(post.Categories, travelCategory) {
+			for _, image := range post.Images {
+				m[path.Join(path.Dir(post.URI), image)] = post.URI
+			}
+		}
+	}
+	return m
 }
 
 func (ps *postService) GetPostsByCategory(category string) []*blog.Post {
@@ -396,6 +414,33 @@ func (ps *postService) GetYears() []string {
 	return years
 }
 
+func (ps *postService) GetMonthsInYear() map[string][]string {
+	monthsInYear := make(map[string][]string)
+	for _, year := range ps.GetYears() {
+		var (
+			m      = make(map[string]struct{})
+			months []string
+		)
+		for _, post := range ps.posts {
+			if post.Date.GetYear() == year {
+				month := post.Date.GetMonth()
+				_, found := m[month]
+				m[month] = struct{}{}
+				if !found {
+					months = append(months, month)
+				}
+			}
+		}
+
+		sort.Slice(months, func(i, j int) bool {
+			return months[i] > months[j]
+		})
+		monthsInYear[year] = months
+	}
+
+	return monthsInYear
+}
+
 func (ps *postService) GetPostsByDate(year, month, day string) []*blog.Post {
 	var postsByDate []*blog.Post
 	for _, post := range ps.posts {
@@ -406,14 +451,20 @@ func (ps *postService) GetPostsByDate(year, month, day string) []*blog.Post {
 	return postsByDate
 }
 
-func (ps *postService) GetPostsByMonth(year, month string) []*blog.Post {
-	var postsByMonth []*blog.Post
-	for _, post := range ps.posts {
-		if post.Date.GetYear() == year && post.Date.GetMonth() == month {
-			postsByMonth = append(postsByMonth, post)
+func (ps *postService) GetPostsByMonth() map[string]map[string][]*blog.Post {
+	ym := make(map[string]map[string][]*blog.Post)
+	for _, year := range ps.GetYears() {
+		mm := make(map[string][]*blog.Post)
+		for _, month := range ps.GetMonthsInYear()[year] {
+			for _, post := range ps.posts {
+				if post.Date.GetYear() == year && post.Date.GetMonth() == month {
+					mm[month] = append(mm[month], post)
+				}
+			}
 		}
+		ym[year] = mm
 	}
-	return postsByMonth
+	return ym
 }
 
 func (ps *postService) GetPostsByYear(year string) []*blog.Post {

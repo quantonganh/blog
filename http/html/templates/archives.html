@@ -12,12 +12,11 @@
     });
 </script>
 <div class="list-group">
-    {{ $allPosts := .allPosts }}
     {{ range $_, $year := .years }}
     <a class="list-group-item" href="/{{ $year }}">{{ $year }}</a>
     <div class="list-group" id="{{ $year }}">
-        {{ range $_, $month := getMonthsInYear $allPosts $year }}
-            {{ $postsByMonth := getPostsByMonth $allPosts $year $month }}
+        {{ range $_, $month := index $.monthsInYear $year }}
+            {{ $postsByMonth := index (index $.postsByMonth $year) $month }}
         <a class="list-group-item" data-toggle="collapse" href="#{{ $month | toMonthName }}-{{ $year }}">
             <i class="bi bi-chevron-right"></i>
             {{ $month | toMonthName }} ({{ len $postsByMonth }})
