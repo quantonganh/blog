@@ -3,7 +3,7 @@ title: Kiyomizu-dera Pagoda
 date: 2016-11-26
 description:
 images:
-- Kiyomizu-dera-pagoda.jpg
+- /2016/11/26/Kiyomizu-dera-pagoda.jpg
 categories:
 - Du lịch
 tags:

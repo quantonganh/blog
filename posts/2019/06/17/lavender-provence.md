@@ -3,7 +3,7 @@ title: Lavender
 date: 2019-06-17
 description:
 images:
-- lavender-provence.jpg
+- /2019/06/17/lavender-provence.jpg
 categories:
 - Du lịch
 tags:

@@ -3,7 +3,7 @@ title: Chân ta đi hôn mặt đất nồng ấm
 date: 2016-11-28
 description:
 images:
-- father-and-son-hakone.jpeg
+- /2016/11/28/father-and-son-hakone.jpeg
 categories:
 - Du lịch
 tags:

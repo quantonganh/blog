@@ -349,9 +349,7 @@ func (ps *postService) GetImageAddresses() []string {
 	var imageAddresses []string
 	for _, post := range ps.posts {
 		if blog.Contains(post.Categories, travelCategory) {
-			for _, image := range post.Images {
-				imageAddresses = append(imageAddresses, path.Join(path.Dir(post.URI), image))
-			}
+			imageAddresses = append(imageAddresses, post.Images...)
 		}
 	}
 	return imageAddresses
@@ -362,7 +360,7 @@ func (ps *postService) GetPostURIByImage() map[string]string {
 	for _, post := range ps.posts {
 		if blog.Contains(post.Categories, travelCategory) {
 			for _, image := range post.Images {
-				m[path.Join(path.Dir(post.URI), image)] = post.URI
+				m[image] = post.URI
 			}
 		}
 	}

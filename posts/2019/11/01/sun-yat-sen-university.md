@@ -3,7 +3,7 @@ title: Những người tốt quanh ta
 date: 2019-11-01
 description:
 images:
-- sun-yat-sen-university.jpg
+- /2019/11/01/sun-yat-sen-university.jpg
 categories:
 - Du lịch
 tags:

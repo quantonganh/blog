@@ -3,7 +3,7 @@ title: Duc Ba church
 date: 2020-07-28
 description:
 images:
-- Duc-Ba-church.jpg
+- /2020/07/28/Duc-Ba-church.jpg
 categories:
 - Du lịch
 tags:
