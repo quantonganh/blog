@@ -3,7 +3,6 @@ package gmail
 import (
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/matcornic/hermes/v2"
@@ -29,7 +28,7 @@ func NewSMTPService(config *blog.Config, serverURL string, subscribeService blog
 		ServerURL:        serverURL,
 		SubscribeService: subscribeService,
 		Renderer:         renderer,
-		Cron:             cron.New(cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags)))),
+		Cron:             cron.New(cron.WithLogger(cron.DefaultLogger)),
 	}
 }
 
