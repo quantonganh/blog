@@ -28,7 +28,6 @@ import (
 const (
 	newLineSeparator     = "\n"
 	yamlSeparator        = "---"
-	defaultCategory      = "Uncategorized"
 	travelCategory       = "Du lịch"
 	wordSeparator        = " "
 	summaryLength        = 70
@@ -183,9 +182,6 @@ func ParseMarkdown(ctx context.Context, root string, r io.Reader) (*blog.Post, e
 		p := blog.Post{}
 		if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
 			return nil, errors.Wrapf(err, "failed to decode metadata")
-		}
-		if len(p.Categories) == 0 {
-			p.Categories = []string{defaultCategory}
 		}
 
 		switch v := r.(type) {

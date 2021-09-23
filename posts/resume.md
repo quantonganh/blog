@@ -2,18 +2,25 @@
 title: Resume
 date: Mon Sep 30 20:43:10 +07 2019
 description: My resume
-tags:
-  - devops
-  - golang
-  - resume
 ---
 **Quan Tong Anh**\
-quantonganh@gmail.com\
+[quantonganh@gmail.com](mailto:quantonganh@gmail.com)\
 [github.com/quantonganh](https://github.com/quantonganh)
 
-### Experience  
+### Experience
 
 ***
+
+**Software Engineer, CIC Data**\
+*Oct 2019 - Sep 2021*
+
+- Design and build high performance and reliable software with clean code.
+- Write scalable RESTful and gRPC-based APIs in Golang for our clients and partners.
+- Redesign algorithm of the most important module to improve the performance by 20-30%.
+- Refactor code to make it easier to read, simpler to understand, and faster to update.
+- Automate integration testing with Drone CI / GitHub Actions and Docker Compose.
+- Run unit tests in parallel to improve the execution time by 30%.
+- Speed up the CI build time by 70-80% with incremental builds.
 
 **Golang Developer (remote), AOPrivacy (Malaysia)**\
 *Jul 2017 - Sep 2019*
@@ -45,34 +52,6 @@ quantonganh@gmail.com\
 - Debugged and fixed MySQL deadlock problem.
 - Built a centralized authentication system using OpenLDAP
 	
-**IT Professional, Thanh Cong Securities (Vietnam)**\
-*Oct 2008 - May 2010*
-
-- Setup technical facilities for Hanoi Branch to connect with the headquarter in Ho Chi Minh city, included making a wifi authentication system with FreeRADIUS and Active Directory.
-- Coordinated with a Thailand team to deploy the core securities solutions (written by Freewill) on AIX 5.3 and RHEL 5.3; prepared infrastructure to link with banks for online trading.
-- Built a centralized logging system with syslog-ng and Splunk; a network monitoring system with MRTG, RRDTool and Routers2.cgi.
-- Created shell scripts to automate backup procedures, perform repetitive tasks, etc.
-
-**System Administrator, NextG Solutions (Vietnam)**\
-*Jan 2008 - Oct 2008*
-
-- Responsible for installation, configuration and administration of 2 RHEL servers.
-- Setup and maintained Subversion, Trac, Zope and Plone.
-- Installed SugarCRM, Pentaho Business Intelligence server and created document for the customers.
-
-**.NET Developer, FPT Software (Vietnam)**\
-*May 2006 - Oct 2007*
-
-- Migrated 1500 applications from IBM Lotus Notes to Microsoft SharePoint.
-
-### Education
-
-***
-
-**National University of Civil Engineering**\
-**Bachelor of Information Technology in Civil Engineering**\
-*Sep 2001 - Mar 2006*
-
 ### Projects
 
 ***
@@ -80,5 +59,7 @@ quantonganh@gmail.com\
 **Personal website: https://quantonganh.com**
 
 - Utilized html/template and markdown to build a static site generator.
+- Full text search with Bleve
+- Created email subscription form
 - Automated testing and delivery by using Drone CI.
 - Implemented continuous deployment with docker compose on Raspberry Pi 4.
