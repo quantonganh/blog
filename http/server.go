@@ -103,6 +103,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	s.router.HandleFunc("/{year:20[0-9][0-9]}", s.Error(s.postsByYearHandler))
 	s.router.HandleFunc("/about", s.Error(s.postHandler(config.Posts.Dir)))
 	s.router.HandleFunc("/resume", s.Error(s.postHandler(config.Posts.Dir)))
+	s.router.HandleFunc("/projects", s.Error(s.postHandler(config.Posts.Dir)))
 	s.router.HandleFunc("/photos", s.Error(s.photosHandler))
 	s.router.HandleFunc("/category/{categoryName}", s.Error(s.categoryHandler))
 	s.router.HandleFunc("/tags", s.Error(s.tagsHandler))
