@@ -23,7 +23,7 @@
         </a>
         <div class="list-group collapse" id="{{ $month | toMonthName }}-{{ $year }}">
             {{ range $_, $post := $postsByMonth }}
-            <a class="pl-5 list-group-item" href="/{{ $post.URI }}">{{ $post.Title }}</a>
+            <a class="pl-5 list-group-item" href="{{ $post.URI }}">{{ $post.Title }}</a>
             {{ end }}
         </div>
         {{ end }}

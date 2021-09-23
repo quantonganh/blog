@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -14,13 +13,7 @@ func (s *Server) postHandler(postsDir string) ErrHandlerFunc {
 		if hasSuffix(r.URL.Path, []string{"jpg", "jpeg", "png"}) {
 			http.ServeFile(w, r, path.Join(postsDir, r.URL.Path))
 		} else {
-			vars := mux.Vars(r)
-			year := vars["year"]
-			month := vars["month"]
-			day := vars["day"]
-			fileName := vars["postName"]
-
-			currentPost := s.PostService.GetPostByURI(filepath.Join(year, month, day, fileName))
+			currentPost := s.PostService.GetPostByURI(r.URL.Path)
 
 			relatedPosts := s.PostService.GetRelatedPosts(currentPost)
 
