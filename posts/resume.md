@@ -2,18 +2,25 @@
 title: Resume
 date: Mon Sep 30 20:43:10 +07 2019
 description: My resume
-tags:
-  - devops
-  - golang
-  - resume
 ---
 **Quan Tong Anh**\
-quantonganh@gmail.com\
+[quantonganh@gmail.com](mailto:quantonganh@gmail.com)\
 [github.com/quantonganh](https://github.com/quantonganh)
 
-### Experience  
+### Experience
 
 ***
+
+**Software Engineer, CIC Data**\
+*Oct 2019 - Sep 2021*
+
+- Design and build high performance and reliable software with clean code.
+- Write scalable RESTful and gRPC-based APIs in Golang for our clients and partners.
+- Redesign algorithm of the most important module to improve the performance by 20-30%.
+- Refactor code to make it easier to read, simpler to understand, and faster to update.
+- Automate integration testing with Drone CI / GitHub Actions and Docker Compose.
+- Run unit tests in parallel to improve the execution time by 30%.
+- Speed up the CI build time by 70-80% with incremental builds.
 
 **Golang Developer (remote), AOPrivacy (Malaysia)**\
 *Jul 2017 - Sep 2019*
@@ -80,5 +87,7 @@ quantonganh@gmail.com\
 **Personal website: https://quantonganh.com**
 
 - Utilized html/template and markdown to build a static site generator.
+- Full text search with Bleve
+- Created email subscription form
 - Automated testing and delivery by using Drone CI.
 - Implemented continuous deployment with docker compose on Raspberry Pi 4.

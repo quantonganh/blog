@@ -8,25 +8,34 @@
 </div>
 <h3>{{ .currentPost.Title }}</h3>
 <p class="text-secondary">{{ .currentPost.Date | toISODate }}</p>
-<p>Categories:
+{{ if .currentPost.Categories }}
+<p>
+    Categories:
     {{ range $i, $category := .currentPost.Categories }}
     <a class="btn btn-outline-primary" href="/category/{{ $category }}" role="button">{{ $category }}</a>
     {{ end }}
 </p>
+{{ end }}
 {{ .currentPost.Content }}
-<p>Tags:
+{{ if .currentPost.Tags }}
+<p>
+    Tags:
     {{ range $_, $tag := .currentPost.Tags }}
     <a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">{{ $tag }}</a>
     {{ end }}
 </p>
+{{ end }}
 <hr/>
-<p>Related Posts:
+{{ if .relatedPosts }}
+<p>
+    Related Posts:
     <ul>
-        {{ range $_, $post := .relatedPosts }}
-            <li><a href="{{ $post.URI }}">{{ $post.Title }}</a></li>
-        {{ end }}
+    {{ range $_, $post := .relatedPosts }}
+        <li><a href="{{ $post.URI }}">{{ $post.Title }}</a></li>
+    {{ end }}
     </ul>
 </p>
+{{ end }}
 <table>
     <tr>
         {{ if .currentPost.HasPrev }}
