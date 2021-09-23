@@ -62,7 +62,7 @@ tags:
 ---
 Test.`)
 	var err error
-	post, err = ondisk.ParseMarkdown(context.Background(), r)
+	post, err = ondisk.ParseMarkdown(context.Background(), ".", r)
 	if err != nil {
 		log.Fatal(err)
 	}

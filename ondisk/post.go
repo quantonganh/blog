@@ -64,7 +64,7 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 			if err != nil {
 				return errors.Wrapf(err, "failed to open file: %s", p)
 			}
-			post, err := ParseMarkdown(ctx, f)
+			post, err := ParseMarkdown(ctx, root, f)
 			if err != nil {
 				return err
 			}
@@ -158,7 +158,7 @@ func (ps *postService) GetLatestPosts(days int) []*blog.Post {
 	return latestPosts
 }
 
-func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
+func ParseMarkdown(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -188,13 +188,16 @@ func ParseMarkdown(ctx context.Context, r io.Reader) (*blog.Post, error) {
 			p.Categories = []string{defaultCategory}
 		}
 
-		ymd := path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay())
 		switch v := r.(type) {
 		case *os.File:
-			basename := filepath.Base(v.Name())
-			p.URI = path.Join(ymd, strings.TrimSuffix(basename, filepath.Ext(basename)))
+			name := v.Name()
+			basename := filepath.Base(name)
+			p.URI = path.Join(strings.TrimPrefix(filepath.Dir(name), root), strings.TrimSuffix(basename, filepath.Ext(basename)))
 		default:
-			p.URI = path.Join(ymd, url.QueryEscape(strings.ToLower(p.Title)))
+			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), url.QueryEscape(strings.ToLower(p.Title)))
+		}
+		if !strings.HasPrefix(p.URI, "/") {
+			p.URI = "/" + p.URI
 		}
 
 		content := strings.Join(lines[closingMetadataLine+1:], newLineSeparator)

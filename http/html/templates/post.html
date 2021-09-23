@@ -23,7 +23,7 @@
 <p>Related Posts:
     <ul>
         {{ range $_, $post := .relatedPosts }}
-            <li><a href="/{{ $post.URI }}">{{ $post.Title }}</a></li>
+            <li><a href="{{ $post.URI }}">{{ $post.Title }}</a></li>
         {{ end }}
     </ul>
 </p>
@@ -32,7 +32,7 @@
         {{ if .currentPost.HasPrev }}
         <td>
             <div class="d-md-flex">
-                <a class="page-link" href="/{{ .previousPost.URI }}">
+                <a class="page-link" href="{{ .previousPost.URI }}">
                     <span aria-hidden="true">&laquo;</span>
                     Previous
                 </a>
@@ -42,7 +42,7 @@
         {{ if .currentPost.HasNext }}
         <td>
             <div class="d-md-flex flex-md-row-reverse">
-                <a class="page-link" href="/{{ .nextPost.URI }}">
+                <a class="page-link" href="{{ .nextPost.URI }}">
                     Next
                     <span aria-hidden="true">&raquo;</span>
                 </a>

@@ -5,7 +5,7 @@ import (
 )
 
 func (s *Server) aboutHandler(w http.ResponseWriter, r *http.Request) *AppError {
-	currentPost := s.PostService.GetPostByURI("2019/09/19/about")
+	currentPost := s.PostService.GetPostByURI(r.URL.Path)
 
 	relatedPosts := s.PostService.GetRelatedPosts(currentPost)
 
