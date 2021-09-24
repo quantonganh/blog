@@ -21,7 +21,10 @@
 <p>
     Tags:
     {{ range $_, $tag := .currentPost.Tags }}
-    <a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">{{ $tag }}</a>
+    <a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">
+        <i class="bi bi-tag"></i>
+        {{ $tag }}
+    </a>
     {{ end }}
 </p>
 {{ end }}
