@@ -4,7 +4,10 @@
     <p class="text-secondary">{{ .Date | toISODate }}</p>
     <p>Tags:
         {{ range $_, $tag := .Tags }}
-            <a href="{{ $.pageURL }}/tag/{{ $tag }}">#{{ $tag }}</a>
+            <a href="{{ $.pageURL }}/tag/{{ $tag }}">
+                <i class="bi bi-tag"></i>
+                #{{ $tag }}
+            </a>
         {{ end }}
     </p>
     <p>{{ .Description }}</p>

@@ -2,7 +2,10 @@
 {{ template "header" . }}
 <p>
 	{{ range $_, $tag := .tags }}
-	<a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">{{ $tag }} ({{ index $.postsPerTag $tag }})</a>
+	<a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">
+		<i class="bi bi-tag"></i>
+		{{ $tag }} ({{ index $.postsPerTag $tag }})
+	</a>
 	{{ end }}
 </p>
 {{ template "footer" . }}

@@ -159,7 +159,7 @@ func getLinkByText(t *testing.T, body *bytes.Buffer, text string) string {
 
 	var link string
 	doc.Find("article a").Each(func(_ int, s *goquery.Selection) {
-		if s.Text() == text {
+		if strings.TrimSpace(s.Text()) == text {
 			link, _ = s.Attr("href")
 		}
 	})
