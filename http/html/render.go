@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/astaxie/beego/utils/pagination"
-	"github.com/flosch/pongo2"
 	"github.com/pkg/errors"
 
 	"github.com/quantonganh/blog"
@@ -32,7 +31,7 @@ func NewRender(config *blog.Config, postService blog.PostService, tmpl *template
 }
 
 func (r *render) RenderPhotos(w http.ResponseWriter) error {
-	data := pongo2.Context{
+	data := map[string]interface{}{
 		"categories":     r.postService.GetAllCategories(),
 		"imageAddresses": r.postService.GetImageAddresses(),
 		"postURIByImage": r.postService.GetPostURIByImage(),
@@ -45,7 +44,7 @@ func (r *render) RenderPhotos(w http.ResponseWriter) error {
 }
 
 func (r *render) RenderTags(w http.ResponseWriter) error {
-	data := pongo2.Context{
+	data := map[string]interface{}{
 		"categories":  r.postService.GetAllCategories(),
 		"tags":        r.postService.GetAllTags(),
 		"postsPerTag": r.postService.GetPostsPerTag(),
@@ -58,7 +57,7 @@ func (r *render) RenderTags(w http.ResponseWriter) error {
 }
 
 func (r *render) RenderArchives(w http.ResponseWriter) error {
-	data := pongo2.Context{
+	data := map[string]interface{}{
 		"categories":   r.postService.GetAllCategories(),
 		"years":        r.postService.GetYears(),
 		"monthsInYear": r.postService.GetMonthsInYear(),
@@ -95,7 +94,7 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 		endPos = nums
 	}
 
-	data := pongo2.Context{
+	data := map[string]interface{}{
 		"Site":       r.config.Site,
 		"categories": r.postService.GetAllCategories(),
 		"posts":      posts[offset:endPos],
@@ -109,7 +108,7 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 }
 
 func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relatedPosts []*blog.Post, previousPost, nextPost *blog.Post) error {
-	data := pongo2.Context{
+	data := map[string]interface{}{
 		"categories":   r.postService.GetAllCategories(),
 		"Title":        currentPost.Title,
 		"Description":  currentPost.Description,
@@ -126,7 +125,7 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 }
 
 func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) error {
-	data := pongo2.Context{
+	data := map[string]interface{}{
 		"categories": r.postService.GetAllCategories(),
 		"message":    message,
 	}
@@ -144,7 +143,7 @@ func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email str
 		return nil, err
 	}
 	buf := new(bytes.Buffer)
-	data := pongo2.Context{
+	data := map[string]interface{}{
 		"categories": r.postService.GetAllCategories(),
 		"posts":      latestPosts,
 		"pageURL":    serverURL,

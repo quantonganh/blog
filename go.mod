@@ -10,7 +10,6 @@ require (
 	github.com/astaxie/beego v1.12.0
 	github.com/blevesearch/bleve v1.0.14
 	github.com/dlclark/regexp2 v1.4.0 // indirect
-	github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4
 	github.com/getsentry/sentry-go v0.9.0
 	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/feeds v1.1.1
