@@ -1,11 +1,5 @@
 {{ define "post" }}
 {{ template "header" . }}
-<div class="d-md-flex flex-md-row-reverse">
-    <a class="btn btn-outline-info" href="https://github.com/quantonganh/blog/edit/master/posts/{{ .currentPost.URI }}.md" title="Edit this page on GitHub" target="_blank" rel="noopener">
-        <i class="bi bi-pencil"></i>
-        Edit on GitHub
-    </a>
-</div>
 <h3>{{ .currentPost.Title }}</h3>
 <p class="text-secondary">{{ .currentPost.Date | toISODate }}</p>
 {{ if .currentPost.Categories }}
@@ -28,6 +22,12 @@
     {{ end }}
 </p>
 {{ end }}
+<div class="d-flex flex-row-reverse">
+    <a class="btn btn-outline-info" href="https://github.com/quantonganh/blog/edit/master/posts/{{ .currentPost.URI }}.md" title="Edit this page on GitHub" target="_blank" rel="noopener">
+        <i class="bi bi-pencil"></i>
+        Edit on GitHub
+    </a>
+</div>
 <hr/>
 {{ if .relatedPosts }}
 <p>
