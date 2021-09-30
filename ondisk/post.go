@@ -222,7 +222,7 @@ func ParseMarkdown(ctx context.Context, root string, r io.Reader) (*blog.Post, e
 			numThreeBackticks int
 		)
 		for _, line := range lines[closingMetadataLine+1:] {
-			if strings.HasPrefix(line, threeBackticks) {
+			if strings.Contains(line, threeBackticks) {
 				numThreeBackticks++
 			}
 			summaries = append(summaries, line)
