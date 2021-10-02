@@ -19,6 +19,7 @@ import (
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/http/html"
+	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/ondisk"
 )
 
@@ -85,7 +86,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 			Dur("duration", duration).
 			Msg("")
 	}))
-	s.router.Use(hlog.RemoteAddrHandler("ip"))
+	s.router.Use(mw.RealIPHandler("ip"))
 	s.router.Use(hlog.UserAgentHandler("user_agent"))
 	s.router.Use(hlog.RefererHandler("referer"))
 	s.router.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
