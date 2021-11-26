@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/quantonganh/blog"
 )
 
 const xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
-func (s *Server) sitemapHandler(w http.ResponseWriter, r *http.Request) *AppError {
+func (s *Server) sitemapHandler(w http.ResponseWriter, r *http.Request) error {
 	sitemap := blog.Sitemap{
 		XMLNS: xmlns,
 		URLs: []blog.URL{
@@ -29,19 +31,11 @@ func (s *Server) sitemapHandler(w http.ResponseWriter, r *http.Request) *AppErro
 
 	output, err := xml.MarshalIndent(sitemap, "  ", "    ")
 	if err != nil {
-		return &AppError{
-			Error:   err,
-			Message: "failed to encode XML",
-			Code:    http.StatusInternalServerError,
-		}
+		return errors.Wrapf(err, "failed to marshal sitemap")
 	}
 	_, err = w.Write([]byte(xml.Header + string(output)))
 	if err != nil {
-		return &AppError{
-			Error:   err,
-			Message: "Can't write the data to the connection as part of a HTTP reply",
-			Code:    http.StatusInternalServerError,
-		}
+		return err
 	}
 
 	return nil

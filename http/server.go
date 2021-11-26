@@ -155,25 +155,19 @@ func (s *Server) URL() string {
 	return fmt.Sprintf("%s://%s:%d", scheme, domain, s.Port())
 }
 
-func faviconHandler(w http.ResponseWriter, r *http.Request) *AppError {
+func faviconHandler(w http.ResponseWriter, r *http.Request) error {
 	file, _ := assets.ReadFile("assets/favicon.ico")
 	_, err := w.Write(file)
 	if err != nil {
-		return &AppError{
-			Error: err,
-			Code:  http.StatusInternalServerError,
-		}
+		return err
 	}
 
 	return nil
 }
 
-func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) *AppError {
+func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) error {
 	if err := s.Renderer.RenderPosts(w, r, s.PostService.GetAllPosts()); err != nil {
-		return &AppError{
-			Error: err,
-			Code:  http.StatusInternalServerError,
-		}
+		return err
 	}
 
 	return nil
