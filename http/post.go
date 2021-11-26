@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (s *Server) postHandler(postsDir string) ErrHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) *AppError {
+func (s *Server) postHandler(postsDir string) appHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		if hasSuffix(r.URL.Path, []string{"jpg", "jpeg", "png"}) {
 			http.ServeFile(w, r, path.Join(postsDir, r.URL.Path))
 		} else {
@@ -26,10 +26,7 @@ func (s *Server) postHandler(postsDir string) ErrHandlerFunc {
 			}
 
 			if err := s.Renderer.RenderPost(w, currentPost, relatedPosts, previousPost, nextPost); err != nil {
-				return &AppError{
-					Error: err,
-					Code:  http.StatusInternalServerError,
-				}
+				return err
 			}
 		}
 
@@ -46,46 +43,37 @@ func hasSuffix(path string, suffixes []string) bool {
 	return false
 }
 
-func (s *Server) postsByDateHandler(w http.ResponseWriter, r *http.Request) *AppError {
+func (s *Server) postsByDateHandler(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	year := vars["year"]
 	month := vars["month"]
 	day := vars["day"]
 
 	if err := s.Renderer.RenderPosts(w, r, s.PostService.GetPostsByDate(year, month, day)); err != nil {
-		return &AppError{
-			Error: err,
-			Code:  http.StatusInternalServerError,
-		}
+		return err
 	}
 
 	return nil
 }
 
-func (s *Server) postsByMonthHandler(w http.ResponseWriter, r *http.Request) *AppError {
+func (s *Server) postsByMonthHandler(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	year := vars["year"]
 	month := vars["month"]
 
 	if err := s.Renderer.RenderPosts(w, r, s.PostService.GetPostsByMonth()[year][month]); err != nil {
-		return &AppError{
-			Error: err,
-			Code:  http.StatusInternalServerError,
-		}
+		return err
 	}
 
 	return nil
 }
 
-func (s *Server) postsByYearHandler(w http.ResponseWriter, r *http.Request) *AppError {
+func (s *Server) postsByYearHandler(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	year := vars["year"]
 
 	if err := s.Renderer.RenderPosts(w, r, s.PostService.GetPostsByYear(year)); err != nil {
-		return &AppError{
-			Error: err,
-			Code:  http.StatusInternalServerError,
-		}
+		return err
 	}
 
 	return nil

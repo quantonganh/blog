@@ -6,17 +6,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (s *Server) tagHandler(w http.ResponseWriter, r *http.Request) *AppError {
+func (s *Server) tagHandler(w http.ResponseWriter, r *http.Request) error {
 	tag := mux.Vars(r)["tagName"]
-
 	postsByTag := s.PostService.GetPostsByTag(tag)
-
-	if err := s.Renderer.RenderPosts(w, r, postsByTag); err != nil {
-		return &AppError{
-			Error: err,
-			Code:  http.StatusInternalServerError,
-		}
-	}
-
-	return nil
+	return s.Renderer.RenderPosts(w, r, postsByTag)
 }
