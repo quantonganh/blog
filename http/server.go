@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"html/template"
 	"net"
@@ -18,9 +17,9 @@ import (
 	"github.com/rs/zerolog/hlog"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/http/html"
 	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/ondisk"
+	"github.com/quantonganh/blog/ui"
 )
 
 const (
@@ -41,12 +40,6 @@ type Server struct {
 	Renderer         blog.Renderer
 }
 
-//go:embed html/templates/*.html
-var htmlFiles embed.FS
-
-//go:embed assets
-var assets embed.FS
-
 func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Server, error) {
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn: config.Sentry.DSN,
@@ -61,7 +54,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 		"toISODate":   blog.ToISODate,
 		"toMonthName": blog.ToMonthName,
 	}
-	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(htmlFiles, "html/templates/*.html"))
+	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(ui.HTMLFS, "html/*.html"))
 	postService, err := ondisk.NewPostService(posts, indexPath)
 	if err != nil {
 		return nil, err
@@ -70,7 +63,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 		server:      &http.Server{},
 		router:      mux.NewRouter().StrictSlash(true),
 		PostService: postService,
-		Renderer:    html.NewRender(config, postService, tmpl),
+		Renderer:    NewRender(config, postService, tmpl),
 	}
 
 	zlog := zerolog.New(os.Stdout).With().
@@ -110,7 +103,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	s.router.HandleFunc("/tags", s.Error(s.tagsHandler))
 	s.router.HandleFunc("/archives", s.Error(s.archivesHandler))
 	s.router.HandleFunc("/tag/{tagName}", s.Error(s.tagHandler))
-	s.router.PathPrefix("/assets/").Handler(http.FileServer(http.FS(assets)))
+	s.router.PathPrefix("/static/").Handler(http.FileServer(http.FS(ui.StaticFS)))
 	s.router.HandleFunc("/search", s.Error(s.searchHandler))
 	s.router.HandleFunc("/sitemap.xml", s.Error(s.sitemapHandler))
 	s.router.HandleFunc("/rss.xml", s.Error(s.rssHandler))
@@ -156,7 +149,7 @@ func (s *Server) URL() string {
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) error {
-	file, _ := assets.ReadFile("assets/favicon.ico")
+	file, _ := ui.StaticFS.ReadFile("static/favicon.ico")
 	_, err := w.Write(file)
 	if err != nil {
 		return err
