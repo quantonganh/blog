@@ -126,7 +126,7 @@ func (smtp *smtpService) Stop() error {
 
 func (smtp *smtpService) sendEmail(to string, subject, body string) error {
 	m := gomail.NewMessage()
-	m.SetHeader("From", smtp.Config.SMTP.Username)
+	m.SetHeader("From", smtp.Config.Newsletter.From)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)

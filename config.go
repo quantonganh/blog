@@ -34,6 +34,7 @@ type Config struct {
 	}
 
 	Newsletter struct {
+		From      string
 		Frequency int
 		Cron      struct {
 			Spec string
