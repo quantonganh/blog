@@ -13,6 +13,7 @@ const errOops = "Oops! Something went wrong."
 
 type appHandler func(w http.ResponseWriter, r *http.Request) error
 
+// Error parse HTTP error and write to header and body
 func (s *Server) Error(fn appHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := fn(w, r)
@@ -53,12 +54,14 @@ func (s *Server) Error(fn appHandler) http.HandlerFunc {
 	}
 }
 
+// ClientError is the interface that wraps methods related to error on the client side
 type ClientError interface {
 	Error() string
 	Body() ([]byte, error)
 	Headers() (int, map[string]string)
 }
 
+// Error represents a detail error message
 type Error struct {
 	Cause   error  `json:"-"`
 	Message string `json:"message"`
@@ -72,6 +75,7 @@ func (e *Error) Error() string {
 	return e.Message + ": " + e.Cause.Error()
 }
 
+// Body returns response body from error
 func (e *Error) Body() ([]byte, error) {
 	body, err := json.Marshal(e)
 	if err != nil {
@@ -80,12 +84,14 @@ func (e *Error) Body() ([]byte, error) {
 	return body, nil
 }
 
+// Headers returns status and header
 func (e *Error) Headers() (int, map[string]string) {
 	return e.Status, map[string]string{
 		"Content-Type": "application/json; charset=utf-8",
 	}
 }
 
+// NewError returns new error message
 func NewError(err error, status int, message string) error {
 	return &Error{
 		Cause:   err,

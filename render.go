@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// Renderer is the interface that wraps methods related to render HTML page
 type Renderer interface {
 	RenderPhotos(w http.ResponseWriter) error
 	RenderTags(w http.ResponseWriter) error

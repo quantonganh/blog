@@ -18,7 +18,8 @@ type searchService struct {
 	index bleve.Index
 }
 
-func NewSearchService(indexPath string, posts []*blog.Post) (*searchService, error) {
+// NewSearchService returns new search service
+func NewSearchService(indexPath string, posts []*blog.Post) (blog.SearchService, error) {
 	var index bleve.Index
 	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
 		index, err = bleve.NewUsing(indexPath, bleve.NewIndexMapping(), scorch.Name, scorch.Name, nil)
