@@ -14,6 +14,46 @@ import (
 	"github.com/quantonganh/blog"
 )
 
+type searchService struct {
+	index bleve.Index
+}
+
+func NewSearchService(indexPath string, posts []*blog.Post) (*searchService, error) {
+	var index bleve.Index
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		index, err = bleve.NewUsing(indexPath, bleve.NewIndexMapping(), scorch.Name, scorch.Name, nil)
+		if err != nil {
+			return nil, errors.Errorf("failed to create index at %s: %v", indexPath, err)
+		}
+	} else if err == nil {
+		index, err = bleve.OpenUsing(indexPath, nil)
+		if err != nil {
+			return nil, errors.Errorf("failed to open index at %s: %v", indexPath, err)
+		}
+
+		if err := deletePostsFromIndex(index, posts); err != nil {
+			return nil, err
+		}
+	}
+
+	batch := index.NewBatch()
+	for i, post := range posts {
+		post.ID = i
+
+		if err := indexPost(post, batch); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := index.Batch(batch); err != nil {
+		return nil, errors.Wrapf(err, "failed to index batch")
+	}
+
+	return &searchService{
+		index: index,
+	}, nil
+}
+
 func indexPost(post *blog.Post, batch *bleve.Batch) error {
 	doc := document.Document{
 		ID: post.URI,
@@ -35,27 +75,7 @@ func indexPost(post *blog.Post, batch *bleve.Batch) error {
 	return nil
 }
 
-func createOrOpenIndex(posts []*blog.Post, indexPath string) (bleve.Index, error) {
-	var index bleve.Index
-	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		index, err = bleve.NewUsing(indexPath, bleve.NewIndexMapping(), scorch.Name, scorch.Name, nil)
-		if err != nil {
-			return nil, errors.Errorf("failed to create index at %s: %v", indexPath, err)
-		}
-	} else if err == nil {
-		index, err = bleve.OpenUsing(indexPath, nil)
-		if err != nil {
-			return nil, errors.Errorf("failed to open index at %s: %v", indexPath, err)
-		}
-
-		if err := deletePostsFromIndex(posts, index); err != nil {
-			return nil, err
-		}
-	}
-	return index, nil
-}
-
-func deletePostsFromIndex(posts []*blog.Post, index bleve.Index) error {
+func deletePostsFromIndex(index bleve.Index, posts []*blog.Post) error {
 	count, err := index.DocCount()
 	if err != nil {
 		return errors.Errorf("failed to get number of documents in the index: %v", err)
@@ -89,18 +109,18 @@ func isContains(posts []*blog.Post, uri string) bool {
 	return false
 }
 
-func (ps *postService) Search(value string) ([]*blog.Post, error) {
+func (ss *searchService) Search(value string) ([]*blog.Post, error) {
 	query := bleve.NewMatchQuery(value)
 	request := bleve.NewSearchRequest(query)
 	request.Fields = []string{"_source"}
 
-	size, err := ps.index.DocCount()
+	size, err := ss.index.DocCount()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to count number of documents in the index")
 	}
 	request.Size = int(size)
 
-	searchResults, err := ps.index.Search(request)
+	searchResults, err := ss.index.Search(request)
 	if err != nil {
 		return nil, errors.Errorf("failed to execute a search request: %v", err)
 	}
@@ -117,4 +137,8 @@ func (ps *postService) Search(value string) ([]*blog.Post, error) {
 	}
 
 	return searchPosts, nil
+}
+
+func (ss *searchService) CloseIndex() error {
+	return ss.index.Close()
 }
