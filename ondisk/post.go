@@ -16,7 +16,6 @@ import (
 	"github.com/Depado/bfchroma"
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
-	"github.com/blevesearch/bleve"
 	"github.com/pkg/errors"
 	bf "github.com/russross/blackfriday/v2"
 	"golang.org/x/sync/errgroup"
@@ -99,32 +98,12 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 
 type postService struct {
 	posts []*blog.Post
-	index bleve.Index
 }
 
-func NewPostService(posts []*blog.Post, indexPath string) (*postService, error) {
-	index, err := createOrOpenIndex(posts, indexPath)
-	if err != nil {
-		return nil, err
-	}
-
-	batch := index.NewBatch()
-	for i, post := range posts {
-		post.ID = i
-
-		if err := indexPost(post, batch); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := index.Batch(batch); err != nil {
-		return nil, errors.Wrapf(err, "failed to index batch")
-	}
-
+func NewPostService(posts []*blog.Post) *postService {
 	return &postService{
 		posts: posts,
-		index: index,
-	}, nil
+	}
 }
 
 func (ps *postService) GetAllPosts() []*blog.Post {
@@ -472,8 +451,4 @@ func (ps *postService) GetPostsByYear(year string) []*blog.Post {
 		}
 	}
 	return postsByYear
-}
-
-func (ps *postService) CloseIndex() error {
-	return ps.index.Close()
 }
