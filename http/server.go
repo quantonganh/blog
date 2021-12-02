@@ -35,6 +35,7 @@ type Server struct {
 	Domain string
 
 	PostService      blog.PostService
+	SearchService    blog.SearchService
 	SubscribeService blog.SubscribeService
 	SMTPService      blog.SMTPService
 	Renderer         blog.Renderer
@@ -55,15 +56,17 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 		"toMonthName": blog.ToMonthName,
 	}
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(ui.HTMLFS, "html/*.html"))
-	postService, err := ondisk.NewPostService(posts, indexPath)
+	postService := ondisk.NewPostService(posts)
+	searchService, err := ondisk.NewSearchService(indexPath, posts)
 	if err != nil {
 		return nil, err
 	}
 	s := &Server{
-		server:      &http.Server{},
-		router:      mux.NewRouter().StrictSlash(true),
-		PostService: postService,
-		Renderer:    NewRender(config, postService, tmpl),
+		server:        &http.Server{},
+		router:        mux.NewRouter().StrictSlash(true),
+		PostService:   postService,
+		SearchService: searchService,
+		Renderer:      NewRender(config, postService, tmpl),
 	}
 
 	zlog := zerolog.New(os.Stdout).With().

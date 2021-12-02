@@ -31,6 +31,9 @@ type PostService interface {
 	GetPostsByDate(year, month, date string) []*Post
 	GetPostsByMonth() map[string]map[string][]*Post
 	GetPostsByYear(year string) []*Post
+}
+
+type SearchService interface {
 	Search(value string) ([]*Post, error)
 	CloseIndex() error
 }
