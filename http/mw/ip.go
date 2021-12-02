@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// RealIPHandler gets the real IP address behind a proxy
 func RealIPHandler(fieldKey string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

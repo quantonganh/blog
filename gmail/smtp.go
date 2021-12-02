@@ -22,7 +22,8 @@ type smtpService struct {
 	*cron.Cron
 }
 
-func NewSMTPService(config *blog.Config, serverURL string, subscribeService blog.SubscribeService, renderer blog.Renderer) *smtpService {
+// NewSMTPService returns new SMTP service
+func NewSMTPService(config *blog.Config, serverURL string, subscribeService blog.SubscribeService, renderer blog.Renderer) blog.SMTPService {
 	return &smtpService{
 		Config:           config,
 		ServerURL:        serverURL,
@@ -32,6 +33,7 @@ func NewSMTPService(config *blog.Config, serverURL string, subscribeService blog
 	}
 }
 
+// SendConfirmationEmail sends a confirmation email
 func (smtp *smtpService) SendConfirmationEmail(to, token string) error {
 	h := hermes.Hermes{
 		Product: hermes.Product{
@@ -67,6 +69,7 @@ func (smtp *smtpService) SendConfirmationEmail(to, token string) error {
 	return smtp.sendEmail(to, "Confirm subscription", emailBody)
 }
 
+// SendThankYouEmail sends a "thank you" email
 func (smtp *smtpService) SendThankYouEmail(to string) error {
 	h := hermes.Hermes{
 		Product: hermes.Product{
@@ -97,6 +100,7 @@ func (smtp *smtpService) SendThankYouEmail(to string) error {
 	return smtp.sendEmail(to, "Thank you for subscribing", emailBody)
 }
 
+// SendNewsletter sends newsletter
 func (smtp *smtpService) SendNewsletter(latestPosts []*blog.Post) {
 	_, _ = smtp.Cron.AddFunc(smtp.Config.Newsletter.Cron.Spec, func() {
 
@@ -112,12 +116,13 @@ func (smtp *smtpService) SendNewsletter(latestPosts []*blog.Post) {
 	smtp.Cron.Start()
 }
 
+// Stop stops SMTP service
 func (smtp *smtpService) Stop() error {
 	ctx := smtp.Cron.Stop()
 	log.Println("Shutting down cron...")
 	select {
 	case <-time.After(10 * time.Second):
-		return errors.New("Cron forced to shutdown...")
+		return errors.New("cron forced to shutdown")
 	case <-ctx.Done():
 		log.Println("Cron exiting...")
 		return ctx.Err()
@@ -142,6 +147,7 @@ func (smtp *smtpService) GenerateNewUUID() string {
 	return uuid.NewV4().String()
 }
 
+// GetHMACSecret gets HMAC secret from config
 func (smtp *smtpService) GetHMACSecret() string {
 	return smtp.Config.Newsletter.HMAC.Secret
 }

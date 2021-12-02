@@ -41,7 +41,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	a := NewApp(cfg, posts)
+	a := newApp(cfg, posts)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
@@ -71,7 +71,7 @@ type app struct {
 	httpServer *http.Server
 }
 
-func NewApp(config *blog.Config, posts []*blog.Post) *app {
+func newApp(config *blog.Config, posts []*blog.Post) *app {
 	indexPath := path.Join(path.Dir(config.Posts.Dir), path.Base(config.Posts.Dir)+".bleve")
 	httpServer, err := http.NewServer(config, posts, indexPath)
 	if err != nil {

@@ -22,7 +22,8 @@ type render struct {
 	tmpl        *template.Template
 }
 
-func NewRender(config *blog.Config, postService blog.PostService, tmpl *template.Template) *render {
+// NewRender returns new render service
+func NewRender(config *blog.Config, postService blog.PostService, tmpl *template.Template) blog.Renderer {
 	return &render{
 		config:      config,
 		postService: postService,
@@ -30,6 +31,7 @@ func NewRender(config *blog.Config, postService blog.PostService, tmpl *template
 	}
 }
 
+// RenderPhotos renders photo page
 func (r *render) RenderPhotos(w http.ResponseWriter) error {
 	data := map[string]interface{}{
 		"categories":     r.postService.GetAllCategories(),
@@ -43,6 +45,7 @@ func (r *render) RenderPhotos(w http.ResponseWriter) error {
 	return nil
 }
 
+// RenderTags renders tags page
 func (r *render) RenderTags(w http.ResponseWriter) error {
 	data := map[string]interface{}{
 		"categories":  r.postService.GetAllCategories(),
@@ -56,6 +59,7 @@ func (r *render) RenderTags(w http.ResponseWriter) error {
 	return nil
 }
 
+// RenderArchives renders archives page
 func (r *render) RenderArchives(w http.ResponseWriter) error {
 	data := map[string]interface{}{
 		"categories":   r.postService.GetAllCategories(),
@@ -70,6 +74,7 @@ func (r *render) RenderArchives(w http.ResponseWriter) error {
 	return nil
 }
 
+// RenderPosts renders blogs posts
 func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*blog.Post) error {
 	var (
 		postsPerPage int
@@ -107,6 +112,7 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 	return nil
 }
 
+// RenderPost renders a single blog post
 func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relatedPosts []*blog.Post, previousPost, nextPost *blog.Post) error {
 	data := map[string]interface{}{
 		"categories":   r.postService.GetAllCategories(),
@@ -124,6 +130,7 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 	return nil
 }
 
+// RenderResponseMessage renders HTTP response message
 func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) error {
 	data := map[string]interface{}{
 		"categories": r.postService.GetAllCategories(),
@@ -137,6 +144,7 @@ func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) er
 	return nil
 }
 
+// RenderNewsletter renders newsletter
 func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email string) (*bytes.Buffer, error) {
 	hash, err := hash.ComputeHmac256(email, r.config.Newsletter.HMAC.Secret)
 	if err != nil {

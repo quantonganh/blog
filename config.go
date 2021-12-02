@@ -1,5 +1,6 @@
 package blog
 
+// Config represents the main config
 type Config struct {
 	Site struct {
 		BaseURL string
@@ -52,6 +53,7 @@ type Config struct {
 	}
 }
 
+// Item represents a navbar item
 type Item struct {
 	Text string
 	URL  string

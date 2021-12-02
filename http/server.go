@@ -26,6 +26,7 @@ const (
 	shutdownTimeout = 1 * time.Second
 )
 
+// Server represents HTTP server
 type Server struct {
 	ln     net.Listener
 	server *http.Server
@@ -41,6 +42,7 @@ type Server struct {
 	Renderer         blog.Renderer
 }
 
+// NewServer create new HTTP server
 func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Server, error) {
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn: config.Sentry.DSN,
@@ -119,6 +121,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	return s, nil
 }
 
+// Scheme returns scheme
 func (s *Server) Scheme() string {
 	if s.UseTLS() {
 		return "https"
@@ -126,10 +129,12 @@ func (s *Server) Scheme() string {
 	return "http"
 }
 
+// UseTLS checks if server use TLS or not
 func (s *Server) UseTLS() bool {
 	return s.Domain != ""
 }
 
+// Port returns server port
 func (s *Server) Port() int {
 	if s.ln == nil {
 		return 0
@@ -137,6 +142,7 @@ func (s *Server) Port() int {
 	return s.ln.Addr().(*net.TCPAddr).Port
 }
 
+// URL returns server URL
 func (s *Server) URL() string {
 	scheme, port := s.Scheme(), s.Port()
 
@@ -173,6 +179,7 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
+// Open opens a connection to HTTP server
 func (s *Server) Open() (err error) {
 	s.ln, err = net.Listen("tcp", s.Addr)
 	if err != nil {
@@ -186,6 +193,7 @@ func (s *Server) Open() (err error) {
 	return nil
 }
 
+// Close shutdowns HTTP server
 func (s *Server) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()

@@ -13,6 +13,7 @@ const (
 	layoutISO  = "2006-01-02"
 )
 
+// PostService is the interface that wraps method related to a blog post
 type PostService interface {
 	GetAllPosts() []*Post
 	GetPostByURI(uri string) *Post
@@ -33,11 +34,13 @@ type PostService interface {
 	GetPostsByYear(year string) []*Post
 }
 
+// SearchService is the interface that wraps methods related to search
 type SearchService interface {
 	Search(value string) ([]*Post, error)
 	CloseIndex() error
 }
 
+// Post represents a blog post
 type Post struct {
 	ID          int
 	URI         string
@@ -76,15 +79,18 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return errors.Errorf("Unrecognized date format: %s", pd)
 }
 
+// ToISODate converts date to ISO layout
 func ToISODate(d publishDate) string {
 	return d.Time.Format(layoutISO)
 }
 
+// ToMonthName converts month from string number to name
 func ToMonthName(month string) string {
 	m, _ := strconv.Atoi(month)
 	return time.Month(m).String()
 }
 
+// Contains checks if a slice of strings contains a string
 func Contains(s []string, e string) bool {
 	for _, v := range s {
 		if v == e {
@@ -94,10 +100,12 @@ func Contains(s []string, e string) bool {
 	return false
 }
 
+// GetYear gets year from publish date
 func (d *publishDate) GetYear() string {
 	return strconv.Itoa(d.Time.Year())
 }
 
+// GetMonth gets month from publish date
 func (d *publishDate) GetMonth() string {
 	month := int(d.Time.Month())
 	if month < 10 {
@@ -107,6 +115,7 @@ func (d *publishDate) GetMonth() string {
 	return strconv.Itoa(month)
 }
 
+// GetDay gets day from publish date
 func (d *publishDate) GetDay() string {
 	day := d.Time.Day()
 	if day < 10 {

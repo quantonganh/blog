@@ -1,5 +1,6 @@
 package blog
 
+// SubscribeService is the interface that wraps methods related to subscribe function
 type SubscribeService interface {
 	FindByEmail(email string) (*Subscribe, error)
 	Insert(s *Subscribe) error
@@ -10,6 +11,7 @@ type SubscribeService interface {
 	Unsubscribe(email string) error
 }
 
+// Subscribe represents a subscriber
 type Subscribe struct {
 	ID     int    `storm:"id,increment"`
 	Email  string `storm:"unique"`
@@ -17,12 +19,14 @@ type Subscribe struct {
 	Status string `storm:"index"`
 }
 
+// Subscribe status
 const (
 	StatusPending      = "pending"
 	StatusSubscribed   = "subscribed"
 	StatusUnsubscribed = "unsubscribed"
 )
 
+// NewSubscribe returns new subscriber
 func NewSubscribe(email, token, status string) *Subscribe {
 	return &Subscribe{
 		Email:  email,
