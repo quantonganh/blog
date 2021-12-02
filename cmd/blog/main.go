@@ -113,8 +113,8 @@ func (a *app) Run(ctx context.Context) error {
 
 func (a *app) Close() error {
 	if a.httpServer != nil {
-		if a.httpServer.PostService != nil {
-			if err := a.httpServer.PostService.CloseIndex(); err != nil {
+		if a.httpServer.SearchService != nil {
+			if err := a.httpServer.SearchService.CloseIndex(); err != nil {
 				return err
 			}
 		}
