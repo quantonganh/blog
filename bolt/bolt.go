@@ -6,6 +6,7 @@ import (
 	"github.com/asdine/storm/v3"
 )
 
+// DB represents a database
 type DB struct {
 	path   string
 	db     *storm.DB
@@ -13,6 +14,7 @@ type DB struct {
 	cancel func()
 }
 
+// NewDB returns new database
 func NewDB(path string) *DB {
 	db := &DB{
 		path: path,
@@ -23,6 +25,7 @@ func NewDB(path string) *DB {
 	return db
 }
 
+// Open opens new database connection
 func (db *DB) Open() error {
 	stormDB, err := storm.Open(db.path)
 	if err != nil {
@@ -33,6 +36,7 @@ func (db *DB) Open() error {
 	return nil
 }
 
+// Close closes database connection
 func (db *DB) Close() error {
 	db.cancel()
 

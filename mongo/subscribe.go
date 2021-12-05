@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,7 +15,8 @@ type subscribeService struct {
 	collection *mongo.Collection
 }
 
-func NewSubscribeService(db *DB) *subscribeService {
+// NewSubscribeService creates new subscribe service
+func NewSubscribeService(db *DB) blog.SubscribeService {
 	newDB := db.NewDatabase("mailing_list")
 	return &subscribeService{
 		collection: newDB.Collection("subscribers"),
@@ -36,6 +38,11 @@ func (ss *subscribeService) Insert(s *blog.Subscribe) error {
 		return errors.Errorf("failed to insert blog.Subscribe into the collection: %v", err)
 	}
 
+	return nil
+}
+
+func (ss *subscribeService) UpdateStatus(email string) error {
+	fmt.Println("Not implemented")
 	return nil
 }
 

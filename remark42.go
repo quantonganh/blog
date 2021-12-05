@@ -10,6 +10,7 @@ type remark struct {
 	PageURL *url.URL
 }
 
+// GetRemarkURL gets remark URL
 func GetRemarkURL() (*remark, error) {
 	remarkURL, err := url.Parse(os.Getenv("REMARK_URL"))
 	if err != nil {

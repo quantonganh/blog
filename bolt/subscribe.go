@@ -6,6 +6,7 @@ import (
 	"github.com/quantonganh/blog"
 )
 
+// FindByEmail finds a subscriber by email
 func (db *DB) FindByEmail(email string) (*blog.Subscribe, error) {
 	var s blog.Subscribe
 	if err := db.db.One("Email", email, &s); err != nil {
@@ -15,6 +16,7 @@ func (db *DB) FindByEmail(email string) (*blog.Subscribe, error) {
 	return &s, nil
 }
 
+// Insert inserts new subscriber into db
 func (db *DB) Insert(s *blog.Subscribe) error {
 	if err := db.db.Save(s); err != nil {
 		return errors.Errorf("failed to save: %v", err)
@@ -23,6 +25,7 @@ func (db *DB) Insert(s *blog.Subscribe) error {
 	return nil
 }
 
+// UpdateStatus updates subscribe status
 func (db *DB) UpdateStatus(email string) error {
 	s, err := db.FindByEmail(email)
 	if err != nil {
@@ -37,6 +40,7 @@ func (db *DB) UpdateStatus(email string) error {
 	return nil
 }
 
+// FindByToken finds subscriber by token
 func (db *DB) FindByToken(token string) (*blog.Subscribe, error) {
 	var s blog.Subscribe
 	if err := db.db.One("Token", token, &s); err != nil {
@@ -46,6 +50,7 @@ func (db *DB) FindByToken(token string) (*blog.Subscribe, error) {
 	return &s, nil
 }
 
+// FindByStatus finds subscriber by status
 func (db *DB) FindByStatus(status string) ([]blog.Subscribe, error) {
 	var subscribes []blog.Subscribe
 	if err := db.db.Find("Status", status, &subscribes); err != nil {
@@ -55,6 +60,7 @@ func (db *DB) FindByStatus(status string) ([]blog.Subscribe, error) {
 	return subscribes, nil
 }
 
+// Subscribe subscribes to newsletter
 func (db *DB) Subscribe(token string) error {
 	s, err := db.FindByToken(token)
 	if err != nil {
@@ -69,6 +75,7 @@ func (db *DB) Subscribe(token string) error {
 	return nil
 }
 
+// Unsubscribe unsubscribes from newsletter
 func (db *DB) Unsubscribe(email string) error {
 	s, err := db.FindByEmail(email)
 	if err != nil {
