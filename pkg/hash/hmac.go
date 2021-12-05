@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ComputeHmac256 computes HMAC-SHA256
 func ComputeHmac256(message, secret string) (string, error) {
 	key := []byte(secret)
 	h := hmac.New(sha256.New, key)

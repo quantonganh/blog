@@ -10,6 +10,7 @@ import (
 
 const connectionTimeout = 10 * time.Second
 
+// DB represents a DB connection
 type DB struct {
 	client *mongo.Client
 	ctx    context.Context
@@ -18,6 +19,7 @@ type DB struct {
 	dsn string
 }
 
+// NewDB creates new database connection
 func NewDB(dsn string) *DB {
 	db := &DB{
 		dsn: dsn,
@@ -26,6 +28,7 @@ func NewDB(dsn string) *DB {
 	return db
 }
 
+// Open opens a new database connection
 func (db *DB) Open() error {
 	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
 	defer cancel()
@@ -40,6 +43,7 @@ func (db *DB) Open() error {
 	return nil
 }
 
+// Close closes a database connection
 func (db *DB) Close() error {
 	db.cancel()
 
@@ -50,6 +54,7 @@ func (db *DB) Close() error {
 	return nil
 }
 
+// NewDatabase returns new MongoDB database
 func (db *DB) NewDatabase(dbname string) *mongo.Database {
 	return db.client.Database(dbname)
 }

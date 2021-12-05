@@ -34,6 +34,7 @@ const (
 	numberOfRelatedPosts = 5
 )
 
+// GetAllPosts gets all posts in root directory
 func GetAllPosts(root string) ([]*blog.Post, error) {
 	g, ctx := errgroup.WithContext(context.Background())
 	paths := make(chan string)
@@ -100,7 +101,8 @@ type postService struct {
 	posts []*blog.Post
 }
 
-func NewPostService(posts []*blog.Post) *postService {
+// NewPostService returns new post service
+func NewPostService(posts []*blog.Post) blog.PostService {
 	return &postService{
 		posts: posts,
 	}
@@ -136,6 +138,7 @@ func (ps *postService) GetLatestPosts(days int) []*blog.Post {
 	return latestPosts
 }
 
+// ParseMarkdown parse markdown file, returns a blog post
 func ParseMarkdown(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 	select {
 	case <-ctx.Done():
