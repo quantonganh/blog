@@ -21,7 +21,7 @@ func (s *Server) rssHandler(w http.ResponseWriter, r *http.Request) error {
 		items = append(items, &feeds.Item{
 			Title: p.Title,
 			Link: &feeds.Link{
-				Href: fmt.Sprintf("%s/%s", s.URL(), p.URI),
+				Href: fmt.Sprintf("%s%s", s.URL(), p.URI),
 			},
 			Description: p.Description,
 			Created:     p.Date.Time,

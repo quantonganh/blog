@@ -14,9 +14,5 @@ func (s *Server) searchHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if err := s.Renderer.RenderPosts(w, r, searchPosts); err != nil {
-		return err
-	}
-
-	return nil
+	return s.Renderer.RenderPosts(w, r, searchPosts)
 }

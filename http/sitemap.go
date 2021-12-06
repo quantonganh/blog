@@ -24,7 +24,7 @@ func (s *Server) sitemapHandler(w http.ResponseWriter, r *http.Request) error {
 
 	for _, p := range s.PostService.GetAllPosts() {
 		sitemap.URLs = append(sitemap.URLs, blog.URL{
-			Loc:     fmt.Sprintf("%s/%s", s.URL(), p.URI),
+			Loc:     fmt.Sprintf("%s%s", s.URL(), p.URI),
 			LastMod: blog.ToISODate(p.Date),
 		})
 	}
