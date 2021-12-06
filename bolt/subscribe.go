@@ -6,19 +6,29 @@ import (
 	"github.com/quantonganh/blog"
 )
 
+type subscribeService struct {
+	db *DB
+}
+
+func NewSubscribeService(db *DB) blog.SubscribeService {
+	return &subscribeService{
+		db: db,
+	}
+}
+
 // FindByEmail finds a subscriber by email
-func (db *DB) FindByEmail(email string) (*blog.Subscribe, error) {
+func (ss *subscribeService) FindByEmail(email string) (*blog.Subscribe, error) {
 	var s blog.Subscribe
-	if err := db.db.One("Email", email, &s); err != nil {
+	if err := ss.db.stormDB.One("Email", email, &s); err != nil {
 		return nil, err
 	}
 
 	return &s, nil
 }
 
-// Insert inserts new subscriber into db
-func (db *DB) Insert(s *blog.Subscribe) error {
-	if err := db.db.Save(s); err != nil {
+// Insert inserts new subscriber into stormDB
+func (ss *subscribeService) Insert(s *blog.Subscribe) error {
+	if err := ss.db.stormDB.Save(s); err != nil {
 		return errors.Errorf("failed to save: %v", err)
 	}
 
@@ -26,14 +36,14 @@ func (db *DB) Insert(s *blog.Subscribe) error {
 }
 
 // UpdateStatus updates subscribe status
-func (db *DB) UpdateStatus(email string) error {
-	s, err := db.FindByEmail(email)
+func (ss *subscribeService) UpdateStatus(email string) error {
+	s, err := ss.FindByEmail(email)
 	if err != nil {
 		return err
 	}
 
 	s.Status = blog.StatusPending
-	if err := db.db.Save(s); err != nil {
+	if err := ss.db.stormDB.Save(s); err != nil {
 		return errors.Errorf("failed to save: %v", err)
 	}
 
@@ -41,9 +51,9 @@ func (db *DB) UpdateStatus(email string) error {
 }
 
 // FindByToken finds subscriber by token
-func (db *DB) FindByToken(token string) (*blog.Subscribe, error) {
+func (ss *subscribeService) FindByToken(token string) (*blog.Subscribe, error) {
 	var s blog.Subscribe
-	if err := db.db.One("Token", token, &s); err != nil {
+	if err := ss.db.stormDB.One("Token", token, &s); err != nil {
 		return nil, errors.Errorf("failed to find by token: %v", err)
 	}
 
@@ -51,9 +61,9 @@ func (db *DB) FindByToken(token string) (*blog.Subscribe, error) {
 }
 
 // FindByStatus finds subscriber by status
-func (db *DB) FindByStatus(status string) ([]blog.Subscribe, error) {
+func (ss *subscribeService) FindByStatus(status string) ([]blog.Subscribe, error) {
 	var subscribes []blog.Subscribe
-	if err := db.db.Find("Status", status, &subscribes); err != nil {
+	if err := ss.db.stormDB.Find("Status", status, &subscribes); err != nil {
 		return nil, errors.Errorf("failed to find by status: %v", err)
 	}
 
@@ -61,14 +71,14 @@ func (db *DB) FindByStatus(status string) ([]blog.Subscribe, error) {
 }
 
 // Subscribe subscribes to newsletter
-func (db *DB) Subscribe(token string) error {
-	s, err := db.FindByToken(token)
+func (ss *subscribeService) Subscribe(token string) error {
+	s, err := ss.FindByToken(token)
 	if err != nil {
 		return err
 	}
 
 	s.Status = blog.StatusSubscribed
-	if err := db.db.Save(s); err != nil {
+	if err := ss.db.stormDB.Save(s); err != nil {
 		return err
 	}
 
@@ -76,14 +86,14 @@ func (db *DB) Subscribe(token string) error {
 }
 
 // Unsubscribe unsubscribes from newsletter
-func (db *DB) Unsubscribe(email string) error {
-	s, err := db.FindByEmail(email)
+func (ss *subscribeService) Unsubscribe(email string) error {
+	s, err := ss.FindByEmail(email)
 	if err != nil {
 		return errors.Errorf("failed to find by email: %v", err)
 	}
 
 	s.Status = blog.StatusUnsubscribed
-	if err := db.db.Save(s); err != nil {
+	if err := ss.db.stormDB.Save(s); err != nil {
 		return errors.Errorf("failed to save: %v", err)
 	}
 
