@@ -100,7 +100,7 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
-	a.httpServer.SubscribeService = a.db
+	a.httpServer.SubscribeService = bolt.NewSubscribeService(a.db)
 	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.URL(), a.httpServer.SubscribeService, a.httpServer.Renderer)
 
 	latestPosts := a.httpServer.PostService.GetLatestPosts(a.config.Newsletter.Frequency)

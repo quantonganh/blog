@@ -8,10 +8,10 @@ import (
 
 // DB represents a database
 type DB struct {
-	path   string
-	db     *storm.DB
-	ctx    context.Context
-	cancel func()
+	path    string
+	stormDB *storm.DB
+	ctx     context.Context
+	cancel  func()
 }
 
 // NewDB returns new database
@@ -31,7 +31,7 @@ func (db *DB) Open() error {
 	if err != nil {
 		return err
 	}
-	db.db = stormDB
+	db.stormDB = stormDB
 
 	return nil
 }
@@ -40,8 +40,8 @@ func (db *DB) Open() error {
 func (db *DB) Close() error {
 	db.cancel()
 
-	if db.db != nil {
-		return db.db.Close()
+	if db.stormDB != nil {
+		return db.stormDB.Close()
 	}
 
 	return nil
