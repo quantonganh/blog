@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"html/template"
 	"net"
@@ -151,7 +152,7 @@ func (s *Server) URL() string {
 		domain = s.Domain
 	}
 
-	if port == 80 || port == 443 {
+	if port == 80 || port == 443 || flag.Lookup("test.v") != nil {
 		return fmt.Sprintf("%s://%s", scheme, domain)
 	}
 	return fmt.Sprintf("%s://%s:%d", scheme, domain, s.Port())

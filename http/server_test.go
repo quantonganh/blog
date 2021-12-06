@@ -57,6 +57,10 @@ newsletter:
 title: Test
 date: Thu Sep 19 21:48:39 +07 2019
 description: Just a test
+images:
+  - /path/to/photo.jpg
+categories:
+  - Du lịch
 tags:
   - test
 ---
@@ -85,29 +89,27 @@ func TestParseMarkdown(t *testing.T) {
 	assert.Equal(t, template.HTML("<p>Test.</p>\n"), post.Content)
 }
 
-func TestHomeHandler(t *testing.T) {
+func TestFaviconHandler(t *testing.T) {
 	t.Parallel()
 
 	rr := httptest.NewRecorder()
-	request, err := http.NewRequest(http.MethodGet, "/", nil)
+	request, err := http.NewRequest(http.MethodGet, "/favicon.ico", nil)
 	assert.NoError(t, err)
 	s.router.ServeHTTP(rr, request)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
+}
+
+func TestHomeHandler(t *testing.T) {
+	t.Run("home", func(t *testing.T) {
+		testPostHandler(t, "/")
+	})
 }
 
 func TestArchivesHandler(t *testing.T) {
-	t.Parallel()
-
-	rr := httptest.NewRecorder()
-	request, err := http.NewRequest(http.MethodGet, "/archives", nil)
-	assert.NoError(t, err)
-	s.router.ServeHTTP(rr, request)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-	body := rr.Body
-	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, body, "Test"))
+	t.Run("archives", func(t *testing.T) {
+		testPostHandler(t, "/archives")
+	})
 }
 
 func TestPostHandler(t *testing.T) {
@@ -123,15 +125,9 @@ func TestPostHandler(t *testing.T) {
 }
 
 func TestTagHandler(t *testing.T) {
-	t.Parallel()
-
-	rr := httptest.NewRecorder()
-	request, err := http.NewRequest(http.MethodGet, "/tag/test", nil)
-	assert.NoError(t, err)
-	s.router.ServeHTTP(rr, request)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
+	t.Run("tag", func(t *testing.T) {
+		testPostHandler(t, "/tag/test")
+	})
 }
 
 func TestSearchHandler(t *testing.T) {
