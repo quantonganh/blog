@@ -14,6 +14,12 @@ func (s *Server) postHandler(postsDir string) appHandler {
 			http.ServeFile(w, r, path.Join(postsDir, r.URL.Path))
 		} else {
 			currentPost := s.PostService.GetPostByURI(r.URL.Path)
+			if currentPost == nil {
+				return &Error{
+					Message: "post not found",
+					Status:  http.StatusNotFound,
+				}
+			}
 
 			relatedPosts := s.PostService.GetRelatedPosts(currentPost)
 
