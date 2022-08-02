@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -57,24 +58,27 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 	})
 
 	postsCh := make(chan *blog.Post)
-	g.Go(func() error {
-		for p := range paths {
-			f, err := os.Open(p)
-			if err != nil {
-				return errors.Wrapf(err, "failed to open file: %s", p)
+	maxProcs := runtime.GOMAXPROCS(0)
+	for i := 0; i < maxProcs; i++ {
+		g.Go(func() error {
+			for p := range paths {
+				f, err := os.Open(p)
+				if err != nil {
+					return errors.Wrapf(err, "failed to open file: %s", p)
+				}
+				post, err := ParseMarkdown(ctx, root, f)
+				if err != nil {
+					return errors.Wrapf(err, "failed to parse markdown: %s", p)
+				}
+				select {
+				case postsCh <- post:
+				case <-ctx.Done():
+					return ctx.Err()
+				}
 			}
-			post, err := ParseMarkdown(ctx, root, f)
-			if err != nil {
-				return err
-			}
-			select {
-			case postsCh <- post:
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		}
-		return nil
-	})
+			return nil
+		})
+	}
 
 	go func() {
 		_ = g.Wait()
