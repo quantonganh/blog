@@ -137,6 +137,11 @@ services:
       - traefik.http.routers.blog-secured.tls=true
       - traefik.http.routers.blog-secured.tls.certresolver=le
 
+  vtv:
+    image: ghcr.io/quantonganh/vtv:main
+    container_name: vtv
+    restart: always
+
   dev:
     image: ghcr.io/quantonganh/blog:bleve-di
     container_name: dev
