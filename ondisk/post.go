@@ -4,7 +4,6 @@ import (
 	"context"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
@@ -148,7 +147,7 @@ func ParseMarkdown(ctx context.Context, root string, r io.Reader) (*blog.Post, e
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		postContent, err := ioutil.ReadAll(r)
+		postContent, err := io.ReadAll(r)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read from io.Reader")
 		}

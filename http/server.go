@@ -57,6 +57,9 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	funcMap := template.FuncMap{
 		"toISODate":   blog.ToISODate,
 		"toMonthName": blog.ToMonthName,
+		"mod": func(i, j, r int) bool {
+			return i%j == r
+		},
 	}
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(ui.HTMLFS, "html/*.html"))
 	postService := ondisk.NewPostService(posts)
@@ -80,6 +83,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 		hlog.FromRequest(r).Info().
 			Str("method", r.Method).
 			Stringer("url", r.URL).
+			Str("form_value", r.FormValue("letters")).
 			Int("status", status).
 			Int("size", size).
 			Dur("duration", duration).
@@ -118,6 +122,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	subRouter := s.router.PathPrefix("/subscribe").Subrouter()
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
+	s.router.HandleFunc("/vtv", s.Error(s.vtvHandler))
 
 	return s, nil
 }

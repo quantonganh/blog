@@ -14,4 +14,5 @@ type Renderer interface {
 	RenderPost(w http.ResponseWriter, currentPost *Post, relatedPosts []*Post, previousPost, nextPost *Post) error
 	RenderResponseMessage(w http.ResponseWriter, message string) error
 	RenderNewsletter(latestPosts []*Post, serverURL, email string) (*bytes.Buffer, error)
+	RenderVTV(w http.ResponseWriter, letters string, total int, rows [][]string) error
 }

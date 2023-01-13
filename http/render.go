@@ -164,3 +164,12 @@ func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email str
 
 	return buf, nil
 }
+
+func (r *render) RenderVTV(w http.ResponseWriter, letters string, total int, rows [][]string) error {
+	data := map[string]interface{}{
+		"letters": letters,
+		"total":   total,
+		"rows":    rows,
+	}
+	return r.tmpl.ExecuteTemplate(w, "vtv", data)
+}

@@ -1,0 +1,39 @@
+{{ define "vtv" }}
+{{ template "header" . }}
+<h3 class="text-center">The King of Vietnamese language</h3>
+<div class="d-flex justify-content-center">
+    <form class="form-inline my-2 my-lg-0" method="post" action="/vtv">
+        <input class="form-control mr-sm-2" type="search" id="letters" placeholder="Enter 6 to 15 letters" name="letters" pattern=".{6,15}">
+        <button type="submit" class="btn btn-primary">Find Words</button>
+    </form>
+</div>
+{{ if gt (len .rows) 0 }}
+<h6 class="text-left">Letters: {{ .letters }}</h6>
+<h6 class="text-left">Total: {{ .total }} words</h6>
+{{ end }}
+{{ range $index, $words := .rows }}
+<ul class="list-group list-group-horizontal">
+    {{ range $_, $word := $words }}
+        {{ if mod $index 9 0 }}
+    <li class="list-group-item flex-fill">{{ $word }}</li>
+        {{ else if mod $index 9 1 }}
+    <li class="list-group-item flex-fill list-group-item-primary">{{ $word }}</li>
+        {{ else if mod $index 9 2 }}
+    <li class="list-group-item flex-fill list-group-item-secondary">{{ $word }}</li>
+        {{ else if mod $index 9 3 }}
+    <li class="list-group-item flex-fill list-group-item-success">{{ $word }}</li>
+        {{ else if mod $index 9 4 }}
+    <li class="list-group-item flex-fill list-group-item-danger">{{ $word }}</li>
+        {{ else if mod $index 9 5 }}
+    <li class="list-group-item flex-fill list-group-item-warning">{{ $word }}</li>
+        {{ else if mod $index 9 6 }}
+    <li class="list-group-item flex-fill list-group-item-info">{{ $word }}</li>
+        {{ else if mod $index 9 7 }}
+    <li class="list-group-item flex-fill list-group-item-light">{{ $word }}</li>
+        {{ else if mod $index 9 8 }}
+    <li class="list-group-item flex-fill list-group-item-dark">{{ $word }}</li>
+        {{ end }}
+    {{ end }}
+</ul>
+{{ end }}
+{{ end }}

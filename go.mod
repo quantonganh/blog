@@ -9,7 +9,6 @@ require (
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/astaxie/beego v1.12.0
 	github.com/blevesearch/bleve v1.0.14
-	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/getsentry/sentry-go v0.9.0
 	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/feeds v1.1.1
@@ -25,8 +24,13 @@ require (
 	go.mongodb.org/mongo-driver v1.7.0
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	golang.org/x/sync v0.1.0
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	golang.org/x/text v0.3.5
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 	gopkg.in/yaml.v2 v2.2.8
+)
+
+require (
+	github.com/dlclark/regexp2 v1.4.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
