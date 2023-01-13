@@ -12,28 +12,28 @@
 <h6 class="text-left">Total: {{ .total }} words</h6>
 {{ end }}
 {{ range $index, $words := .rows }}
-<ul class="list-group list-group-horizontal">
+<div class="list-group list-group-horizontal">
     {{ range $_, $word := $words }}
         {{ if mod $index 9 0 }}
-    <li class="list-group-item flex-fill">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 1 }}
-    <li class="list-group-item flex-fill list-group-item-primary">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-primary" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 2 }}
-    <li class="list-group-item flex-fill list-group-item-secondary">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-secondary" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 3 }}
-    <li class="list-group-item flex-fill list-group-item-success">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-success" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 4 }}
-    <li class="list-group-item flex-fill list-group-item-danger">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-danger" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 5 }}
-    <li class="list-group-item flex-fill list-group-item-warning">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-warning" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 6 }}
-    <li class="list-group-item flex-fill list-group-item-info">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-info" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 7 }}
-    <li class="list-group-item flex-fill list-group-item-light">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-light" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ else if mod $index 9 8 }}
-    <li class="list-group-item flex-fill list-group-item-dark">{{ $word }}</li>
+    <a class="list-group-item list-group-item-action text-center list-group-item-dark" href='https://www.google.com/search?q="{{ $word }}"' target="_blank">{{ $word }}</a>
         {{ end }}
     {{ end }}
-</ul>
+</div>
 {{ end }}
 {{ end }}
