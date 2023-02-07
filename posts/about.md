@@ -3,14 +3,16 @@ title: About
 date: Thu Sep 19 21:48:39 +07 2019
 description:
 ---
-Hello. I'm Quan.
-I started my career as a .NET developer. Then my passionate on Linux and open source led me to a different direction, a system administrator.
-With a strong background in Linux system administration, I was gradually moving to backend. I'm currently working as a software engineer. In spare time, I teach my wife to program to [automate her office tasks](../../../2021/06/10/automate-office-tasks).
+Hi. I'm Quan.
+I began my career as a .NET developer but my passion for Linux and open source led me to pursue a career in system administrator.
+With extensive experience in Linux system administration, I have since transitioned to working as a software engineer.
+In my spare time, I enjoy teaching my wife how to program to [optimize her office tasks](../../../2021/06/10/automate-office-tasks).
 
-I enjoy working in the fields that can make a different in people's lives or allow me to help others.
+I am motivated by roles that make a positive impact on people's lives or offer opportunities to help others.
 
-I've been trying to have a good work-life balance. Leaving work on time, picking up my child from school, then we can talk about our day on the way back home. We love to travel together to have stories to tell (and collect passport stamps).
+Maintaining a healthy work-life balance is important to me, so I make a point of leaving work on time and picking up my child from school, allowing us to catch up on our days during the drive home.
+Traveling together and collecting new stories and passport stamps is something we both enjoy.
 
-My favourite sports are: table tennis and badminton. I'm scared to speak in front of a crowd, but sometimes [I can sing](https://youtu.be/4pxr5zTRgmM). I'm a lover of nature, street photography.
+My favorite sports are table tennis and badminton. While public speaking is a fear of mine, [I can sometimes sing](https://youtu.be/4pxr5zTRgmM). I also have a love for of nature and street photography.
 
 [My resume.](/resume)
