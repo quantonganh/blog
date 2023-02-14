@@ -7,7 +7,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/alecthomas/chroma v0.8.2
 	github.com/asdine/storm/v3 v3.2.1
-	github.com/astaxie/beego v1.12.0
+	github.com/astaxie/beego v1.12.2
 	github.com/blevesearch/bleve v1.0.14
 	github.com/getsentry/sentry-go v0.9.0
 	github.com/go-errors/errors v1.0.1
@@ -24,9 +24,8 @@ require (
 	go.mongodb.org/mongo-driver v1.7.0
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	golang.org/x/sync v0.1.0
-	golang.org/x/text v0.3.5
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
-	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/yaml.v2 v2.2.8
 )
 
