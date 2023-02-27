@@ -1,4 +1,4 @@
-package ondisk
+package markdown
 
 import (
 	"bytes"

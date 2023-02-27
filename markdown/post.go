@@ -1,4 +1,4 @@
-package ondisk
+package markdown
 
 import (
 	"context"
@@ -65,7 +65,7 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 				if err != nil {
 					return errors.Wrapf(err, "failed to open file: %s", p)
 				}
-				post, err := ParseMarkdown(ctx, root, f)
+				post, err := Parse(ctx, root, f)
 				if err != nil {
 					return errors.Wrapf(err, "failed to parse markdown: %s", p)
 				}
@@ -141,8 +141,8 @@ func (ps *postService) GetLatestPosts(days int) []*blog.Post {
 	return latestPosts
 }
 
-// ParseMarkdown parse markdown file, returns a blog post
-func ParseMarkdown(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
+// Parse parses markdown file, returns a blog post
+func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()

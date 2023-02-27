@@ -27,7 +27,7 @@ So, is there any search engine written in Go?
 
 Looking at the [documentation](https://blevesearch.com/docs/Getting%20Started/), there are three steps to add search to your website:
 
-- [Open a new index](https://github.com/quantonganh/blog/blob/144fdd13e62faa0aa74f488967c187c0a8e52cc4/ondisk/search.go#L38-L55):
+- [Open a new index](https://github.com/quantonganh/blog/blob/144fdd13e62faa0aa74f488967c187c0a8e52cc4/markdown/search.go#L38-L55):
 
 ```go
 func createOrOpenIndex(posts []*blog.Post, indexPath string) (bleve.Index, error) {
@@ -80,7 +80,7 @@ func deletePostsFromIndex(posts []*blog.Post, index bleve.Index) error {
 ```
 
 
-- [Index posts](https://github.com/quantonganh/blog/blob/144fdd13e62faa0aa74f488967c187c0a8e52cc4/ondisk/search.go#L17-L36):
+- [Index posts](https://github.com/quantonganh/blog/blob/144fdd13e62faa0aa74f488967c187c0a8e52cc4/markdown/search.go#L17-L36):
 
 ```go
 func indexPost(post *blog.Post, batch *bleve.Batch) error {
@@ -105,7 +105,7 @@ func indexPost(post *blog.Post, batch *bleve.Batch) error {
 }
 ```
 
-- [Search](https://github.com/quantonganh/blog/blob/144fdd13e62faa0aa74f488967c187c0a8e52cc4/ondisk/search.go#L92-L113):
+- [Search](https://github.com/quantonganh/blog/blob/144fdd13e62faa0aa74f488967c187c0a8e52cc4/markdown/search.go#L92-L113):
 
 ```go
 func (ps *postService) Search(value string) ([]*blog.Post, error) {

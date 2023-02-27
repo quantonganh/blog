@@ -23,8 +23,8 @@ import (
 	nethtml "golang.org/x/net/html"
 
 	"github.com/quantonganh/blog"
+	"github.com/quantonganh/blog/markdown"
 	"github.com/quantonganh/blog/mock"
-	"github.com/quantonganh/blog/ondisk"
 	"github.com/quantonganh/blog/pkg/hash"
 )
 
@@ -66,7 +66,7 @@ tags:
 ---
 Test.`)
 	var err error
-	post, err = ondisk.ParseMarkdown(context.Background(), ".", r)
+	post, err = markdown.Parse(context.Background(), ".", r)
 	if err != nil {
 		log.Fatal(err)
 	}

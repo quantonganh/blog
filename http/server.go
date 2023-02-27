@@ -19,7 +19,7 @@ import (
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/http/mw"
-	"github.com/quantonganh/blog/ondisk"
+	"github.com/quantonganh/blog/markdown"
 	"github.com/quantonganh/blog/ui"
 )
 
@@ -62,8 +62,8 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 		},
 	}
 	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(ui.HTMLFS, "html/*.html"))
-	postService := ondisk.NewPostService(posts)
-	searchService, err := ondisk.NewSearchService(indexPath, posts)
+	postService := markdown.NewPostService(posts)
+	searchService, err := markdown.NewSearchService(indexPath, posts)
 	if err != nil {
 		return nil, err
 	}
