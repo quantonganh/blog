@@ -16,7 +16,7 @@ import (
 	"github.com/quantonganh/blog/bolt"
 	"github.com/quantonganh/blog/gmail"
 	"github.com/quantonganh/blog/http"
-	"github.com/quantonganh/blog/ondisk"
+	"github.com/quantonganh/blog/markdown"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	posts, err := ondisk.GetAllPosts(cfg.Posts.Dir)
+	posts, err := markdown.GetAllPosts(cfg.Posts.Dir)
 	if err != nil {
 		log.Fatal(err)
 	}
