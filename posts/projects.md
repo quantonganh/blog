@@ -4,6 +4,7 @@ date: 2021-09-23
 description:
 ---
 - [chatgpt](https://github.com/quantonganh/chatgpt): A simple terminal UI for ChatGPT
+- [ims](https://github.com/quantonganh/ims): I assisted my friend in automating his tasks on Chrome
 - [vtv](https://github.com/quantonganh/vtv): The King of Vietnamese language
 - [blog](https://github.com/quantonganh/blog): my own static site generator
 - [xsplitter](https://github.com/quantonganh/xsplitter): I helped my wife to automate her office tasks
