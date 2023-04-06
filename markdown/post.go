@@ -189,6 +189,7 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 		}
 		options := []html.Option{
 			html.WithLineNumbers(true),
+			html.TabWidth(4),
 		}
 
 		p.Content = template.HTML(bf.Run(
