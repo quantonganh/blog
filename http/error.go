@@ -3,10 +3,10 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/rs/zerolog/hlog"
 )
 
 const errOops = "Oops! Something went wrong."
@@ -21,7 +21,7 @@ func (s *Server) Error(fn appHandler) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("%+v", err)
+		hlog.FromRequest(r).Error().Msg(err.Error())
 		sentry.CaptureException(err)
 
 		clientError, ok := err.(ClientError)
