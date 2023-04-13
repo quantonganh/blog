@@ -1,5 +1,4 @@
-{{ define "post" }}
-{{ template "header" . }}
+{{ define "content" }}
 <h3>{{ .currentPost.Title }}</h3>
 <img src="https://visitor-badge.glitch.me/badge?page_id=quantonganh.{{ .currentPost.URI }}" alt="visitor badge"/>
 <p class="text-secondary">{{ .currentPost.Date | toISODate }}</p>
@@ -71,5 +70,4 @@
         crossorigin="anonymous"
         async>
 </script>
-{{ template "footer" . }}
 {{ end }}

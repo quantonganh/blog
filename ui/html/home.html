@@ -1,16 +1,39 @@
-{{ define "home" }}
-{{ template "header" . }}
-{{ range .posts }}
-    <h3><a href="{{ .URI }}">{{ .Title }}</a></h3>
-    <p class="text-secondary">{{ .Date | toISODate }}</p>
-    {{ .Summary }}
-    {{ if .Truncated }}
-    <p class="text-right">
-        <a href="{{ .URI }}">Read More...</a>
-    </p>
+{{ define "content" }}
+    {{ range .posts }}
+        <h3><a href="{{ .URI }}">{{ .Title }}</a></h3>
+        <p class="text-secondary">{{ .Date | toISODate }}</p>
+        {{ .Summary }}
+        {{ if .Truncated }}
+        <p class="text-right">
+            <a href="{{ .URI }}">Read More...</a>
+        </p>
+        {{ end }}
+        <hr>
     {{ end }}
-    <hr>
 {{ end }}
-{{ template "paginator" . }}
-{{ template "footer" . }}
+
+{{ define "paginator" }}
+    {{if .paginator.HasPages}}
+<ul class="pagination justify-content-center">
+        {{if .paginator.HasPrev}}
+    <li class="page-item"><a class="page-link" href="{{.paginator.PageLinkFirst}}">First</a></li>
+    <li class="page-item"><a class="page-link" href="{{.paginator.PageLinkPrev}}">&laquo;</a></li>
+        {{else}}
+    <li class="page-item disabled"><a class="page-link">First</a></li>
+    <li class="page-item disabled"><a class="page-link">&laquo;</a></li>
+        {{end}}
+        {{range $_, $page := .paginator.Pages}}
+    <li class="page-item{{if $.paginator.IsActive .}} active{{end}}">
+        <a class="page-link" href="{{$.paginator.PageLink $page}}">{{$page}}</a>
+    </li>
+        {{end}}
+        {{if .paginator.HasNext}}
+    <li class="page-item"><a class="page-link" href="{{.paginator.PageLinkNext}}">&raquo;</a></li>
+    <li class="page-item"><a class="page-link" href="{{.paginator.PageLinkLast}}">Last</a></li>
+        {{else}}
+    <li class="page-item disabled"><a class="page-link">&raquo;</a></li>
+    <li class="page-item disabled"><a class="page-link">Last</a></li>
+        {{end}}
+</ul>
+    {{end}}
 {{ end }}

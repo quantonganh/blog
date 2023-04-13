@@ -12,6 +12,7 @@ import (
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/pkg/hash"
+	"github.com/quantonganh/blog/ui/html"
 )
 
 const defaultPostsPerPage = 10
@@ -19,26 +20,25 @@ const defaultPostsPerPage = 10
 type render struct {
 	config      *blog.Config
 	postService blog.PostService
-	tmpl        *template.Template
 }
 
 // NewRender returns new render service
-func NewRender(config *blog.Config, postService blog.PostService, tmpl *template.Template) blog.Renderer {
+func NewRender(config *blog.Config, postService blog.PostService) blog.Renderer {
 	return &render{
 		config:      config,
 		postService: postService,
-		tmpl:        tmpl,
 	}
 }
 
 // RenderPhotos renders photo page
 func (r *render) RenderPhotos(w http.ResponseWriter) error {
+	tmpl := html.Parse(nil, "photos.html")
 	data := map[string]interface{}{
 		"categories":     r.postService.GetAllCategories(),
 		"imageAddresses": r.postService.GetImageAddresses(),
 		"postURIByImage": r.postService.GetPostURIByImage(),
 	}
-	if err := r.tmpl.ExecuteTemplate(w, "photos", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
 	}
 
@@ -47,12 +47,13 @@ func (r *render) RenderPhotos(w http.ResponseWriter) error {
 
 // RenderTags renders tags page
 func (r *render) RenderTags(w http.ResponseWriter) error {
+	tmpl := html.Parse(nil, "tags.html")
 	data := map[string]interface{}{
 		"categories":  r.postService.GetAllCategories(),
 		"tags":        r.postService.GetAllTags(),
 		"postsPerTag": r.postService.GetPostsPerTag(),
 	}
-	if err := r.tmpl.ExecuteTemplate(w, "tags", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
 	}
 
@@ -61,13 +62,16 @@ func (r *render) RenderTags(w http.ResponseWriter) error {
 
 // RenderArchives renders archives page
 func (r *render) RenderArchives(w http.ResponseWriter) error {
+	tmpl := html.Parse(template.FuncMap{
+		"toMonthName": blog.ToMonthName,
+	}, "archives.html")
 	data := map[string]interface{}{
 		"categories":   r.postService.GetAllCategories(),
 		"years":        r.postService.GetYears(),
 		"monthsInYear": r.postService.GetMonthsInYear(),
 		"postsByMonth": r.postService.GetPostsByMonth(),
 	}
-	if err := r.tmpl.ExecuteTemplate(w, "archives", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
 	}
 
@@ -99,13 +103,16 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 		endPos = nums
 	}
 
+	tmpl := html.Parse(template.FuncMap{
+		"toISODate": blog.ToISODate,
+	}, "home.html")
 	data := map[string]interface{}{
 		"Site":       r.config.Site,
 		"categories": r.postService.GetAllCategories(),
 		"posts":      posts[offset:endPos],
 		"paginator":  paginator,
 	}
-	if err := r.tmpl.ExecuteTemplate(w, "home", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
 	}
 
@@ -114,6 +121,9 @@ func (r *render) RenderPosts(w http.ResponseWriter, req *http.Request, posts []*
 
 // RenderPost renders a single blog post
 func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relatedPosts []*blog.Post, previousPost, nextPost *blog.Post) error {
+	tmpl := html.Parse(template.FuncMap{
+		"toISODate": blog.ToISODate,
+	}, "post.html")
 	data := map[string]interface{}{
 		"categories":   r.postService.GetAllCategories(),
 		"Title":        currentPost.Title,
@@ -123,7 +133,7 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 		"previousPost": previousPost,
 		"nextPost":     nextPost,
 	}
-	if err := r.tmpl.ExecuteTemplate(w, "post", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		return errors.Errorf("failed to render post %s: %v", currentPost.Title, err)
 	}
 
@@ -132,12 +142,13 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 
 // RenderResponseMessage renders HTTP response message
 func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) error {
+	tmpl := html.Parse(nil, "subscribe.html")
 	data := map[string]interface{}{
 		"categories": r.postService.GetAllCategories(),
 		"message":    message,
 	}
 
-	if err := r.tmpl.ExecuteTemplate(w, "response", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		return errors.Errorf("failed to execute template: %v", err)
 	}
 
@@ -146,6 +157,10 @@ func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) er
 
 // RenderNewsletter renders newsletter
 func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email string) (*bytes.Buffer, error) {
+	funcMap := template.FuncMap{
+		"toISODate": blog.ToISODate,
+	}
+	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(html.FS, "newsletter.html"))
 	hash, err := hash.ComputeHmac256(email, r.config.Newsletter.HMAC.Secret)
 	if err != nil {
 		return nil, err
@@ -158,7 +173,7 @@ func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email str
 		"email":      email,
 		"hash":       hash,
 	}
-	if err := r.tmpl.ExecuteTemplate(buf, "newsletter", data); err != nil {
+	if err := tmpl.ExecuteTemplate(buf, "newsletter", data); err != nil {
 		return nil, errors.Errorf("failed to execute template newsletter: %v", err)
 	}
 
@@ -166,10 +181,15 @@ func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email str
 }
 
 func (r *render) RenderVTV(w http.ResponseWriter, letters string, total int, rows [][]string) error {
+	tmpl := html.Parse(template.FuncMap{
+		"mod": func(i, j, r int) bool {
+			return i%j == r
+		},
+	}, "vtv.html")
 	data := map[string]interface{}{
 		"letters": letters,
 		"total":   total,
 		"rows":    rows,
 	}
-	return r.tmpl.ExecuteTemplate(w, "vtv", data)
+	return tmpl.ExecuteTemplate(w, "base", data)
 }

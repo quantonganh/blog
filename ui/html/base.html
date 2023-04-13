@@ -1,7 +1,7 @@
-{{define "header"}}
+{{ define "base" }}
 <!DOCTYPE html>
-<html>
-	<head>
+<html lang="en">
+    <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{{ if .Title }}{{ .Title }}{{ else }}{{ .Site.Title }}{{ end }}</title>
         <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ .Site.Params.Description }}{{ end }}">
@@ -16,8 +16,8 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
         <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js" integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"></script>
         <script src="https://unpkg.com/imagesloaded@4/imagesloaded.pkgd.min.js" integrity="sha384-YnGSHPPWEUDKMHFPOVmNP7Xyfwx5G0CHet6IoNgiX6CbFZS8gCeIfEgB1MgPwjdI" crossorigin="anonymous"></script>
-	</head>
-	<body>
+    </head>
+    <body>
         <article>
             <header class="text-center">
                 <div class="title">
@@ -61,4 +61,77 @@
                 </div>
             </header>
             <hr>
-{{end}}
+            {{ block "content" . }}
+            {{ end }}
+            {{ block "paginator" . }}
+            {{ end }}
+            <footer class="text-center">
+                <div class="elsewhere pt-3">
+                    <ul>
+                        <li>
+                            <a class="btn btn-primary" style="background-color: #333333;" href="https://github.com/quantonganh/blog" role="button" title="GitHub" target="_blank">
+                                <i class="bi bi-github"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary" style="background-color: #0082ca;" href="https://www.linkedin.com/in/quantonganh/" role="button" title="LinkedIn" target="_blank">
+                                <i class="bi bi-linkedin"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary" style="background-color: #e52a34;" href="https://serverfault.com/users/59925/quanta" role="button" title="Server Fault" target="_blank">
+                                <i class="cib-server-fault"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary" style="background-color: #ffac44;" href="https://stackoverflow.com/users/631612/quanta" role="button" title="Stack Overflow" target="_blank">
+                                <i class="cib-stackoverflow"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="navi">
+                    <ul>
+                        <li>
+                            <a href="/archives">Archives</a>
+                        </li>
+                        <li>
+                            <a href="/sitemap.xml">Sitemap</a>
+                        </li>
+                        <li>
+                            <a href="/rss.xml">RSS</a>
+                        </li>
+                    </ul>
+                </div>
+                <form class="needs-validation ml-auto pb-3 d-flex justify-content-center" method="post" action="/subscribe" novalidate>
+                    <div class="form-row">
+                        <div class="col-auto">
+                            <input type="email" class="form-control mr-sm-2" id="email" placeholder="Enter your email" aria-describedby="emailHelp" name="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$">
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Subscribe</button>
+                        </div>
+                    </div>
+                </form>
+            </footer>
+        </article>
+        <script>
+            (function() {
+                'use strict';
+                window.addEventListener('load', function() {
+                    let forms = document.getElementsByClassName('needs-validation');
+                    Array.prototype.filter.call(forms, function(form) {
+                        form.addEventListener('submit', function(event) {
+                            if (form.checkValidity() === false) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                            form.classList.add('was-validated');
+                        }, false);
+                    });
+                }, false);
+            })();
+        </script>
+    </body>
+</html>
+{{ end }}

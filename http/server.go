@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"html/template"
 	"net"
 	"net/http"
 	"os"
@@ -54,14 +53,6 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 
 	sentryHandler := sentryhttp.New(sentryhttp.Options{})
 
-	funcMap := template.FuncMap{
-		"toISODate":   blog.ToISODate,
-		"toMonthName": blog.ToMonthName,
-		"mod": func(i, j, r int) bool {
-			return i%j == r
-		},
-	}
-	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(ui.HTMLFS, "html/*.html"))
 	postService := markdown.NewPostService(posts)
 	searchService, err := markdown.NewSearchService(indexPath, posts)
 	if err != nil {
@@ -72,7 +63,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 		router:        mux.NewRouter().StrictSlash(true),
 		PostService:   postService,
 		SearchService: searchService,
-		Renderer:      NewRender(config, postService, tmpl),
+		Renderer:      NewRender(config, postService),
 	}
 
 	zlog := zerolog.New(os.Stdout).With().
