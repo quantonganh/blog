@@ -21,6 +21,10 @@ p > img {
     width: 100%;
 }
 
+a > img {
+    max-width: 90%;
+}
+
 img + em {
     display: block;
     text-align: center;
