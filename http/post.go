@@ -10,7 +10,7 @@ import (
 
 func (s *Server) postHandler(postsDir string) appHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		if hasSuffix(r.URL.Path, []string{"jpg", "jpeg", "png"}) {
+		if hasSuffix(r.URL.Path, []string{"jpg", "jpeg", "png", "gif"}) {
 			http.ServeFile(w, r, path.Join(postsDir, r.URL.Path))
 		} else {
 			currentPost := s.PostService.GetPostByURI(r.URL.Path)
