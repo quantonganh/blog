@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -44,15 +43,6 @@ type Server struct {
 
 // NewServer create new HTTP server
 func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Server, error) {
-	if err := sentry.Init(sentry.ClientOptions{
-		Dsn: config.Sentry.DSN,
-	}); err != nil {
-		return nil, errors.Wrapf(err, "failed to init Sentry, DSN: %s", config.Sentry.DSN)
-	}
-	defer sentry.Flush(2 * time.Second)
-
-	sentryHandler := sentryhttp.New(sentryhttp.Options{})
-
 	postService := markdown.NewPostService(posts)
 	searchService, err := markdown.NewSearchService(indexPath, posts)
 	if err != nil {
@@ -85,6 +75,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	s.router.Use(hlog.RefererHandler("referer"))
 	s.router.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
 
+	sentryHandler := sentryhttp.New(sentryhttp.Options{})
 	s.router.Use(sentryHandler.Handle)
 
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)

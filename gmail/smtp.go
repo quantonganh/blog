@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/matcornic/hermes/v2"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
@@ -102,16 +103,27 @@ func (smtp *smtpService) SendThankYouEmail(to string) error {
 
 // SendNewsletter sends newsletter
 func (smtp *smtpService) SendNewsletter(latestPosts []*blog.Post) {
-	_, _ = smtp.Cron.AddFunc(smtp.Config.Newsletter.Cron.Spec, func() {
+	_, err := smtp.Cron.AddFunc(smtp.Config.Newsletter.Cron.Spec, func() {
 
-		subscribers, _ := smtp.SubscribeService.FindByStatus(blog.StatusSubscribed)
+		subscribers, err := smtp.SubscribeService.FindByStatus(blog.StatusSubscribed)
+		if err != nil {
+			sentry.CaptureException(err)
+		}
 
 		for _, s := range subscribers {
-			buf, _ := smtp.Renderer.RenderNewsletter(latestPosts, smtp.ServerURL, s.Email)
+			buf, err := smtp.Renderer.RenderNewsletter(latestPosts, smtp.ServerURL, s.Email)
+			if err != nil {
+				sentry.CaptureException(err)
+			}
 
-			_ = smtp.sendEmail(s.Email, fmt.Sprintf("%s newsletter", smtp.Config.Newsletter.Product.Name), buf.String())
+			if err := smtp.sendEmail(s.Email, fmt.Sprintf("%s newsletter", smtp.Config.Newsletter.Product.Name), buf.String()); err != nil {
+				sentry.CaptureException(err)
+			}
 		}
 	})
+	if err != nil {
+		sentry.CaptureException(err)
+	}
 
 	smtp.Cron.Start()
 }

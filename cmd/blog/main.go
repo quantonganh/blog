@@ -8,7 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
@@ -31,17 +33,24 @@ func main() {
 	viper.SetDefault("http.addr", ":80")
 	viper.SetDefault("posts.dir", "posts")
 
-	var cfg *blog.Config
-	if err := viper.Unmarshal(&cfg); err != nil {
+	var config *blog.Config
+	if err := viper.Unmarshal(&config); err != nil {
 		log.Fatal(err)
 	}
 
-	posts, err := markdown.GetAllPosts(cfg.Posts.Dir)
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn: config.Sentry.DSN,
+	}); err != nil {
+		log.Fatalf("sentry.Init: %v", err)
+	}
+	defer sentry.Flush(2 * time.Second)
+
+	posts, err := markdown.GetAllPosts(config.Posts.Dir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	a := newApp(cfg, posts)
+	a := newApp(config, posts)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
