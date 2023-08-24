@@ -35,14 +35,15 @@ func (ss *subscribeService) Insert(s *blog.Subscribe) error {
 	return nil
 }
 
-// UpdateStatus updates subscribe status
-func (ss *subscribeService) UpdateStatus(email string) error {
+// Update updates subscribe status and new token
+func (ss *subscribeService) Update(email, token string) error {
 	s, err := ss.FindByEmail(email)
 	if err != nil {
 		return err
 	}
 
 	s.Status = blog.StatusPending
+	s.Token = token
 	if err := ss.db.stormDB.Save(s); err != nil {
 		return errors.Errorf("failed to save: %v", err)
 	}

@@ -4,7 +4,7 @@ package blog
 type SubscribeService interface {
 	FindByEmail(email string) (*Subscribe, error)
 	Insert(s *Subscribe) error
-	UpdateStatus(email string) error
+	Update(email, token string) error
 	FindByToken(token string) (*Subscribe, error)
 	FindByStatus(status string) ([]Subscribe, error)
 	Subscribe(token string) error

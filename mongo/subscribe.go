@@ -41,7 +41,7 @@ func (ss *subscribeService) Insert(s *blog.Subscribe) error {
 	return nil
 }
 
-func (ss *subscribeService) UpdateStatus(email string) error {
+func (ss *subscribeService) Update(email, token string) error {
 	fmt.Println("Not implemented")
 	return nil
 }

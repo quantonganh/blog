@@ -6,6 +6,7 @@ import (
 
 	"github.com/asdine/storm/v3"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/hlog"
 
 	"github.com/quantonganh/blog"
 )
@@ -22,17 +23,21 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 	token := s.SMTPService.GenerateNewUUID()
 	newSubscriber := blog.NewSubscribe(email, token, blog.StatusPending)
 
+	logger := hlog.FromRequest(r)
 	subscribe, err := s.SubscribeService.FindByEmail(email)
 	if err != nil {
 		if errors.Is(err, storm.ErrNotFound) {
+			logger.Info().Msg("Sending confirmation email")
 			if err := s.SMTPService.SendConfirmationEmail(email, token); err != nil {
 				return err
 			}
 
+			logger.Info().Msgf("Saving new subscriber %+v into the database", newSubscriber)
 			if err := s.SubscribeService.Insert(newSubscriber); err != nil {
 				return err
 			}
 
+			logger.Info().Msg("Rendering the response message")
 			if err := s.Renderer.RenderResponseMessage(w, fmt.Sprintf(confirmationMessage, newSubscriber.Email)); err != nil {
 				return err
 			}
@@ -40,6 +45,7 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 			return NewError(err, http.StatusNotFound, fmt.Sprintf("Cannot found email: %s", email))
 		}
 	} else {
+		logger.Info().Msgf("Found subscriber %+v in the database", subscribe)
 		switch subscribe.Status {
 		case blog.StatusPending:
 			if err := s.Renderer.RenderResponseMessage(w, pendingMessage); err != nil {
@@ -54,7 +60,13 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 				return err
 			}
 
-			if err := s.SubscribeService.UpdateStatus(email); err != nil {
+			logger.Info().Msgf("Updating status to %s", blog.StatusPending)
+			if err := s.SubscribeService.Update(email, token); err != nil {
+				return err
+			}
+
+			logger.Info().Msg("Rendering the response message")
+			if err := s.Renderer.RenderResponseMessage(w, fmt.Sprintf(confirmationMessage, email)); err != nil {
 				return err
 			}
 		}
