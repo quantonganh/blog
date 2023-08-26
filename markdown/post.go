@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"io"
 	"net/url"
@@ -17,6 +18,7 @@ import (
 	"github.com/alecthomas/chroma/formatters/html"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	bf "github.com/russross/blackfriday/v2"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
@@ -32,6 +34,7 @@ const (
 	summaryLength        = 70
 	threeBackticks       = "```"
 	numberOfRelatedPosts = 5
+	mdExtension          = ".md"
 )
 
 // GetAllPosts gets all posts in root directory
@@ -44,7 +47,7 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 			if err != nil {
 				return err
 			}
-			if filepath.Ext(path) != ".md" {
+			if filepath.Ext(path) != mdExtension {
 				return nil
 			}
 			select {
@@ -166,16 +169,16 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 
 		p := blog.Post{}
 		if err := yaml.Unmarshal([]byte(metadata), &p); err != nil {
-			return nil, errors.Wrapf(err, "failed to decode metadata")
+			log.Printf("failed to decode metadata: %v", err)
 		}
 
 		switch v := r.(type) {
 		case *os.File:
 			name := v.Name()
 			basename := filepath.Base(name)
-			p.URI = path.Join(strings.TrimPrefix(filepath.Dir(name), root), strings.TrimSuffix(basename, filepath.Ext(basename)))
+			p.URI = path.Join(strings.TrimPrefix(filepath.Dir(name), root), basename)
 		default:
-			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), url.QueryEscape(strings.ToLower(p.Title)))
+			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), fmt.Sprintf("%s%s", url.QueryEscape(strings.ToLower(p.Title)), mdExtension))
 		}
 		if !strings.HasPrefix(p.URI, "/") {
 			p.URI = "/" + p.URI

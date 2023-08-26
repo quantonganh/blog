@@ -13,6 +13,6 @@ I am motivated by roles that make a positive impact on people's lives or offer o
 Maintaining a healthy work-life balance is important to me, so I make a point of leaving work on time and picking up my child from school, allowing us to catch up on our days during the drive home.
 Traveling together and collecting new stories and passport stamps is something we both enjoy.
 
-My favorite sports are table tennis and badminton. While public speaking is a fear of mine, [I can sometimes sing](https://youtu.be/4pxr5zTRgmM). I also have a love for of nature and street photography.
+My favorite sports are table tennis and badminton. While public speaking is a fear of mine, [I can sometimes sing](https://youtu.be/4pxr5zTRgmM). I also have a love for nature and street photography.
 
 [My resume.](/resume)

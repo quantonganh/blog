@@ -28,7 +28,7 @@ The first algorithm that comes to my mind is exactly the way I would solve it on
 
 At the final step, the valid words can be filtered out by using a [Vietnamese word list](http://www.informatik.uni-leipzig.de/~duc/software/misc/wordlist.html).
 
-Here's the result:
+Here's [the result](/vtv):
 
 ```
 $ vtv "đăngcay"

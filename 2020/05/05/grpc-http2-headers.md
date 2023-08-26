@@ -10,7 +10,7 @@ tags:
     - http2
     - tshark
 ---
-After sniffing with tcpdump, show can I show all HTTP2 header using tshark?
+After sniffing with tcpdump, how can I show all HTTP2 header using tshark?
 
 First, find the frame number based on method:
 

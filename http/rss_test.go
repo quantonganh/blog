@@ -23,5 +23,5 @@ func TestRSSHandler(t *testing.T) {
 	var rss *feeds.RssFeedXml
 	require.NoError(t, xml.NewDecoder(rr.Body).Decode(&rss))
 	assert.Equal(t, 1, len(rss.Channel.Items))
-	assert.Equal(t, "http://localhost/2019/09/19/test", rss.Channel.Items[0].Link)
+	assert.Equal(t, "http://localhost/2019/09/19/test.md", rss.Channel.Items[0].Link)
 }

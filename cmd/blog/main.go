@@ -31,7 +31,7 @@ func main() {
 	}
 
 	viper.SetDefault("http.addr", ":80")
-	viper.SetDefault("posts.dir", "posts")
+	viper.SetDefault("posts.dir", ".")
 
 	var config *blog.Config
 	if err := viper.Unmarshal(&config); err != nil {
@@ -81,7 +81,7 @@ type app struct {
 }
 
 func newApp(config *blog.Config, posts []*blog.Post) *app {
-	indexPath := path.Join(path.Dir(config.Posts.Dir), path.Base(config.Posts.Dir)+".bleve")
+	indexPath := path.Join(path.Dir(config.Posts.Dir), "posts.bleve")
 	httpServer, err := http.NewServer(config, posts, indexPath)
 	if err != nil {
 		log.Fatalf("%+v\n", err)

@@ -28,7 +28,7 @@ This post recaps previous series of posts about Helix.
 
 #### 1. Running code {#running-code}
 
-In my [previous post](/2023/07/14/run-code-in-helix), I shared a method for running code from within Helix by using [this PR](https://github.com/helix-editor/helix/pull/6979).
+In my [previous post](/2023/07/14/run-code-in-helix.md), I shared a method for running code from within Helix by using [this PR](https://github.com/helix-editor/helix/pull/6979).
 
 I later discovered another useful trick [here](https://www.reddit.com/r/HelixEditor/comments/13x9a3z/integrating_fuzzylive_grepping_into_helix_my/). We can use [wezterm cli get-text](https://wezfurlong.org/wezterm/cli/cli/get-text.html) command to extract the filename and line number from the status line:
 
@@ -40,11 +40,11 @@ line_number=$(echo $status_line | awk '{ print $2}')
 
 #### 2. Jumping to build errors {#jumping-to-build-errors}
 
-- [/2023/07/21/jump-to-build-error-helix](/2023/07/21/jump-to-build-error-helix)
+- [/2023/07/21/jump-to-build-error-helix](/2023/07/21/jump-to-build-error-helix.md)
 
 #### 3. Quickly select a command and open it in a new pane {#quickly-select-a-command-and-open-it-in-a-new-pane}
 
-- [/2023/08/04/quick-select-wezterm](/2023/08/04/quick-select-wezterm)
+- [/2023/08/04/quick-select-wezterm](/2023/08/04/quick-select-wezterm.md)
 
 #### 4. Testing a single function {#testing-a-single-function}
 
@@ -79,7 +79,7 @@ While Helix currently [does not support Git](https://github.com/helix-editor/hel
     ;;
 ```
 
-and [reload automatically](/2023/07/25/auto-reload-helix) after switching back.
+and [reload automatically](/2023/07/25/auto-reload-helix.md) after switching back.
 
 ##### git blame
 
@@ -94,7 +94,7 @@ Since we can obtain the filename and line number, we can easily send it to [tig]
 
 #### 6. File tree {#file-tree}
 
-- [/2023/08/02/file-tree-workaround-for-helix](/2023/08/02/file-tree-workaround-for-helix)
+- [/2023/08/02/file-tree-workaround-for-helix](/2023/08/02/file-tree-workaround-for-helix.md)
 
 Discover how to open [broot](https://github.com/Canop/broot) from within Helix:
 
@@ -136,12 +136,12 @@ wezterm cli activate-pane-direction --pane-id $pane_id right
 
 #### 7. Creating snippets {#creating-snippets}
 
-- [/2023/07/31/create-snippets-in-helix](/2023/07/31/create-snippets-in-helix)
+- [/2023/07/31/create-snippets-in-helix](/2023/07/31/create-snippets-in-helix.md)
 
 #### 8. How to debug? {#how-to-debug}
 
-- [Debugging Rust in Helix](https://quantonganh.com/2023/08/10/debug-rust-helix)
-- [Debugging Rust in Helix (Part 2)](https://quantonganh.com/2023/08/11/debug-rust-helix-2)
+- [Debugging Rust in Helix](https://quantonganh.com/2023/08/10/debug-rust-helix.md)
+- [Debugging Rust in Helix (Part 2)](https://quantonganh.com/2023/08/11/debug-rust-helix-2.md)
 
 I submitted [this PR](https://github.com/helix-editor/helix/pull/7936) to allow the `target` directory to appear in the completion list in the debugger prompt, and it got merged so quickly.
 

@@ -70,6 +70,7 @@ Test.`)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("post: %+v", post)
 
 	s, err = NewServer(cfg, []*blog.Post{post}, indexPath)
 	if err != nil {
@@ -142,7 +143,7 @@ func TestSearchHandler(t *testing.T) {
 	s.router.ServeHTTP(rr, request)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
+	assert.Equal(t, "/2019/09/19/test.md", getLinkByText(t, rr.Body, "Test"))
 
 	t.Cleanup(func() {
 		_ = os.RemoveAll(indexPath)

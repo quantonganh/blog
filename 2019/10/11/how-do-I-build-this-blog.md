@@ -1,12 +1,11 @@
 ---
 title: How do I build this blog?
 date: Fri Oct 11 09:34:20 +07 2019
-description: Why I want to write a static site generator instead of using Hugo and GitHub Pages?
+description: Why I want to build this blog from ground up instead of using Hugo and GitHub Pages?
 categories:
     - Programming
 tags:
     - golang
-    - static-site-generator
 ---
 ![Raspberry Pi 4](/2019/10/11/pi4.jpg)
 
@@ -14,7 +13,7 @@ Recently, I decided to find a new job as a Golang developer. So, I updated my re
 
 What is the reason?
 
-As you can see in [my resume](resume), I started my career as a .NET developer, then my passionate on Linux and open source lead me to a different direction: system administrator. And I followed this nearly in 9 years before switching back to work as a Golang developer 2 years ago.
+As you can see in [my resume](resume), I started my career as a .NET developer, then my passionate on Linux and open source lead me to a different direction: system administrator. I dedicated myself to this role for a significant period before transitioning back to work as a Golang developer 2 years ago.
 
 I was looking around to see how can I write a software engineering resume and here's what I found:
 

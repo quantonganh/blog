@@ -25,5 +25,5 @@ func TestSitemapHandler(t *testing.T) {
 	require.NoError(t, xml.NewDecoder(rr.Body).Decode(&sitemap))
 	assert.Equal(t, 2, len(sitemap.URLs))
 	assert.Equal(t, "http://localhost", sitemap.URLs[0].Loc)
-	assert.Equal(t, "http://localhost/2019/09/19/test", sitemap.URLs[1].Loc)
+	assert.Equal(t, "http://localhost/2019/09/19/test.md", sitemap.URLs[1].Loc)
 }

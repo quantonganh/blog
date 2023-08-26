@@ -22,20 +22,21 @@
 </p>
 {{ end }}
 <div class="d-flex flex-row-reverse">
-    <a class="btn btn-outline-info" href="https://github.com/quantonganh/blog/edit/master/posts/{{ .currentPost.URI }}.md" title="Edit this page on GitHub" target="_blank" rel="noopener">
+    <a class="btn btn-outline-info" href="https://github.com/quantonganh/blog/edit/master/{{ .currentPost.URI }}"
+        title="Edit this page on GitHub" target="_blank" rel="noopener">
         <i class="bi bi-pencil"></i>
         Edit on GitHub
     </a>
 </div>
-<hr/>
+<hr />
 {{ if .relatedPosts }}
 <p>
     Related Posts:
-    <ul>
+<ul>
     {{ range $_, $post := .relatedPosts }}
-        <li><a href="{{ $post.URI }}">{{ $post.Title }}</a></li>
+    <li><a href="{{ $post.URI }}">{{ $post.Title }}</a></li>
     {{ end }}
-    </ul>
+</ul>
 </p>
 {{ end }}
 <table>
@@ -62,11 +63,7 @@
         {{ end }}
     </tr>
 </table>
-<script src="https://utteranc.es/client.js"
-        repo="quantonganh/blog"
-        issue-term="pathname"
-        theme="github-light"
-        crossorigin="anonymous"
-        async>
-</script>
+<script src="https://utteranc.es/client.js" repo="quantonganh/blog" issue-term="pathname" theme="github-light"
+    crossorigin="anonymous" async>
+    </script>
 {{ end }}

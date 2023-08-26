@@ -20,7 +20,7 @@ func TestPhotosHandler(t *testing.T) {
 	s.router.ServeHTTP(rr, request)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "/2019/09/19/test", getLinkByImg(t, rr.Body, "/path/to/photo.jpg"))
+	assert.Equal(t, "/2019/09/19/test.md", getLinkByImg(t, rr.Body, "/path/to/photo.jpg"))
 }
 
 func getLinkByImg(t *testing.T, body *bytes.Buffer, imgSrc string) string {

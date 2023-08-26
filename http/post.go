@@ -10,10 +10,14 @@ import (
 
 func (s *Server) postHandler(postsDir string) appHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		if hasSuffix(r.URL.Path, []string{"jpg", "jpeg", "png", "gif"}) {
-			http.ServeFile(w, r, path.Join(postsDir, r.URL.Path))
+		uriPath := r.URL.Path
+		if hasSuffix(uriPath, []string{"jpg", "jpeg", "png", "gif"}) {
+			http.ServeFile(w, r, path.Join(postsDir, uriPath))
 		} else {
-			currentPost := s.PostService.GetPostByURI(r.URL.Path)
+			if !strings.HasSuffix(uriPath, ".md") {
+				uriPath += ".md"
+			}
+			currentPost := s.PostService.GetPostByURI(uriPath)
 			if currentPost == nil {
 				return &Error{
 					Message: "post not found",

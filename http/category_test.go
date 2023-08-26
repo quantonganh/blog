@@ -17,5 +17,5 @@ func TestCategoryHandler(t *testing.T) {
 	s.router.ServeHTTP(rr, request)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "/2019/09/19/test", getLinkByText(t, rr.Body, "Test"))
+	assert.Equal(t, "/2019/09/19/test.md", getLinkByText(t, rr.Body, "Test"))
 }
