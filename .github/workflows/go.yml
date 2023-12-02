@@ -31,9 +31,6 @@ jobs:
     - name: Build
       run: CGO_ENABLED=0 GOARCH=arm64 go build -o blog -v -ldflags="-s -w" cmd/blog/main.go
 
-    - name: Create an archive containing the posts
-      run: find . -type d -maxdepth 1 -name '20[0-9][0-9]' -o -type f ! -name README.md -name "*.md" | tar -cJf posts.tar.xz -T -
-
     - name: Set up QEMU
       if: github.event_name == 'push'
       uses: docker/setup-qemu-action@v1
