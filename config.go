@@ -19,6 +19,10 @@ type Config struct {
 		Dir string
 	}
 
+	Webhook struct {
+		Secret string
+	}
+
 	DB struct {
 		Path string
 	}

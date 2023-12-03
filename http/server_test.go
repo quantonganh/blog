@@ -28,8 +28,6 @@ import (
 	"github.com/quantonganh/blog/pkg/hash"
 )
 
-const indexPath = "test.bleve"
-
 var (
 	cfg  *blog.Config
 	post *blog.Post
@@ -39,6 +37,9 @@ var (
 func TestMain(m *testing.M) {
 	viper.SetConfigType("yaml")
 	var yamlConfig = []byte(`
+posts:
+  dir: test
+
 templates:
   dir: html/templates
 
@@ -72,7 +73,7 @@ Test.`)
 	}
 	fmt.Printf("post: %+v", post)
 
-	s, err = NewServer(cfg, []*blog.Post{post}, indexPath)
+	s, err = NewServer(cfg, []*blog.Post{post})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,7 +147,7 @@ func TestSearchHandler(t *testing.T) {
 	assert.Equal(t, "/2019/09/19/test.md", getLinkByText(t, rr.Body, "Test"))
 
 	t.Cleanup(func() {
-		_ = os.RemoveAll(indexPath)
+		_ = os.RemoveAll("test.bleve")
 	})
 }
 

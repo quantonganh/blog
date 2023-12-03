@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"time"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -42,8 +43,9 @@ type Server struct {
 }
 
 // NewServer create new HTTP server
-func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Server, error) {
+func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 	postService := markdown.NewPostService(posts)
+	indexPath := path.Join(path.Dir(config.Posts.Dir), path.Base(config.Posts.Dir)+".bleve")
 	searchService, err := markdown.NewSearchService(indexPath, posts)
 	if err != nil {
 		return nil, err
@@ -83,6 +85,7 @@ func NewServer(config *blog.Config, posts []*blog.Post, indexPath string) (*Serv
 	s.router.HandleFunc("/favicon.ico", s.Error(faviconHandler))
 	s.router.HandleFunc("/", s.Error(s.homeHandler))
 	s.router.NotFoundHandler = s.Error(s.homeHandler)
+	s.router.HandleFunc("/webhook", s.Error(s.webhookHandler(config))).Methods(http.MethodPost)
 	s.router.HandleFunc("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler(config.Posts.Dir)))
 	s.router.HandleFunc("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}", s.Error(s.postsByDateHandler))
 	s.router.HandleFunc("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}", s.Error(s.postsByMonthHandler))

@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -30,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	viper.SetDefault("http.addr", ":80")
+	viper.SetDefault("http.addr", ":8009")
 	viper.SetDefault("posts.dir", "posts")
 
 	var config *blog.Config
@@ -81,8 +80,7 @@ type app struct {
 }
 
 func newApp(config *blog.Config, posts []*blog.Post) *app {
-	indexPath := path.Join(path.Dir(config.Posts.Dir), path.Base(config.Posts.Dir)+".bleve")
-	httpServer, err := http.NewServer(config, posts, indexPath)
+	httpServer, err := http.NewServer(config, posts)
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
