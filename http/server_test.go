@@ -123,12 +123,12 @@ func TestPostHandler(t *testing.T) {
 	s.router.ServeHTTP(rr, request)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "/tag/test", getLinkByText(t, rr.Body, "test"))
+	assert.Equal(t, "/tags/test", getLinkByText(t, rr.Body, "test"))
 }
 
 func TestTagHandler(t *testing.T) {
-	t.Run("tag", func(t *testing.T) {
-		testPostHandler(t, "/tag/test")
+	t.Run("tags", func(t *testing.T) {
+		testPostHandler(t, "/tags/test")
 	})
 }
 

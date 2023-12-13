@@ -1,7 +1,7 @@
 {{ define "content" }}
 <p>
 	{{ range $_, $tag := .tags }}
-	<a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">
+	<a class="btn btn-outline-secondary" href="/tags/{{ $tag }}" role="button">
 		<i class="bi bi-tag"></i>
 		{{ $tag }} ({{ index $.postsPerTag $tag }})
 	</a>

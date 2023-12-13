@@ -12,7 +12,7 @@ func TestCategoryHandler(t *testing.T) {
 	t.Parallel()
 
 	rr := httptest.NewRecorder()
-	request, err := http.NewRequest(http.MethodGet, "/category/Du%20lịch", nil)
+	request, err := http.NewRequest(http.MethodGet, "/categories/Du%20lịch", nil)
 	assert.NoError(t, err)
 	s.router.ServeHTTP(rr, request)
 

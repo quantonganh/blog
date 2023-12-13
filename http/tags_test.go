@@ -17,5 +17,5 @@ func TestTagsHandler(t *testing.T) {
 	s.router.ServeHTTP(rr, request)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "/tag/test", getLinkByText(t, rr.Body, "test (1)"))
+	assert.Equal(t, "/tags/test", getLinkByText(t, rr.Body, "test (1)"))
 }

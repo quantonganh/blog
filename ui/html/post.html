@@ -5,7 +5,7 @@
 <p>
     Categories:
     {{ range $i, $category := .currentPost.Categories }}
-    <a class="btn btn-outline-primary" href="/category/{{ $category }}" role="button">{{ $category }}</a>
+    <a class="btn btn-outline-primary" href="/categories/{{ $category }}" role="button">{{ $category }}</a>
     {{ end }}
 </p>
 {{ end }}
@@ -14,7 +14,7 @@
 <p>
     Tags:
     {{ range $_, $tag := .currentPost.Tags }}
-    <a class="btn btn-outline-secondary" href="/tag/{{ $tag }}" role="button">
+    <a class="btn btn-outline-secondary" href="/tags/{{ $tag }}" role="button">
         <i class="bi bi-tag"></i>
         {{ $tag }}
     </a>
