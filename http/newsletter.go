@@ -6,14 +6,12 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-
-	"github.com/quantonganh/mailbus"
 )
 
 func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
 	email := r.FormValue("email")
-	subsReq := mailbus.SubscriptionRequest{
-		Email: email,
+	subsReq := map[string]string{
+		"email": email,
 	}
 	req, err := json.Marshal(subsReq)
 	if err != nil {
@@ -25,13 +23,16 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	var subsResp *mailbus.SubscriptionResponse
+	var subsResp map[string]string
 	if err := json.NewDecoder(resp.Body).Decode(&subsResp); err != nil {
 		return err
 	}
 
-	if err := s.Renderer.RenderResponseMessage(w, subsResp.Message); err != nil {
-		return err
+	msg, ok := subsResp["message"]
+	if ok {
+		if err := s.Renderer.RenderResponseMessage(w, msg); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -48,13 +49,16 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	var subsResp *mailbus.SubscriptionResponse
+	var subsResp map[string]string
 	if err := json.NewDecoder(resp.Body).Decode(&subsResp); err != nil {
 		return err
 	}
 
-	if err := s.Renderer.RenderResponseMessage(w, subsResp.Message); err != nil {
-		return err
+	msg, ok := subsResp["message"]
+	if ok {
+		if err := s.Renderer.RenderResponseMessage(w, msg); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -70,13 +74,16 @@ func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) erro
 		return err
 	}
 
-	var subsResp *mailbus.SubscriptionResponse
+	var subsResp map[string]string
 	if err := json.NewDecoder(resp.Body).Decode(&subsResp); err != nil {
 		return err
 	}
 
-	if err := s.Renderer.RenderResponseMessage(w, subsResp.Message); err != nil {
-		return err
+	msg, ok := subsResp["message"]
+	if ok {
+		if err := s.Renderer.RenderResponseMessage(w, msg); err != nil {
+			return err
+		}
 	}
 
 	return nil
