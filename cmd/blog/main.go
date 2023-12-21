@@ -14,8 +14,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/quantonganh/blog"
-	"github.com/quantonganh/blog/bolt"
-	"github.com/quantonganh/blog/gmail"
 	"github.com/quantonganh/blog/http"
 	"github.com/quantonganh/blog/markdown"
 )
@@ -75,7 +73,6 @@ func main() {
 
 type app struct {
 	config     *blog.Config
-	db         *bolt.DB
 	httpServer *http.Server
 }
 
@@ -86,16 +83,11 @@ func newApp(config *blog.Config, posts []*blog.Post) *app {
 	}
 	return &app{
 		config:     config,
-		db:         bolt.NewDB(config.DB.Path),
 		httpServer: httpServer,
 	}
 }
 
 func (a *app) Run(ctx context.Context) error {
-	if err := a.db.Open(); err != nil {
-		return err
-	}
-
 	a.httpServer.Addr = a.config.HTTP.Addr
 	baseURL, err := url.Parse(a.config.Site.BaseURL)
 	if err != nil {
@@ -105,14 +97,6 @@ func (a *app) Run(ctx context.Context) error {
 
 	if err := a.httpServer.Open(); err != nil {
 		return err
-	}
-
-	a.httpServer.SubscribeService = bolt.NewSubscribeService(a.db)
-	a.httpServer.SMTPService = gmail.NewSMTPService(a.config, a.httpServer.URL(), a.httpServer.SubscribeService, a.httpServer.Renderer)
-
-	latestPosts := a.httpServer.PostService.GetLatestPosts(a.config.Newsletter.Frequency)
-	if len(latestPosts) > 0 {
-		a.httpServer.SMTPService.SendNewsletter(latestPosts)
 	}
 
 	return nil
@@ -126,19 +110,7 @@ func (a *app) Close() error {
 			}
 		}
 
-		if a.httpServer.SMTPService != nil {
-			if err := a.httpServer.SMTPService.Stop(); err != nil {
-				return err
-			}
-		}
-
 		if err := a.httpServer.Close(); err != nil {
-			return err
-		}
-	}
-
-	if a.db != nil {
-		if err := a.db.Close(); err != nil {
 			return err
 		}
 	}

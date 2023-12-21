@@ -17,6 +17,7 @@ import (
 	"github.com/rs/zerolog/hlog"
 
 	"github.com/quantonganh/blog"
+	"github.com/quantonganh/blog/client"
 	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/markdown"
 	"github.com/quantonganh/blog/ui"
@@ -35,11 +36,10 @@ type Server struct {
 	Addr   string
 	Domain string
 
-	PostService      blog.PostService
-	SearchService    blog.SearchService
-	SubscribeService blog.SubscribeService
-	SMTPService      blog.SMTPService
-	Renderer         blog.Renderer
+	PostService       blog.PostService
+	SearchService     blog.SearchService
+	Renderer          blog.Renderer
+	NewsletterService blog.NewsletterService
 }
 
 // NewServer create new HTTP server
@@ -51,11 +51,12 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 		return nil, err
 	}
 	s := &Server{
-		server:        &http.Server{},
-		router:        mux.NewRouter().StrictSlash(true),
-		PostService:   postService,
-		SearchService: searchService,
-		Renderer:      NewRender(config, postService),
+		server:            &http.Server{},
+		router:            mux.NewRouter().StrictSlash(true),
+		PostService:       postService,
+		SearchService:     searchService,
+		Renderer:          NewRender(config, postService),
+		NewsletterService: client.NewNewsletter(config.Newsletter.BaseURL),
 	}
 
 	zlog := zerolog.New(os.Stdout).With().
@@ -82,34 +83,38 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 
 	s.server.Handler = http.HandlerFunc(s.serveHTTP)
 
-	s.router.HandleFunc("/favicon.ico", s.Error(faviconHandler))
-	s.router.HandleFunc("/", s.Error(s.homeHandler))
+	s.newRoute("/favicon.ico", faviconHandler)
+	s.newRoute("/", s.homeHandler)
 	s.router.NotFoundHandler = s.Error(s.homeHandler)
-	s.router.HandleFunc("/webhook", s.Error(s.webhookHandler(config))).Methods(http.MethodPost)
-	s.router.HandleFunc("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.Error(s.postHandler(config.Posts.Dir)))
-	s.router.HandleFunc("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}", s.Error(s.postsByDateHandler))
-	s.router.HandleFunc("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}", s.Error(s.postsByMonthHandler))
-	s.router.HandleFunc("/{year:20[0-9][0-9]}", s.Error(s.postsByYearHandler))
-	s.router.HandleFunc("/about", s.Error(s.postHandler(config.Posts.Dir)))
-	s.router.HandleFunc("/resume", s.Error(s.postHandler(config.Posts.Dir)))
-	s.router.HandleFunc("/projects", s.Error(s.postHandler(config.Posts.Dir)))
-	s.router.HandleFunc("/photos", s.Error(s.photosHandler))
-	s.router.HandleFunc("/categories/{categoryName}", s.Error(s.categoryHandler))
-	s.router.HandleFunc("/tags", s.Error(s.tagsHandler))
-	s.router.HandleFunc("/archives", s.Error(s.archivesHandler))
-	s.router.HandleFunc("/tags/{tagName}", s.Error(s.tagHandler))
+	s.newRoute("/webhook", s.webhookHandler(config)).Methods(http.MethodPost)
+	s.newRoute("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.postHandler(config.Posts.Dir))
+	s.newRoute("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}", s.postsByDateHandler)
+	s.newRoute("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}", s.postsByMonthHandler)
+	s.newRoute("/{year:20[0-9][0-9]}", s.postsByYearHandler)
+	s.newRoute("/about", s.postHandler(config.Posts.Dir))
+	s.newRoute("/resume", s.postHandler(config.Posts.Dir))
+	s.newRoute("/projects", s.postHandler(config.Posts.Dir))
+	s.newRoute("/photos", s.photosHandler)
+	s.newRoute("/categories/{categoryName}", s.categoryHandler)
+	s.newRoute("/tags", s.tagsHandler)
+	s.newRoute("/archives", s.archivesHandler)
+	s.newRoute("/tags/{tagName}", s.tagHandler)
 	s.router.PathPrefix("/static/").Handler(http.FileServer(http.FS(ui.StaticFS)))
-	s.router.HandleFunc("/search", s.Error(s.searchHandler))
-	s.router.HandleFunc("/sitemap.xml", s.Error(s.sitemapHandler))
-	s.router.HandleFunc("/rss.xml", s.Error(s.rssHandler))
+	s.newRoute("/search", s.searchHandler)
+	s.newRoute("/sitemap.xml", s.sitemapHandler)
+	s.newRoute("/rss.xml", s.rssHandler)
 
-	s.router.HandleFunc("/subscribe", s.Error(s.subscribeHandler)).Methods(http.MethodPost)
+	s.newRoute("/subscribe", s.subscribeHandler).Methods(http.MethodPost)
 	subRouter := s.router.PathPrefix("/subscribe").Subrouter()
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
-	s.router.HandleFunc("/unsubscribe", s.Error(s.unsubscribeHandler))
-	s.router.HandleFunc("/vtv", s.Error(s.vtvHandler))
+	s.newRoute("/unsubscribe", s.unsubscribeHandler)
+	s.newRoute("/vtv", s.vtvHandler)
 
 	return s, nil
+}
+
+func (s *Server) newRoute(path string, h appHandler) *mux.Route {
+	return s.router.HandleFunc(path, s.Error(h))
 }
 
 // Scheme returns scheme

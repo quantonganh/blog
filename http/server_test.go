@@ -15,8 +15,6 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/asdine/storm/v3"
-	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,8 +22,6 @@ import (
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/markdown"
-	"github.com/quantonganh/blog/mock"
-	"github.com/quantonganh/blog/pkg/hash"
 )
 
 var (
@@ -165,66 +161,6 @@ func getLinkByText(t *testing.T, body *bytes.Buffer, text string) string {
 	return link
 }
 
-func TestSubscribeHandler(t *testing.T) {
-	t.Parallel()
-
-	email := "foo@gmail.com"
-	token := uuid.NewV4().String()
-
-	subscribe := &blog.Subscribe{}
-	subscribeService := new(mock.SubscribeService)
-	subscribeService.On("FindByEmail", email).Return(subscribe, storm.ErrNotFound)
-	subscribeService.On("Insert", blog.NewSubscribe(email, token, blog.StatusPending)).Return(nil)
-
-	smtpService := new(mock.SMTPService)
-	smtpService.On("SendConfirmationEmail", email, token).Return(nil)
-	smtpService.On("GenerateNewUUID").Return(token)
-
-	s.SubscribeService = subscribeService
-	s.SMTPService = smtpService
-
-	form := url.Values{}
-	form.Add("email", email)
-	req, err := http.NewRequest(http.MethodPost, "/subscribe", strings.NewReader(form.Encode()))
-	assert.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	w := httptest.NewRecorder()
-	s.router.ServeHTTP(w, req)
-
-	resp := w.Result()
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, fmt.Sprintf(confirmationMessage, email), getResponseMessage(resp.Body))
-}
-
-func TestConfirmHandler(t *testing.T) {
-	email := "foo@gmail.com"
-	token := uuid.NewV4().String()
-
-	subscribe := blog.NewSubscribe(email, token, blog.StatusPending)
-	subscribeService := new(mock.SubscribeService)
-	subscribeService.On("Subscribe", token).Return(nil)
-	subscribeService.On("FindByToken", token).Return(subscribe, nil)
-
-	smtpService := new(mock.SMTPService)
-	smtpService.On("SendThankYouEmail", email).Return(nil)
-
-	s.SubscribeService = subscribeService
-	s.SMTPService = smtpService
-
-	form := url.Values{}
-	form.Add("email", email)
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/subscribe/confirm?token=%s", token), nil)
-	assert.NoError(t, err)
-
-	w := httptest.NewRecorder()
-	s.router.ServeHTTP(w, req)
-
-	resp := w.Result()
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, thankyouMessage, getResponseMessage(resp.Body))
-}
-
 func getResponseMessage(body io.ReadCloser) string {
 	tokenizer := nethtml.NewTokenizer(body)
 	for {
@@ -245,30 +181,4 @@ func getResponseMessage(body io.ReadCloser) string {
 	}
 
 	return ""
-}
-
-func TestUnsubscribeHandler(t *testing.T) {
-	email := "foo@gmail.com"
-	secret := cfg.Newsletter.HMAC.Secret
-	hashValue, err := hash.ComputeHmac256(email, secret)
-	require.NoError(t, err)
-
-	subscribeService := new(mock.SubscribeService)
-	subscribeService.On("Unsubscribe", email).Return(nil)
-
-	s.SubscribeService = subscribeService
-
-	smtpService := new(mock.SMTPService)
-	smtpService.On("GetHMACSecret").Return(secret)
-	s.SMTPService = smtpService
-
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/unsubscribe?email=%s&hash=%s", email, hashValue), nil)
-	assert.NoError(t, err)
-
-	w := httptest.NewRecorder()
-	s.router.ServeHTTP(w, req)
-
-	resp := w.Result()
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, unsubscribeMessage, getResponseMessage(resp.Body))
 }

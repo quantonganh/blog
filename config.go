@@ -39,6 +39,7 @@ type Config struct {
 	}
 
 	Newsletter struct {
+		BaseURL   string
 		From      string
 		Frequency int
 		Cron      struct {
