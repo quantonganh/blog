@@ -59,8 +59,8 @@ require (
 	github.com/tinylib/msgp v1.1.0 // indirect
 	github.com/willf/bitset v1.1.10 // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
-	golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4 // indirect
-	golang.org/x/text v0.3.5 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/text v0.3.8 // indirect
 	google.golang.org/protobuf v1.23.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
