@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/blevesearch/bleve"
 	"github.com/pkg/errors"
 )
 
@@ -36,6 +37,8 @@ type PostService interface {
 
 // SearchService is the interface that wraps methods related to search
 type SearchService interface {
+	GetIndex() bleve.Index
+	Index(*Post, *bleve.Batch) error
 	Search(value string) ([]*Post, error)
 	CloseIndex() error
 }

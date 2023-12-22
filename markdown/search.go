@@ -37,11 +37,14 @@ func NewSearchService(indexPath string, posts []*blog.Post) (blog.SearchService,
 		}
 	}
 
+	ss := &searchService{
+		index: index,
+	}
 	batch := index.NewBatch()
 	for i, post := range posts {
 		post.ID = i
 
-		if err := indexPost(post, batch); err != nil {
+		if err := ss.Index(post, batch); err != nil {
 			return nil, err
 		}
 	}
@@ -50,12 +53,14 @@ func NewSearchService(indexPath string, posts []*blog.Post) (blog.SearchService,
 		return nil, errors.Wrapf(err, "failed to index batch")
 	}
 
-	return &searchService{
-		index: index,
-	}, nil
+	return ss, nil
 }
 
-func indexPost(post *blog.Post, batch *bleve.Batch) error {
+func (ss *searchService) GetIndex() bleve.Index {
+	return ss.index
+}
+
+func (ss *searchService) Index(post *blog.Post, batch *bleve.Batch) error {
 	doc := document.Document{
 		ID: post.URI,
 	}
