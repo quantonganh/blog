@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/hlog"
 )
 
-const errOops = "Oops! Something went wrong."
+const errOops = "Oops! Something went wrong. Please try again later."
 
 type appHandler func(w http.ResponseWriter, r *http.Request) error
 

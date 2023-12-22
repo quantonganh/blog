@@ -21,7 +21,7 @@ import (
 	"github.com/rs/zerolog/log"
 	bf "github.com/russross/blackfriday/v2"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/quantonganh/blog"
 )
