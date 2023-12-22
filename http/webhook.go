@@ -56,7 +56,7 @@ func (s *Server) webhookHandler(config *blog.Config) appHandler {
 			return err
 		}
 
-		cmd := exec.Command("git", "-C", config.Posts.Dir, "pull")
+		cmd := exec.Command("sh", "-c", fmt.Sprintf("git -C %s fetch origin && git -C %s reset --hard origin/main", config.Posts.Dir, config.Posts.Dir))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
