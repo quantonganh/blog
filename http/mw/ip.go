@@ -26,7 +26,7 @@ func RealIPHandler(fieldKey string) func(next http.Handler) http.Handler {
 }
 
 func getIP(r *http.Request) (string, error) {
-	ip := r.Header.Get("X-Real-IP")
+	ip := r.Header.Get("X-Real-Ip")
 	netIP := net.ParseIP(ip)
 	if netIP != nil {
 		return ip, nil
