@@ -127,7 +127,7 @@ func (s *Server) Scheme() string {
 
 // UseTLS checks if server use TLS or not
 func (s *Server) UseTLS() bool {
-	return s.Domain != ""
+	return s.Domain != "localhost"
 }
 
 // Port returns server port
@@ -140,14 +140,17 @@ func (s *Server) Port() int {
 
 // URL returns server URL
 func (s *Server) URL() string {
-	scheme, port := s.Scheme(), s.Port()
-
 	domain := "localhost"
 	if s.Domain != "" {
 		domain = s.Domain
 	}
 
-	if port == 80 || port == 443 || flag.Lookup("test.v") != nil {
+	if flag.Lookup("test.v") != nil {
+		return fmt.Sprintf("http://%s", domain)
+	}
+
+	scheme := s.Scheme()
+	if s.Scheme() == "https" {
 		return fmt.Sprintf("%s://%s", scheme, domain)
 	}
 	return fmt.Sprintf("%s://%s:%d", scheme, domain, s.Port())

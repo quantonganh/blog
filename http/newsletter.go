@@ -26,6 +26,7 @@ const (
 func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
 	email := r.FormValue("email")
 	subsReq := map[string]string{
+		"url":   s.URL(),
 		"email": email,
 	}
 	req, err := json.Marshal(subsReq)
