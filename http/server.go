@@ -18,9 +18,9 @@ import (
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/client"
-	"github.com/quantonganh/blog/http/mw"
 	"github.com/quantonganh/blog/markdown"
 	"github.com/quantonganh/blog/ui"
+	"github.com/quantonganh/httperror"
 )
 
 const (
@@ -73,7 +73,7 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 			Dur("duration", duration).
 			Msg("")
 	}))
-	s.router.Use(mw.RealIPHandler("ip"))
+	s.router.Use(httperror.RealIPHandler("ip"))
 	s.router.Use(hlog.UserAgentHandler("user_agent"))
 	s.router.Use(hlog.RefererHandler("referer"))
 	s.router.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
@@ -104,7 +104,7 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 	s.newRoute("/sitemap.xml", s.sitemapHandler)
 	s.newRoute("/rss.xml", s.rssHandler)
 
-	s.newRoute("/subscribe", s.subscribeHandler).Methods(http.MethodPost)
+	s.router.Handle("/subscribe", httperror.PerClientRateLimiter(config.Newsletter.Limiter.Interval)(s.Error(s.subscribeHandler))).Methods(http.MethodPost)
 	subRouter := s.router.PathPrefix("/subscribe").Subrouter()
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.newRoute("/unsubscribe", s.unsubscribeHandler)

@@ -1,5 +1,7 @@
 package blog
 
+import "time"
+
 // Config represents the main config
 type Config struct {
 	Site struct {
@@ -39,6 +41,9 @@ type Config struct {
 	}
 
 	Newsletter struct {
+		Limiter struct {
+			Interval time.Duration
+		}
 		BaseURL   string
 		From      string
 		Frequency int
