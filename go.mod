@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/mux v1.7.3
 	github.com/pkg/errors v0.9.1
-	github.com/quantonganh/httperror v0.0.4
+	github.com/quantonganh/httperror v0.0.5
 	github.com/rs/zerolog v1.23.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/viper v1.3.2

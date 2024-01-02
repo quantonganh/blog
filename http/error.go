@@ -9,7 +9,9 @@ import (
 	"github.com/rs/zerolog/hlog"
 )
 
-const errOops = "Oops! Something went wrong. Please try again later."
+const (
+	errOops = "Oops! Something went wrong. Please try again later."
+)
 
 type appHandler func(w http.ResponseWriter, r *http.Request) error
 
@@ -27,14 +29,14 @@ func (s *Server) Error(fn appHandler) http.HandlerFunc {
 		clientError, ok := err.(ClientError)
 		if !ok {
 			w.WriteHeader(http.StatusInternalServerError)
-			_ = s.Renderer.RenderResponseMessage(w, errOops)
+			_ = s.Renderer.RenderResponseMessage(w, contextualClassDanger, errOops)
 			return
 		}
 
 		body, err := clientError.Body()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			_ = s.Renderer.RenderResponseMessage(w, errOops)
+			_ = s.Renderer.RenderResponseMessage(w, contextualClassDanger, errOops)
 			return
 		}
 
@@ -48,7 +50,7 @@ func (s *Server) Error(fn appHandler) http.HandlerFunc {
 		_, err = w.Write(body)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			_ = s.Renderer.RenderResponseMessage(w, errOops)
+			_ = s.Renderer.RenderResponseMessage(w, contextualClassDanger, errOops)
 			return
 		}
 	}

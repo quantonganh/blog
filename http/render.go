@@ -141,11 +141,12 @@ func (r *render) RenderPost(w http.ResponseWriter, currentPost *blog.Post, relat
 }
 
 // RenderResponseMessage renders HTTP response message
-func (r *render) RenderResponseMessage(w http.ResponseWriter, message string) error {
+func (r *render) RenderResponseMessage(w http.ResponseWriter, contextualClass, message string) error {
 	tmpl := html.Parse(nil, "subscribe.html")
 	data := map[string]interface{}{
-		"categories": r.postService.GetAllCategories(),
-		"message":    message,
+		"categories":      r.postService.GetAllCategories(),
+		"contextualClass": contextualClass,
+		"message":         message,
 	}
 
 	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {

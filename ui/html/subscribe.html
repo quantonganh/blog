@@ -1,3 +1,5 @@
 {{ define "content" }}
-            <p>{{ .message }}</p>
+<div class="alert alert-{{ .contextualClass }}" role="alert">
+    {{ .message }}
+</div>
 {{ end }}

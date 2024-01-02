@@ -57,7 +57,9 @@ func TestError(t *testing.T) {
 				assert.Equal(t, "invalid URL escape", respErr.Message)
 			} else {
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
-				assert.Equal(t, errOops, getResponseMessage(rs.Body))
+				msg, err := getResponseMessage(rs.Body)
+				require.NoError(t, err)
+				assert.Equal(t, errOops, strings.TrimSpace(msg))
 			}
 		})
 	}

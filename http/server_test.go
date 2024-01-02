@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/html"
 	nethtml "golang.org/x/net/html"
 
 	"github.com/quantonganh/blog"
@@ -161,24 +162,44 @@ func getLinkByText(t *testing.T, body *bytes.Buffer, text string) string {
 	return link
 }
 
-func getResponseMessage(body io.ReadCloser) string {
+func getResponseMessage(body io.ReadCloser) (string, error) {
 	tokenizer := nethtml.NewTokenizer(body)
+	inDiv := false
+	var buffer bytes.Buffer
+
 	for {
 		tokenType := tokenizer.Next()
-		if tokenType == nethtml.ErrorToken {
+		if tokenType == html.ErrorToken {
 			if err := tokenizer.Err(); err == io.EOF {
 				break
 			}
+			return "", nil
 		}
 
 		token := tokenizer.Token()
-		if token.Data == "p" {
-			tokenType = tokenizer.Next()
-			if tokenType == nethtml.TextToken {
-				return tokenizer.Token().Data
+
+		switch tokenType {
+		case nethtml.StartTagToken:
+			if token.Data == "div" {
+				// Check if the div has the expected class attribute
+				for _, attr := range token.Attr {
+					fmt.Printf("attr: %+v\n", attr)
+					if attr.Key == "class" && strings.HasPrefix(attr.Val, "alert") {
+						inDiv = true
+						break
+					}
+				}
+			}
+		case nethtml.TextToken:
+			if inDiv {
+				buffer.WriteString(token.Data)
+			}
+		case nethtml.EndTagToken:
+			if inDiv && token.Data == "div" {
+				return buffer.String(), nil
 			}
 		}
 	}
 
-	return ""
+	return "", nil
 }

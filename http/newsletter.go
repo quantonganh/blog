@@ -3,9 +3,24 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
+)
+
+const (
+	contextualClassSuccess = "success"
+	contextualClassWarning = "warning"
+	contextualClassDanger  = "danger"
+
+	confirmationMessage       = "A confirmation email has been sent to %s. Click the link in the email to confirm and activate your subscription. Check your spam folder if you don't see it within a couple of minutes."
+	thankyouMessage           = "Thank you for subscribing to this blog."
+	pendingMessage            = "Your subscription status is pending. Please click the confirmation link in your email."
+	alreadySubscribedMessage  = "You had been subscribed to this blog already."
+	notFoundMessage           = "Cannot found email: %s"
+	unsubscribeMessage        = "You've been successfully unsubscribed from our blog updates. If this was unintentional or you change your mind, feel free to resubscribe anytime."
+	invalidUnsubscribeMessage = "Either email or hash is invalid"
 )
 
 func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
@@ -22,15 +37,23 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
-	var subsResp map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&subsResp); err != nil {
-		return err
-	}
-
-	msg, ok := subsResp["message"]
-	if ok {
-		if err := s.Renderer.RenderResponseMessage(w, msg); err != nil {
+	switch resp.StatusCode {
+	case http.StatusOK:
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassSuccess, fmt.Sprintf(confirmationMessage, email)); err != nil {
+			return err
+		}
+	case http.StatusUnauthorized:
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassWarning, pendingMessage); err != nil {
+			return err
+		}
+	case http.StatusNotFound:
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassWarning, fmt.Sprintf(notFoundMessage, email)); err != nil {
+			return err
+		}
+	case http.StatusConflict:
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassWarning, alreadySubscribedMessage); err != nil {
 			return err
 		}
 	}
@@ -48,17 +71,10 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
-	var subsResp map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&subsResp); err != nil {
+	if err := s.Renderer.RenderResponseMessage(w, contextualClassSuccess, thankyouMessage); err != nil {
 		return err
-	}
-
-	msg, ok := subsResp["message"]
-	if ok {
-		if err := s.Renderer.RenderResponseMessage(w, msg); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -73,15 +89,15 @@ func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
-	var subsResp map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&subsResp); err != nil {
-		return err
-	}
-
-	msg, ok := subsResp["message"]
-	if ok {
-		if err := s.Renderer.RenderResponseMessage(w, msg); err != nil {
+	switch resp.StatusCode {
+	case http.StatusOK:
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassSuccess, unsubscribeMessage); err != nil {
+			return err
+		}
+	case http.StatusBadRequest:
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassWarning, invalidUnsubscribeMessage); err != nil {
 			return err
 		}
 	}
