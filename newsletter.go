@@ -6,7 +6,7 @@ import (
 )
 
 type NewsletterService interface {
-	Subscribe(body io.Reader) (*http.Response, error)
-	Confirm(token string) (*http.Response, error)
-	Unsubscribe(email, hash string) (*http.Response, error)
+	Subscribe(r *http.Request, body io.Reader) (*http.Response, error)
+	Confirm(r *http.Request, token string) (*http.Response, error)
+	Unsubscribe(r *http.Request, email, hash string) (*http.Response, error)
 }

@@ -29,12 +29,12 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 		"url":   s.URL(),
 		"email": email,
 	}
-	req, err := json.Marshal(subsReq)
+	body, err := json.Marshal(subsReq)
 	if err != nil {
 		return err
 	}
 
-	resp, err := s.NewsletterService.Subscribe(bytes.NewBuffer(req))
+	resp, err := s.NewsletterService.Subscribe(r, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -57,6 +57,10 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 		if err := s.Renderer.RenderResponseMessage(w, contextualClassWarning, alreadySubscribedMessage); err != nil {
 			return err
 		}
+	case http.StatusInternalServerError:
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassDanger, errOops); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -68,7 +72,7 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("token is not present")
 	}
 
-	resp, err := s.NewsletterService.Confirm(token)
+	resp, err := s.NewsletterService.Confirm(r, token)
 	if err != nil {
 		return err
 	}
@@ -86,7 +90,7 @@ func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) erro
 	email := query.Get("email")
 	hashValue := query.Get("hash")
 
-	resp, err := s.NewsletterService.Unsubscribe(email, hashValue)
+	resp, err := s.NewsletterService.Unsubscribe(r, email, hashValue)
 	if err != nil {
 		return err
 	}
