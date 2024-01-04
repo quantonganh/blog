@@ -78,11 +78,28 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer resp.Body.Close()
 
-	if err := s.Renderer.RenderResponseMessage(w, contextualClassSuccess, thankyouMessage); err != nil {
-		return err
+	statusCode := resp.StatusCode
+	if statusCode == http.StatusOK {
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassSuccess, thankyouMessage); err != nil {
+			return err
+		}
+		return nil
+	} else if 400 <= statusCode && statusCode <= 499 {
+		var m map[string]string
+		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+			return err
+		}
+		return &Error{
+			Status:  statusCode,
+			Message: m["message"],
+		}
+	} else {
+		var m map[string]string
+		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+			return err
+		}
+		return errors.New(m["error"])
 	}
-
-	return nil
 }
 
 func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) error {

@@ -1,8 +1,6 @@
 package http
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
@@ -33,33 +31,16 @@ func (s *Server) Error(fn appHandler) http.HandlerFunc {
 			return
 		}
 
-		body, err := clientError.Body()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = s.Renderer.RenderResponseMessage(w, contextualClassDanger, errOops)
-			return
-		}
-
-		status, headers := clientError.Headers()
-		for k, v := range headers {
-			w.Header().Set(k, v)
-		}
-
+		status, _ := clientError.Headers()
 		w.WriteHeader(status)
-
-		_, err = w.Write(body)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_ = s.Renderer.RenderResponseMessage(w, contextualClassDanger, errOops)
-			return
-		}
+		_ = s.Renderer.RenderResponseMessage(w, contextualClassWarning, clientError.Body())
 	}
 }
 
 // ClientError is the interface that wraps methods related to error on the client side
 type ClientError interface {
 	Error() string
-	Body() ([]byte, error)
+	Body() string
 	Headers() (int, map[string]string)
 }
 
@@ -78,12 +59,8 @@ func (e *Error) Error() string {
 }
 
 // Body returns response body from error
-func (e *Error) Body() ([]byte, error) {
-	body, err := json.Marshal(e)
-	if err != nil {
-		return nil, fmt.Errorf("Error while parsing response body: %v", err)
-	}
-	return body, nil
+func (e *Error) Body() string {
+	return e.Message
 }
 
 // Headers returns status and header

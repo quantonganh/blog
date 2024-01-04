@@ -36,7 +36,6 @@ func (n *Newsletter) Subscribe(r *http.Request, body io.Reader) (*http.Response,
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	return resp, nil
 }
@@ -56,7 +55,6 @@ func (n *Newsletter) Confirm(r *http.Request, token string) (*http.Response, err
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	return resp, nil
 }
@@ -76,7 +74,6 @@ func (n *Newsletter) Unsubscribe(r *http.Request, email, hash string) (*http.Res
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	return resp, nil
 }

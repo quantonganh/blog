@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -20,13 +19,14 @@ func TestError(t *testing.T) {
 	assert.NoError(t, err)
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
+	clientErrMsg := "invalid URL escape"
 	testCases := []struct {
 		name string
 		err  error
 	}{
 		{
 			name: "client error",
-			err:  NewError(errors.New("Bad request: invalid search query"), http.StatusBadRequest, "invalid URL escape"),
+			err:  NewError(errors.New("Bad request: invalid search query"), http.StatusBadRequest, clientErrMsg),
 		},
 		{
 			name: "server error",
@@ -48,13 +48,9 @@ func TestError(t *testing.T) {
 			if ok {
 				assert.Equal(t, http.StatusBadRequest, rr.Code)
 
-				contentTypeHeaders := rs.Header["Content-Type"]
-				assert.Equal(t, 1, len(contentTypeHeaders))
-				assert.Equal(t, "application/json; charset=utf-8", contentTypeHeaders[0])
-
-				var respErr Error
-				require.NoError(t, json.NewDecoder(rs.Body).Decode(&respErr))
-				assert.Equal(t, "invalid URL escape", respErr.Message)
+				msg, err := getResponseMessage(rs.Body)
+				require.NoError(t, err)
+				assert.Equal(t, clientErrMsg, strings.TrimSpace(msg))
 			} else {
 				assert.Equal(t, http.StatusInternalServerError, rr.Code)
 				msg, err := getResponseMessage(rs.Body)
