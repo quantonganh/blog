@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -65,6 +66,22 @@ func (s *Server) webhookHandler(config *blog.Config) appHandler {
 
 		if err := s.reload(config, addedPosts, removedFiles, modifiedPosts); err != nil {
 			return err
+		}
+
+		for _, p := range addedPosts {
+			email := map[string]string{
+				"subject": p.Title,
+				"body":    string(p.Content),
+			}
+			data, err := json.Marshal(email)
+			if err != nil {
+				return err
+			}
+
+			_, err = s.NewsletterService.Send(r, bytes.NewBuffer(data))
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
