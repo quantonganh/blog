@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/quantonganh/blog"
@@ -168,6 +169,9 @@ func (s *Server) reload(config *blog.Config, addedPosts []*blog.Post, removedFil
 		if err != nil {
 			return err
 		}
+		sort.Slice(updatedPosts, func(i, j int) bool {
+			return updatedPosts[i].Date.Time.After(updatedPosts[j].Date.Time)
+		})
 		s.PostService = markdown.NewPostService(updatedPosts)
 	}
 
