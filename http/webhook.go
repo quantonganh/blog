@@ -52,15 +52,14 @@ func (s *Server) webhookHandler(config *blog.Config) appHandler {
 			return err
 		}
 
-		addedPosts, removedFiles, modifiedPosts, err := getChangedPosts(config, payload)
+		cmd := exec.Command("sh", "-c", fmt.Sprintf("git -C %s fetch origin && git -C %s reset --hard origin/main", config.Posts.Dir, config.Posts.Dir))
+		output, err := cmd.CombinedOutput()
 		if err != nil {
-			return err
+			return fmt.Errorf("error fetching the updated content: %s: %w", string(output), err)
 		}
 
-		cmd := exec.Command("sh", "-c", fmt.Sprintf("git -C %s fetch origin && git -C %s reset --hard origin/main", config.Posts.Dir, config.Posts.Dir))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
+		addedPosts, removedFiles, modifiedPosts, err := getChangedPosts(config, payload)
+		if err != nil {
 			return err
 		}
 
