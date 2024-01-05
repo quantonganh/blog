@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -64,13 +65,15 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 		Logger()
 	s.router.Use(hlog.NewHandler(zlog))
 	s.router.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
-		hlog.FromRequest(r).Info().
-			Str("method", r.Method).
-			Stringer("url", r.URL).
-			Int("status", status).
-			Int("size", size).
-			Dur("duration", duration).
-			Msg("")
+		if !strings.HasPrefix(r.URL.Path, "/static") {
+			hlog.FromRequest(r).Info().
+				Str("method", r.Method).
+				Stringer("url", r.URL).
+				Int("status", status).
+				Int("size", size).
+				Dur("duration", duration).
+				Msg("")
+		}
 	}))
 	s.router.Use(httperror.RealIPHandler("ip"))
 	s.router.Use(hlog.UserAgentHandler("user_agent"))
