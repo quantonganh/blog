@@ -66,7 +66,13 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 	s.router.Use(hlog.NewHandler(zlog))
 	s.router.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
 		if !strings.HasPrefix(r.URL.Path, "/static") {
-			hlog.FromRequest(r).Info().
+			var event *zerolog.Event
+			if 400 <= status && status <= 599 {
+				event = hlog.FromRequest(r).Error()
+			} else {
+				event = hlog.FromRequest(r).Info()
+			}
+			event.
 				Str("method", r.Method).
 				Stringer("url", r.URL).
 				Int("status", status).
