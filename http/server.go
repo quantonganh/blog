@@ -67,7 +67,6 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 		hlog.FromRequest(r).Info().
 			Str("method", r.Method).
 			Stringer("url", r.URL).
-			Str("form_value", r.FormValue("letters")).
 			Int("status", status).
 			Int("size", size).
 			Dur("duration", duration).

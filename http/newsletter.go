@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -25,6 +26,10 @@ const (
 
 func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
 	email := r.FormValue("email")
+	log := zerolog.Ctx(r.Context())
+	log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+		return c.Str("email", email)
+	})
 	subsReq := map[string]string{
 		"url":   s.URL(),
 		"email": email,

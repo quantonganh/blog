@@ -2,6 +2,8 @@ package http
 
 import (
 	"net/http"
+
+	"github.com/rs/zerolog"
 )
 
 type customResponseWriter struct {
@@ -27,6 +29,10 @@ func (s *Server) toHTML(next http.Handler) http.Handler {
 		next.ServeHTTP(customWriter, r)
 
 		if customWriter.StatusCode() == http.StatusTooManyRequests {
+			log := zerolog.Ctx(r.Context())
+			log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+				return c.Str("email", r.FormValue("email"))
+			})
 			_ = s.Renderer.RenderResponseMessage(w, contextualClassWarning, "Too many requests.")
 			return
 		}
