@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/rs/zerolog/hlog"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -21,11 +21,14 @@ func (s *Server) Error(fn appHandler) http.HandlerFunc {
 			return
 		}
 
-		hlog.FromRequest(r).Error().Msg(err.Error())
-		sentry.CaptureException(err)
+		log := zerolog.Ctx(r.Context())
+		log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+			return c.Str(zerolog.ErrorFieldName, err.Error())
+		})
 
 		clientError, ok := err.(ClientError)
 		if !ok {
+			sentry.CaptureException(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = s.Renderer.RenderResponseMessage(w, contextualClassDanger, errOops)
 			return

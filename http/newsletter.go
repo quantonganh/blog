@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/mail"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -25,14 +26,24 @@ const (
 )
 
 func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error {
-	email := r.FormValue("email")
+	hpEmail := r.FormValue("email")
+	if hpEmail != "" {
+		return NewError(errors.New("better luck next time, bot!"), http.StatusBadRequest, "Congratulations! You've stumbled into our Honeypot field")
+	}
+
+	email := r.FormValue("email82244417f9")
 	log := zerolog.Ctx(r.Context())
 	log.UpdateContext(func(c zerolog.Context) zerolog.Context {
 		return c.Str("email", email)
 	})
+	a, err := mail.ParseAddress(email)
+	if err != nil {
+		return NewError(err, http.StatusBadRequest, "Invalid email address.")
+	}
+
 	subsReq := map[string]string{
 		"url":   s.URL(),
-		"email": email,
+		"email": a.Address,
 	}
 	body, err := json.Marshal(subsReq)
 	if err != nil {
@@ -47,7 +58,7 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		if err := s.Renderer.RenderResponseMessage(w, contextualClassSuccess, fmt.Sprintf(confirmationMessage, email)); err != nil {
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassSuccess, fmt.Sprintf(confirmationMessage, a.Address)); err != nil {
 			return err
 		}
 	case http.StatusUnauthorized:
@@ -55,7 +66,7 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 			return err
 		}
 	case http.StatusNotFound:
-		if err := s.Renderer.RenderResponseMessage(w, contextualClassWarning, fmt.Sprintf(notFoundMessage, email)); err != nil {
+		if err := s.Renderer.RenderResponseMessage(w, contextualClassWarning, fmt.Sprintf(notFoundMessage, a.Address)); err != nil {
 			return err
 		}
 	case http.StatusConflict:

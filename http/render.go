@@ -180,17 +180,3 @@ func (r *render) RenderNewsletter(latestPosts []*blog.Post, serverURL, email str
 
 	return buf, nil
 }
-
-func (r *render) RenderVTV(w http.ResponseWriter, letters string, total int, rows [][]string) error {
-	tmpl := html.Parse(template.FuncMap{
-		"mod": func(i, j, r int) bool {
-			return i%j == r
-		},
-	}, "vtv.html")
-	data := map[string]interface{}{
-		"letters": letters,
-		"total":   total,
-		"rows":    rows,
-	}
-	return tmpl.ExecuteTemplate(w, "base", data)
-}
