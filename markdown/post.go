@@ -34,7 +34,7 @@ const (
 	summaryLength        = 70
 	threeBackticks       = "```"
 	numberOfRelatedPosts = 5
-	mdExtension          = ".md"
+	Extension            = ".md"
 )
 
 // GetAllPosts gets all posts in root directory
@@ -47,7 +47,7 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 			if err != nil {
 				return err
 			}
-			if filepath.Ext(path) != mdExtension {
+			if filepath.Ext(path) != Extension {
 				return nil
 			}
 			select {
@@ -178,7 +178,7 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 			basename := filepath.Base(name)
 			p.URI = path.Join(strings.TrimPrefix(filepath.Dir(name), root), basename)
 		default:
-			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), fmt.Sprintf("%s%s", url.QueryEscape(strings.ToLower(p.Title)), mdExtension))
+			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), fmt.Sprintf("%s%s", url.QueryEscape(strings.ToLower(p.Title)), Extension))
 		}
 		if !strings.HasPrefix(p.URI, "/") {
 			p.URI = "/" + p.URI

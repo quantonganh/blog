@@ -120,9 +120,9 @@ func getChangedPosts(config *blog.Config, payload webhookPayload) ([]*blog.Post,
 		modifiedFiles []string
 	)
 	for _, commit := range payload.Commits {
-		addedFiles = append(addedFiles, commit.Added...)
-		removedFiles = append(removedFiles, commit.Removed...)
-		modifiedFiles = append(modifiedFiles, commit.Modified...)
+		addedFiles = append(addedFiles, getMDFiles(commit.Added)...)
+		removedFiles = append(removedFiles, getMDFiles(commit.Removed)...)
+		modifiedFiles = append(modifiedFiles, getMDFiles(commit.Modified)...)
 	}
 
 	var (
@@ -160,6 +160,17 @@ func getChangedPosts(config *blog.Config, payload webhookPayload) ([]*blog.Post,
 	}
 
 	return addedPosts, removedFiles, modifiedPosts, nil
+}
+
+func getMDFiles(files []string) []string {
+	var mdFiles []string
+	for _, file := range files {
+		if strings.HasSuffix(file, markdown.Extension) {
+			mdFiles = append(mdFiles, file)
+		}
+	}
+
+	return mdFiles
 }
 
 func (s *Server) reload(config *blog.Config, addedPosts []*blog.Post, removedFiles []string, modifiedPosts []*blog.Post) error {
