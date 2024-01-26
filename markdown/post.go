@@ -195,15 +195,19 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 			html.TabWidth(4),
 		}
 
+		// remove SmartypantsFractions
+		htmlFlags := bf.UseXHTML | bf.Smartypants | bf.SmartypantsDashes | bf.SmartypantsLatexDashes
+		renderer := bfchroma.NewRenderer(
+			bfchroma.WithoutAutodetect(),
+			bfchroma.ChromaOptions(options...),
+			bfchroma.ChromaStyle(styles.SolarizedDark),
+			bfchroma.Extend(bf.NewHTMLRenderer(bf.HTMLRendererParameters{
+				Flags: htmlFlags,
+			})),
+		)
 		p.Content = template.HTML(bf.Run(
 			[]byte(content),
-			bf.WithRenderer(
-				bfchroma.NewRenderer(
-					bfchroma.WithoutAutodetect(),
-					bfchroma.ChromaOptions(options...),
-					bfchroma.ChromaStyle(styles.SolarizedDark),
-				),
-			),
+			bf.WithRenderer(renderer),
 		))
 
 		var (
@@ -221,13 +225,7 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 		}
 		p.Summary = template.HTML(bf.Run(
 			[]byte(strings.Join(summaries, newLineSeparator)),
-			bf.WithRenderer(
-				bfchroma.NewRenderer(
-					bfchroma.WithoutAutodetect(),
-					bfchroma.ChromaOptions(options...),
-					bfchroma.ChromaStyle(styles.SolarizedDark),
-				),
-			),
+			bf.WithRenderer(renderer),
 		))
 
 		return &p, nil
