@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -78,8 +77,7 @@ func (s *Server) webhookHandler(config *blog.Config) appHandler {
 				return err
 			}
 
-			_, err = s.NewsletterService.Send(r, bytes.NewBuffer(data))
-			if err != nil {
+			if err := s.MessageQueueService.Publish("added-posts", data); err != nil {
 				return err
 			}
 		}

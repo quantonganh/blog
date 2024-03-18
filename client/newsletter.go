@@ -77,22 +77,3 @@ func (n *Newsletter) Unsubscribe(r *http.Request, email, hash string) (*http.Res
 
 	return resp, nil
 }
-
-func (n *Newsletter) Send(r *http.Request, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/newsletter/send", n.baseURL), body)
-	if err != nil {
-		return nil, err
-	}
-
-	requestID, ok := hlog.IDFromRequest(r)
-	if ok {
-		req.Header.Set("Request-Id", requestID.String())
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}

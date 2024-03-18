@@ -61,6 +61,10 @@ type Config struct {
 	Sentry struct {
 		DSN string
 	}
+
+	AMQP struct {
+		URL string
+	}
 }
 
 // Item represents a navbar item

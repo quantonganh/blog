@@ -16,6 +16,7 @@ import (
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/http"
 	"github.com/quantonganh/blog/markdown"
+	"github.com/quantonganh/blog/rabbitmq"
 )
 
 func main() {
@@ -47,7 +48,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	a := newApp(config, posts)
+	a, err := newApp(config, posts)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
@@ -76,15 +80,23 @@ type app struct {
 	httpServer *http.Server
 }
 
-func newApp(config *blog.Config, posts []*blog.Post) *app {
+func newApp(config *blog.Config, posts []*blog.Post) (*app, error) {
+	mqService, err := rabbitmq.NewMessageQueueService(config.AMQP.URL)
+	if err != nil {
+		return nil, err
+	}
+
 	httpServer, err := http.NewServer(config, posts)
 	if err != nil {
 		log.Fatalf("%+v\n", err)
+		return nil, err
 	}
+	httpServer.MessageQueueService = mqService
+
 	return &app{
 		config:     config,
 		httpServer: httpServer,
-	}
+	}, nil
 }
 
 func (a *app) Run(ctx context.Context) error {

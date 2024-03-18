@@ -37,10 +37,11 @@ type Server struct {
 	Addr   string
 	Domain string
 
-	PostService       blog.PostService
-	SearchService     blog.SearchService
-	Renderer          blog.Renderer
-	NewsletterService blog.NewsletterService
+	PostService         blog.PostService
+	SearchService       blog.SearchService
+	Renderer            blog.Renderer
+	NewsletterService   blog.NewsletterService
+	MessageQueueService blog.MessageQueueService
 }
 
 // NewServer create new HTTP server
@@ -51,6 +52,7 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	s := &Server{
 		server:            &http.Server{},
 		router:            mux.NewRouter().StrictSlash(true),

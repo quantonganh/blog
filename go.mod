@@ -16,7 +16,7 @@ require (
 	github.com/rs/zerolog v1.23.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/viper v1.3.2
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.8.0
 	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -50,6 +50,7 @@ require (
 	github.com/pelletier/go-toml v1.7.0 // indirect
 	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cast v1.3.0 // indirect
