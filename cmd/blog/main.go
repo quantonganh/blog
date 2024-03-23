@@ -11,12 +11,15 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/http"
+	"github.com/quantonganh/blog/kafka"
 	"github.com/quantonganh/blog/markdown"
 	"github.com/quantonganh/blog/rabbitmq"
+	"github.com/quantonganh/blog/sqlite"
 )
 
 func main() {
@@ -48,9 +51,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	a, err := newApp(config, posts)
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Logger()
+
+	a, err := newApp(logger, config, posts)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error().Err(err).Msg("error creating new app")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -76,30 +83,46 @@ func main() {
 }
 
 type app struct {
+	db         *sqlite.DB
 	config     *blog.Config
 	httpServer *http.Server
 }
 
-func newApp(config *blog.Config, posts []*blog.Post) (*app, error) {
-	mqService, err := rabbitmq.NewMessageQueueService(config.AMQP.URL)
+func newApp(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (*app, error) {
+	httpServer, err := http.NewServer(logger, config, posts)
 	if err != nil {
+		logger.Error().Err(err).Msg("error creating new HTTP server")
 		return nil, err
 	}
 
-	httpServer, err := http.NewServer(config, posts)
+	queueService, err := rabbitmq.NewQueueService(config.AMQP.URL)
 	if err != nil {
-		log.Fatalf("%+v\n", err)
 		return nil, err
 	}
-	httpServer.MessageQueueService = mqService
+	httpServer.QueueService = queueService
+
+	eventService, err := kafka.NewEventService(config.Kafka.Broker)
+	if err != nil {
+		return nil, err
+	}
+	httpServer.EventService = eventService
+
+	db := sqlite.NewDB("db/stats.db")
+	statService := sqlite.NewStatService(logger, db)
+	httpServer.StatService = statService
 
 	return &app{
+		db:         db,
 		config:     config,
 		httpServer: httpServer,
 	}, nil
 }
 
 func (a *app) Run(ctx context.Context) error {
+	if err := a.db.Open(); err != nil {
+		return err
+	}
+
 	a.httpServer.Addr = a.config.HTTP.Addr
 	baseURL, err := url.Parse(a.config.Site.BaseURL)
 	if err != nil {
@@ -108,6 +131,10 @@ func (a *app) Run(ctx context.Context) error {
 	a.httpServer.Domain = baseURL.Hostname()
 
 	if err := a.httpServer.Open(); err != nil {
+		return err
+	}
+
+	if err := a.httpServer.ProcessActivityStream(ctx, a.config.IP2Location.Token); err != nil {
 		return err
 	}
 

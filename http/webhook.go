@@ -77,7 +77,7 @@ func (s *Server) webhookHandler(config *blog.Config) appHandler {
 				return err
 			}
 
-			if err := s.MessageQueueService.Publish("added-posts", data); err != nil {
+			if err := s.QueueService.Publish("added-posts", data); err != nil {
 				return err
 			}
 		}

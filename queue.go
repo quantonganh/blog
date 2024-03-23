@@ -1,5 +1,5 @@
 package blog
 
-type MessageQueueService interface {
+type QueueService interface {
 	Publish(topic string, message []byte) error
 }

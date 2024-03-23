@@ -7,11 +7,11 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type MessageQueueService struct {
+type queueService struct {
 	ch *amqp.Channel
 }
 
-func NewMessageQueueService(url string) (*MessageQueueService, error) {
+func NewQueueService(url string) (*queueService, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -22,12 +22,12 @@ func NewMessageQueueService(url string) (*MessageQueueService, error) {
 		return nil, err
 	}
 
-	return &MessageQueueService{
+	return &queueService{
 		ch: ch,
 	}, nil
 }
 
-func (s *MessageQueueService) Publish(topic string, message []byte) error {
+func (s *queueService) Publish(topic string, message []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

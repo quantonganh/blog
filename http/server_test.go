@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -70,7 +71,10 @@ Test.`)
 	}
 	fmt.Printf("post: %+v", post)
 
-	s, err = NewServer(cfg, []*blog.Post{post})
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Logger()
+	s, err = NewServer(logger, cfg, []*blog.Post{post})
 	if err != nil {
 		log.Fatal(err)
 	}

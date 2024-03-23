@@ -65,6 +65,14 @@ type Config struct {
 	AMQP struct {
 		URL string
 	}
+
+	Kafka struct {
+		Broker string
+	}
+
+	IP2Location struct {
+		Token string
+	}
 }
 
 // Item represents a navbar item

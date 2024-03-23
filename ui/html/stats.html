@@ -1,0 +1,99 @@
+{{ define "content" }}
+<h3 class="text-center my-3">Top 10 Visited Pages</h3>
+<table class="table my-3">
+    <thead>
+        <tr>
+            <th scope="col">URL</th>
+            <th scope="col">Visits</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range $_, $p := .top10VisitedPages }}
+        <tr>
+            <td><a href="{{ $p.URL }}">{{ $p.URL }}</a></td>
+            <td>{{ $p.Visits }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+<h3 class="text-center my-3">Top 10 Referers</h3>
+<table class="table my-3">
+    <thead>
+        <tr>
+            <th scope="col">Share</th>
+            <th scope="col">Referer</th>
+            <th scope="col">Visits</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range $_, $r := .top10Referers }}
+        <tr>
+            <td>{{ $r.Share }}%</a></td>
+            <td>{{ $r.Referer }}</td>
+            <td>{{ $r.Visits }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+<h3 class="text-center my-3">Top 10 Countries</h3>
+<table class="table my-3">
+    <thead>
+        <tr>
+            <th scope="col">Share</th>
+            <th scope="col">Country</th>
+            <th scope="col">Visits</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range $_, $c := .top10Countries }}
+        <tr>
+            <td>{{ $c.Share }}%</a></td>
+            <td>{{ $c.Country }}</a></td>
+            <td>{{ $c.Visits }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+<h3 class="text-center my-3">Top 10 Browsers</h3>
+<table class="table my-3">
+    <thead>
+        <tr>
+            <th scope="col">Share</th>
+            <th scope="col">Browser</th>
+            <th scope="col">Visits</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range $_, $b := .top10Browsers }}
+        <tr>
+            <td>{{ $b.Share }}%</td>
+            <td>{{ $b.Browser }}</td>
+            <td>{{ $b.Visits }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+<h3 class="text-center my-3">Top 10 Operating Systems</h3>
+<table class="table my-3">
+    <thead>
+        <tr>
+            <th scope="col">Share</th>
+            <th scope="col">Operating System</th>
+            <th scope="col">Visits</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range $_, $os := .top10OperatingSystems }}
+        <tr>
+            <td>{{ $os.Share }}%</td>
+            <td>{{ $os.OS }}</a></td>
+            <td>{{ $os.Visits }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ end }}

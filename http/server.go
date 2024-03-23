@@ -2,11 +2,13 @@ package http
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -30,6 +32,7 @@ const (
 
 // Server represents HTTP server
 type Server struct {
+	logger zerolog.Logger
 	ln     net.Listener
 	server *http.Server
 	router *mux.Router
@@ -37,15 +40,17 @@ type Server struct {
 	Addr   string
 	Domain string
 
-	PostService         blog.PostService
-	SearchService       blog.SearchService
-	Renderer            blog.Renderer
-	NewsletterService   blog.NewsletterService
-	MessageQueueService blog.MessageQueueService
+	PostService       blog.PostService
+	SearchService     blog.SearchService
+	Renderer          blog.Renderer
+	NewsletterService blog.NewsletterService
+	QueueService      blog.QueueService
+	EventService      blog.EventService
+	StatService       blog.StatService
 }
 
 // NewServer create new HTTP server
-func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
+func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (*Server, error) {
 	postService := markdown.NewPostService(posts)
 	indexPath := path.Join(path.Dir(config.Posts.Dir), path.Base(config.Posts.Dir)+".bleve")
 	searchService, err := markdown.NewSearchService(indexPath, posts)
@@ -54,6 +59,7 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 	}
 
 	s := &Server{
+		logger:            logger,
 		server:            &http.Server{},
 		router:            mux.NewRouter().StrictSlash(true),
 		PostService:       postService,
@@ -62,12 +68,9 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 		NewsletterService: client.NewNewsletter(config.Newsletter.BaseURL),
 	}
 
-	zlog := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Logger()
-	s.router.Use(hlog.NewHandler(zlog))
+	s.router.Use(hlog.NewHandler(logger))
 	s.router.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
-		if !strings.HasPrefix(r.URL.Path, "/static") {
+		if !strings.HasPrefix(r.URL.Path, "/static") && !hasSuffix(r.URL.Path, []string{"ico", "jpg", "jpeg", "png", "gif"}) {
 			var event *zerolog.Event
 			if 400 <= status && status <= 599 {
 				event = hlog.FromRequest(r).Error()
@@ -81,6 +84,36 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 				Int("size", size).
 				Dur("duration", duration).
 				Msg("")
+
+			ua := r.Header.Get("User-Agent")
+			if !strings.Contains(strings.ToLower(ua), "bot") {
+				ip, err := httperror.GetIP(r)
+				if err != nil {
+					s.logger.Error().Err(err).Msg("failed to get IP address")
+					return
+				}
+				userID := generateUserID(ip, ua)
+
+				referer := r.Header.Get("Referer")
+				if referer == "" {
+					referer = "Unknown"
+				}
+				now := time.Now().Format("2006-01-02T15:04:05Z")
+				data := map[string]string{
+					"ip":         ip,
+					"user_agent": ua,
+					"url":        r.URL.Path,
+					"referer":    referer,
+					"time":       now,
+				}
+				jsonData, err := json.Marshal(data)
+				if err != nil {
+					s.logger.Error().Err(err).Msg("failed to encode message value")
+				}
+				if err := s.EventService.SendMessage("page-views", userID, jsonData); err != nil {
+					s.logger.Error().Err(err).Msg("error sending message")
+				}
+			}
 		}
 	}))
 	s.router.Use(httperror.RealIPHandler("ip"))
@@ -120,11 +153,21 @@ func NewServer(config *blog.Config, posts []*blog.Post) (*Server, error) {
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.newRoute("/unsubscribe", s.unsubscribeHandler)
 
+	s.newRoute("/stats", s.statsHandler)
+
 	return s, nil
 }
 
 func (s *Server) newRoute(path string, h appHandler) *mux.Route {
 	return s.router.HandleFunc(path, s.Error(h))
+}
+
+func generateUserID(ip, ua string) string {
+	encodedStr := base64.StdEncoding.EncodeToString([]byte(ip + ua))
+
+	hash := md5.Sum([]byte(encodedStr))
+
+	return fmt.Sprintf("%x", hash)
 }
 
 // Scheme returns scheme
