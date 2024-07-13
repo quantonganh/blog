@@ -4,6 +4,7 @@ import "time"
 
 // Config represents the main config
 type Config struct {
+	Env  string
 	Site struct {
 		BaseURL string
 		Title   string

@@ -68,7 +68,7 @@ func main() {
 		cancel()
 	}()
 
-	if err := a.Run(ctx); err != nil {
+	if err := a.Run(ctx, logger); err != nil {
 		_ = a.Close()
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -95,21 +95,24 @@ func newApp(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (*ap
 		return nil, err
 	}
 
-	queueService, err := rabbitmq.NewQueueService(config.AMQP.URL)
-	if err != nil {
-		return nil, err
-	}
-	httpServer.QueueService = queueService
-
-	eventService, err := kafka.NewEventService(config.Kafka.Broker)
-	if err != nil {
-		return nil, err
-	}
-	httpServer.EventService = eventService
-
 	db := sqlite.NewDB("db/stats.db")
-	statService := sqlite.NewStatService(logger, db)
-	httpServer.StatService = statService
+
+	if config.Env != "local" {
+		queueService, err := rabbitmq.NewQueueService(config.AMQP.URL)
+		if err != nil {
+			return nil, err
+		}
+		httpServer.QueueService = queueService
+
+		eventService, err := kafka.NewEventService(config.Kafka.Broker)
+		if err != nil {
+			return nil, err
+		}
+		httpServer.EventService = eventService
+
+		statService := sqlite.NewStatService(logger, db)
+		httpServer.StatService = statService
+	}
 
 	return &app{
 		db:         db,
@@ -118,7 +121,7 @@ func newApp(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (*ap
 	}, nil
 }
 
-func (a *app) Run(ctx context.Context) error {
+func (a *app) Run(ctx context.Context, logger zerolog.Logger) error {
 	if err := a.db.Open(); err != nil {
 		return err
 	}
@@ -134,8 +137,13 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := a.httpServer.ProcessActivityStream(ctx, a.config.IP2Location.Token); err != nil {
-		return err
+	if a.config.Env != "local" {
+		go func() {
+			if err := a.httpServer.ProcessActivityStream(ctx, a.config.IP2Location.Token); err != nil {
+				logger.Error().Err(err).Msg("failed to process activity stream")
+				return
+			}
+		}()
 	}
 
 	return nil

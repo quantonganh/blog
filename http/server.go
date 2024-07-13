@@ -85,34 +85,40 @@ func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (
 				Dur("duration", duration).
 				Msg("")
 
-			ua := r.Header.Get("User-Agent")
-			if !strings.Contains(strings.ToLower(ua), "bot") {
-				ip, err := httperror.GetIP(r)
-				if err != nil {
-					s.logger.Error().Err(err).Msg("failed to get IP address")
-					return
-				}
-				userID := generateUserID(ip, ua)
+			if config.Env != "local" {
+				go func() {
+					ua := r.Header.Get("User-Agent")
+					if !strings.Contains(strings.ToLower(ua), "bot") {
+						ip, err := httperror.GetIP(r)
+						if err != nil {
+							s.logger.Error().Err(err).Msg("failed to get IP address")
+							return
+						}
+						userID := generateUserID(ip, ua)
 
-				referer := r.Header.Get("Referer")
-				if referer == "" {
-					referer = "Unknown"
-				}
-				now := time.Now().Format("2006-01-02T15:04:05Z")
-				data := map[string]string{
-					"ip":         ip,
-					"user_agent": ua,
-					"url":        r.URL.Path,
-					"referer":    referer,
-					"time":       now,
-				}
-				jsonData, err := json.Marshal(data)
-				if err != nil {
-					s.logger.Error().Err(err).Msg("failed to encode message value")
-				}
-				if err := s.EventService.SendMessage("page-views", userID, jsonData); err != nil {
-					s.logger.Error().Err(err).Msg("error sending message")
-				}
+						referer := r.Header.Get("Referer")
+						if referer == "" {
+							referer = "Unknown"
+						}
+						now := time.Now().Format("2006-01-02T15:04:05Z")
+						data := map[string]string{
+							"ip":         ip,
+							"user_agent": ua,
+							"url":        r.URL.Path,
+							"referer":    referer,
+							"time":       now,
+						}
+						jsonData, err := json.Marshal(data)
+						if err != nil {
+							s.logger.Error().Err(err).Msg("failed to encode message value")
+							return
+						}
+						if err := s.EventService.SendMessage("page-views", userID, jsonData); err != nil {
+							s.logger.Error().Err(err).Msg("error sending message")
+							return
+						}
+					}
+				}()
 			}
 		}
 	}))
@@ -129,7 +135,6 @@ func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (
 	s.newRoute("/favicon.ico", faviconHandler)
 	s.newRoute("/", s.homeHandler)
 	s.router.NotFoundHandler = s.Error(s.homeHandler)
-	s.newRoute("/webhook", s.webhookHandler(config)).Methods(http.MethodPost)
 	s.newRoute("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}/{postName}", s.postHandler(config.Posts.Dir))
 	s.newRoute("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}/{day:0[1-9]|[12][0-9]|3[01]}", s.postsByDateHandler)
 	s.newRoute("/{year:20[0-9][0-9]}/{month:0[1-9]|1[012]}", s.postsByMonthHandler)
@@ -153,7 +158,10 @@ func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (
 	subRouter.HandleFunc("/confirm", s.Error(s.confirmHandler))
 	s.newRoute("/unsubscribe", s.unsubscribeHandler)
 
-	s.newRoute("/stats", s.statsHandler)
+	if config.Env != "local" {
+		s.newRoute("/webhook", s.webhookHandler(config)).Methods(http.MethodPost)
+		s.newRoute("/stats", s.statsHandler)
+	}
 
 	return s, nil
 }

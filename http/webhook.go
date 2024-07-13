@@ -63,7 +63,7 @@ func (s *Server) webhookHandler(config *blog.Config) appHandler {
 			return err
 		}
 
-		if err := s.reload(config, addedPosts, removedFiles, modifiedPosts); err != nil {
+		if err := s.reload(addedPosts, removedFiles, modifiedPosts); err != nil {
 			return err
 		}
 
@@ -171,10 +171,10 @@ func getMDFiles(files []string) []string {
 	return mdFiles
 }
 
-func (s *Server) reload(config *blog.Config, addedPosts []*blog.Post, removedFiles []string, modifiedPosts []*blog.Post) error {
+func (s *Server) reload(addedPosts []*blog.Post, removedFiles []string, modifiedPosts []*blog.Post) error {
 	if s.PostService != nil {
 		posts := s.PostService.GetAllPosts()
-		updatedPosts, err := updatePosts(config, posts, addedPosts, removedFiles, modifiedPosts)
+		updatedPosts, err := updatePosts(posts, addedPosts, removedFiles, modifiedPosts)
 		if err != nil {
 			return err
 		}
@@ -209,7 +209,7 @@ func (s *Server) reload(config *blog.Config, addedPosts []*blog.Post, removedFil
 	return nil
 }
 
-func updatePosts(config *blog.Config, posts []*blog.Post, addedPosts []*blog.Post, removedFiles []string, modifiedPosts []*blog.Post) ([]*blog.Post, error) {
+func updatePosts(posts []*blog.Post, addedPosts []*blog.Post, removedFiles []string, modifiedPosts []*blog.Post) ([]*blog.Post, error) {
 	posts = append(posts, addedPosts...)
 
 	for _, name := range removedFiles {
