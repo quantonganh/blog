@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -87,8 +88,10 @@ func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (
 
 			if config.Env != "local" {
 				go func() {
+					pattern := `^/\d{4}/\d{2}/\d{2}/[a-z-]+(\.md)?$`
+					regex := regexp.MustCompile(pattern)
 					ua := r.Header.Get("User-Agent")
-					if !strings.Contains(strings.ToLower(ua), "bot") {
+					if regex.MatchString(r.URL.Path) && !strings.Contains(strings.ToLower(ua), "bot") {
 						ip, err := httperror.GetIP(r)
 						if err != nil {
 							s.logger.Error().Err(err).Msg("failed to get IP address")
@@ -96,6 +99,10 @@ func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (
 						}
 						userID := generateUserID(ip, ua)
 
+						urlPath := r.URL.Path
+						if !strings.HasSuffix(urlPath, ".md") {
+							urlPath += ".md"
+						}
 						referer := r.Header.Get("Referer")
 						if referer == "" {
 							referer = "Unknown"
@@ -104,7 +111,7 @@ func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (
 						data := map[string]string{
 							"ip":         ip,
 							"user_agent": ua,
-							"url":        r.URL.Path,
+							"url":        urlPath,
 							"referer":    referer,
 							"time":       now,
 						}
