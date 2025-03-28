@@ -150,6 +150,7 @@ func NewServer(logger zerolog.Logger, config *blog.Config, posts []*blog.Post) (
 	s.router.PathPrefix("/resume").HandlerFunc(s.Error(s.postHandler(config.Posts.Dir)))
 	s.router.PathPrefix("/projects").HandlerFunc(s.Error(s.postHandler(config.Posts.Dir)))
 	s.router.PathPrefix("/uses").HandlerFunc(s.Error(s.postHandler(config.Posts.Dir)))
+	s.router.PathPrefix("/now").HandlerFunc(s.Error(s.postHandler(config.Posts.Dir)))
 	s.newRoute("/photos", s.photosHandler)
 	s.newRoute("/categories/{categoryName}", s.categoryHandler)
 	s.newRoute("/tags", s.tagsHandler)
