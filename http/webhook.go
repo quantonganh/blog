@@ -134,7 +134,7 @@ func getChangedPosts(config *blog.Config, payload webhookPayload) ([]*blog.Post,
 			return nil, nil, nil, fmt.Errorf("error opening new file %s: %w", name, err)
 		}
 
-		newPost, err := markdown.Parse(context.Background(), config.Posts.Dir, f)
+		newPost, err := markdown.Parse(context.Background(), config, f)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -149,7 +149,7 @@ func getChangedPosts(config *blog.Config, payload webhookPayload) ([]*blog.Post,
 			return nil, nil, nil, fmt.Errorf("error opening modified file %s: %w", name, err)
 		}
 
-		modifiedPost, err := markdown.Parse(context.Background(), config.Posts.Dir, f)
+		modifiedPost, err := markdown.Parse(context.Background(), config, f)
 		if err != nil {
 			return nil, nil, nil, err
 		}

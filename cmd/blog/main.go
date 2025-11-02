@@ -46,7 +46,7 @@ func main() {
 	}
 	defer sentry.Flush(2 * time.Second)
 
-	posts, err := markdown.GetAllPosts(config.Posts.Dir)
+	posts, err := markdown.GetAllPosts(config)
 	if err != nil {
 		log.Fatal(err)
 	}

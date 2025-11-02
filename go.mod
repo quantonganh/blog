@@ -1,11 +1,11 @@
 module github.com/quantonganh/blog
 
-go 1.21
+go 1.22
 
 require (
-	github.com/Depado/bfchroma v1.3.0
+	github.com/Depado/bfchroma/v2 v2.0.0
 	github.com/PuerkitoBio/goquery v1.5.0
-	github.com/alecthomas/chroma v0.8.2
+	github.com/alecthomas/chroma/v2 v2.20.1-0.20251102090007-84d187e5ec9e
 	github.com/astaxie/beego v1.12.2
 	github.com/blevesearch/bleve v1.0.14
 	github.com/getsentry/sentry-go v0.9.0
@@ -35,7 +35,6 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/klauspost/compress v1.17.7 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
@@ -57,9 +56,8 @@ require (
 	github.com/blevesearch/zap/v14 v14.0.5 // indirect
 	github.com/blevesearch/zap/v15 v15.0.3 // indirect
 	github.com/couchbase/vellum v1.0.2 // indirect
-	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dlclark/regexp2 v1.4.0 // indirect
+	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/glycerine/go-unsnap-stream v0.0.0-20181221182339-f9677308dec2 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect

@@ -22,6 +22,11 @@ type Config struct {
 		Dir string
 	}
 
+	Chroma struct {
+		Style           string
+		WithLineNumbers bool
+	}
+
 	Webhook struct {
 		Secret string
 	}

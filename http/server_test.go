@@ -65,7 +65,11 @@ tags:
 ---
 Test.`)
 	var err error
-	post, err = markdown.Parse(context.Background(), ".", r)
+	post, err = markdown.Parse(context.Background(), &blog.Config{
+		Posts: struct{ Dir string }{
+			Dir: ".",
+		},
+	}, r)
 	if err != nil {
 		log.Fatal(err)
 	}

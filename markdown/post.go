@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Depado/bfchroma"
-	"github.com/alecthomas/chroma/formatters/html"
-	"github.com/alecthomas/chroma/styles"
+	"github.com/Depado/bfchroma/v2"
+	"github.com/alecthomas/chroma/v2/formatters/html"
+	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	bf "github.com/russross/blackfriday/v2"
@@ -38,7 +38,8 @@ const (
 )
 
 // GetAllPosts gets all posts in root directory
-func GetAllPosts(root string) ([]*blog.Post, error) {
+func GetAllPosts(config *blog.Config) ([]*blog.Post, error) {
+	root := config.Posts.Dir
 	g, ctx := errgroup.WithContext(context.Background())
 	paths := make(chan string)
 	g.Go(func() error {
@@ -68,7 +69,7 @@ func GetAllPosts(root string) ([]*blog.Post, error) {
 				if err != nil {
 					return errors.Wrapf(err, "failed to open file: %s", p)
 				}
-				post, err := Parse(ctx, root, f)
+				post, err := Parse(ctx, config, f)
 				if err != nil {
 					return errors.Wrapf(err, "failed to parse markdown: %s", p)
 				}
@@ -145,7 +146,7 @@ func (ps *postService) GetLatestPosts(days int) []*blog.Post {
 }
 
 // Parse parses markdown file, returns a blog post
-func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
+func Parse(ctx context.Context, config *blog.Config, r io.Reader) (*blog.Post, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -176,7 +177,7 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 		case *os.File:
 			name := v.Name()
 			basename := filepath.Base(name)
-			p.URI = path.Join(strings.TrimPrefix(filepath.Dir(name), root), basename)
+			p.URI = path.Join(strings.TrimPrefix(filepath.Dir(name), config.Posts.Dir), basename)
 		default:
 			p.URI = path.Join(p.Date.GetYear(), p.Date.GetMonth(), p.Date.GetDay(), fmt.Sprintf("%s%s", url.QueryEscape(strings.ToLower(p.Title)), Extension))
 		}
@@ -191,7 +192,7 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 			p.Truncated = false
 		}
 		options := []html.Option{
-			html.WithLineNumbers(true),
+			html.WithLineNumbers(config.Chroma.WithLineNumbers),
 			html.TabWidth(4),
 		}
 
@@ -200,7 +201,7 @@ func Parse(ctx context.Context, root string, r io.Reader) (*blog.Post, error) {
 		renderer := bfchroma.NewRenderer(
 			bfchroma.WithoutAutodetect(),
 			bfchroma.ChromaOptions(options...),
-			bfchroma.ChromaStyle(styles.SolarizedDark),
+			bfchroma.ChromaStyle(styles.Get(config.Chroma.Style)),
 			bfchroma.Extend(bf.NewHTMLRenderer(bf.HTMLRendererParameters{
 				Flags: htmlFlags,
 			})),
