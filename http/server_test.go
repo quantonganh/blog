@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/html"
-	nethtml "golang.org/x/net/html"
 
 	"github.com/quantonganh/blog"
 	"github.com/quantonganh/blog/markdown"
@@ -171,7 +170,7 @@ func getLinkByText(t *testing.T, body *bytes.Buffer, text string) string {
 }
 
 func getResponseMessage(body io.ReadCloser) (string, error) {
-	tokenizer := nethtml.NewTokenizer(body)
+	tokenizer := html.NewTokenizer(body)
 	inDiv := false
 	var buffer bytes.Buffer
 
@@ -187,7 +186,7 @@ func getResponseMessage(body io.ReadCloser) (string, error) {
 		token := tokenizer.Token()
 
 		switch tokenType {
-		case nethtml.StartTagToken:
+		case html.StartTagToken:
 			if token.Data == "div" {
 				// Check if the div has the expected class attribute
 				for _, attr := range token.Attr {
@@ -198,11 +197,11 @@ func getResponseMessage(body io.ReadCloser) (string, error) {
 					}
 				}
 			}
-		case nethtml.TextToken:
+		case html.TextToken:
 			if inDiv {
 				buffer.WriteString(token.Data)
 			}
-		case nethtml.EndTagToken:
+		case html.EndTagToken:
 			if inDiv && token.Data == "div" {
 				return buffer.String(), nil
 			}

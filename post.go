@@ -84,7 +84,7 @@ func (d *publishDate) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // ToISODate converts date to ISO layout
 func ToISODate(d publishDate) string {
-	return d.Time.Format(layoutISO)
+	return d.Format(layoutISO)
 }
 
 // ToMonthName converts month from string number to name
@@ -105,12 +105,12 @@ func Contains(s []string, e string) bool {
 
 // GetYear gets year from publish date
 func (d *publishDate) GetYear() string {
-	return strconv.Itoa(d.Time.Year())
+	return strconv.Itoa(d.Year())
 }
 
 // GetMonth gets month from publish date
 func (d *publishDate) GetMonth() string {
-	month := int(d.Time.Month())
+	month := int(d.Month())
 	if month < 10 {
 		return "0" + strconv.Itoa(month)
 	}
@@ -120,7 +120,7 @@ func (d *publishDate) GetMonth() string {
 
 // GetDay gets day from publish date
 func (d *publishDate) GetDay() string {
-	day := d.Time.Day()
+	day := d.Day()
 	if day < 10 {
 		return "0" + strconv.Itoa(day)
 	}

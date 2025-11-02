@@ -98,7 +98,7 @@ func GetAllPosts(config *blog.Config) ([]*blog.Post, error) {
 	}
 
 	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].Date.Time.After(posts[j].Date.Time)
+		return posts[i].Date.After(posts[j].Date.Time)
 	})
 
 	return posts, nil

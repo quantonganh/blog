@@ -54,7 +54,11 @@ func (s *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			s.logger.Error().Err(err).Msg("failed to close response body")
+		}
+	}()
 
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -92,7 +96,11 @@ func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			s.logger.Error().Err(err).Msg("failed to close response body")
+		}
+	}()
 
 	statusCode := resp.StatusCode
 	if statusCode == http.StatusOK {
@@ -127,7 +135,11 @@ func (s *Server) unsubscribeHandler(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			s.logger.Error().Err(err).Msg("failed to close response body")
+		}
+	}()
 
 	switch resp.StatusCode {
 	case http.StatusOK:

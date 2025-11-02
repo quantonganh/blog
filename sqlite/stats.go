@@ -64,7 +64,7 @@ func (s *statService) ImportIP2LocationDB(token string) error {
 		s.logger.Error().Err(err).Msg("error checking IP2Location data")
 	}
 	if !imported {
-		if err := downloadIP2LocationDB(token); err != nil {
+		if err := s.downloadIP2LocationDB(token); err != nil {
 			return err
 		}
 
@@ -73,7 +73,11 @@ func (s *statService) ImportIP2LocationDB(token string) error {
 		if err != nil {
 			return fmt.Errorf("error importing CSV data into ip2location table: %s: %w", string(output), err)
 		}
-		defer os.Remove(ip2LocationFileName)
+		defer func() {
+			if err := os.Remove(ip2LocationFileName); err != nil {
+				s.logger.Error().Err(err).Msg("failed to remove ip2location file")
+			}
+		}()
 
 		_, err = s.db.sqlDB.Exec("INSERT INTO migrations (name) VALUES ('ip2location')")
 		if err != nil {
@@ -99,12 +103,16 @@ func checkIP2LocationData(db *sql.DB) (bool, error) {
 	return exists == 1, nil
 }
 
-func downloadIP2LocationDB(token string) error {
+func (s *statService) downloadIP2LocationDB(token string) error {
 	resp, err := http.Get(fmt.Sprintf("https://www.ip2location.com/download/?token=%s&file=DB1LITE", token))
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			s.logger.Error().Err(err).Msg("failed to close response body")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -114,7 +122,11 @@ func downloadIP2LocationDB(token string) error {
 	if err != nil {
 		return fmt.Errorf("error creating ip2Location file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			s.logger.Error().Err(err).Msg(fmt.Sprintf("failed to close %s", ip2LocationZipFileName))
+		}
+	}()
 
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
@@ -125,7 +137,11 @@ func downloadIP2LocationDB(token string) error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			s.logger.Error().Err(err).Msg(fmt.Sprintf("failed to close %s", ip2LocationZipFileName))
+		}
+	}()
 
 	for _, file := range r.File {
 		if file.Name != ip2LocationFileName {
@@ -136,13 +152,21 @@ func downloadIP2LocationDB(token string) error {
 		if err != nil {
 			return err
 		}
-		defer outFile.Close()
+		defer func() {
+			if err := outFile.Close(); err != nil {
+				s.logger.Error().Err(err).Msg(fmt.Sprintf("failed to close %s", ip2LocationFileName))
+			}
+		}()
 
 		rc, err := file.Open()
 		if err != nil {
 			return err
 		}
-		defer rc.Close()
+		defer func() {
+			if err := rc.Close(); err != nil {
+				s.logger.Error().Err(err).Msg(fmt.Sprintf("failed to close %s", file.Name))
+			}
+		}()
 
 		_, err = io.Copy(outFile, rc)
 		if err != nil {

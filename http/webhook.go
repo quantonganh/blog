@@ -105,7 +105,7 @@ func verifySignature(signature string, payload []byte, secret string) error {
 	calculateHash := hex.EncodeToString(hmacHash.Sum(nil))
 
 	if !hmac.Equal([]byte(calculateHash), []byte(hash)) {
-		return errors.New("Request signature didn't match")
+		return errors.New("request signature didn't match")
 	}
 
 	return nil
@@ -179,7 +179,7 @@ func (s *Server) reload(addedPosts []*blog.Post, removedFiles []string, modified
 			return err
 		}
 		sort.Slice(updatedPosts, func(i, j int) bool {
-			return updatedPosts[i].Date.Time.After(updatedPosts[j].Date.Time)
+			return updatedPosts[i].Date.After(updatedPosts[j].Date.Time)
 		})
 		s.PostService = markdown.NewPostService(updatedPosts)
 	}
